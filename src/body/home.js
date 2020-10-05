@@ -106,9 +106,11 @@ class HomePage extends Component{
             <Layout>
                 {this.mainBanner()}
                 <Row type="flex" justify="center">
-                    {this.createCard("http://apbs-pdb2pqr.readthedocs.io/en/latest/getting-started.html", "Go to User Guide", "book")}
+                    {this.createCard("http://www.poissonboltzmann.org/", "Go to Project Homepage", "team")}
                     {this.createCard("http://eepurl.com/by4eQr", "Register to help support PDB2PQR & APBS", "form")}
-                    {this.createCard("http://apbs-pdb2pqr.readthedocs.io/en/latest/examples/", "See Examples", "folder-open")}
+                    <Link to="/documentation">
+                        {this.createCard("/documentation", "See Examples", "folder-open")}
+                    </Link>
                 </Row>
             </Layout>        
         )
