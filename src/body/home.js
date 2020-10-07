@@ -46,7 +46,7 @@ class HomePage extends Component{
                                 {/* <p> </p> */}
 
                                 <br/>
-                                <p>Please <b><a href='http://eepurl.com/by4eQr' target="_blank" rel="noopener noreferrer" onClick={() => this.sendRegisterClickEvent('home')}>register</a></b> to ensure continued support for this software.</p>
+                                <p>Please <b><a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer" onClick={() => this.sendRegisterClickEvent('home')}>register</a></b> to ensure continued support for this software.</p>
 
                                 <br/>
                                 <p> Getting Started: </p>
@@ -107,7 +107,7 @@ class HomePage extends Component{
                 {this.mainBanner()}
                 <Row type="flex" justify="center">
                     {this.createCard("http://www.poissonboltzmann.org/", "Go to Project Homepage", "team")}
-                    {this.createCard("http://eepurl.com/by4eQr", "Register to help support PDB2PQR & APBS", "form")}
+                    {this.createCard(window._env_.REGISTRATION_URL, "Register to help support PDB2PQR & APBS", "form")}
                     <Link to="/documentation">
                         {this.createCard("/documentation", "See Examples", "folder-open")}
                     </Link>
