@@ -4,9 +4,10 @@ import 'antd/dist/antd.css';
 import { Layout, Col, Row } from 'antd';
 import { Typography } from 'antd';
 import { Divider } from 'antd';
+// import { ExportOutlined } from '@ant-design/icons'
 
 const { Content } = Layout;
-const { Title, Text, Paragraph, Link } = Typography;
+const { Title, Text, Link } = Typography;
 
 class DocumentationPage extends Component{
     constructor(props){
@@ -27,7 +28,10 @@ class DocumentationPage extends Component{
                         </Title>
                         <Title level={4}>
                             Project homepage:
-                            <Link href="http://poissonboltzmann.org/" target="blank"> PoissonBoltzmann.org </Link>
+                            <Link href={window._env_.PROJECT_HOME_URL} target="_blank" rel="noopener noreferrer"> PoissonBoltzmann.org </Link>
+                            {/* <Link href={window._env_.PROJECT_HOME_URL} target="_blank" rel="noopener noreferrer"> 
+                                Project Homepage <ExportOutlined />
+                             </Link> */}
                         </Title>
                         <Divider/>
 
@@ -39,8 +43,8 @@ class DocumentationPage extends Component{
                             Learn more about APBS and PDB2PQR at their respective documentation sites:
                         </Text>
                         <ul>
-                            <li><a target="blank" href="https://apbs.readthedocs.io/en/latest/"> APBS </a></li>
-                            <li><a target="blank" href="https://pdb2pqr.readthedocs.io/en/latest/"> PDB2PQR </a></li>
+                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_URL_APBS}> APBS </a></li>
+                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_URL_PDB2PQR}> PDB2PQR </a></li>
                         </ul>
                         <br/>
 
@@ -48,9 +52,7 @@ class DocumentationPage extends Component{
                         <Title level={3}>
                             Basic Usage:
                         </Title>
-                        <Link href="https://apbs.readthedocs.io/en/latest/">
-                            <Title level={4}> APBS </Title>
-                        </Link>
+                        <Title level={4}> APBS </Title>
                         <Row>
                             <Col offset={1} span={10}>
                                 {/* <pre style={{backgroundColor: '#eee'}}><code> */}
@@ -84,8 +86,8 @@ class DocumentationPage extends Component{
                             In-depth examples for using either software can be found at the following:
                         </Text>
                         <ul>
-                            <li><a target="_blank" href="https://apbs.readthedocs.io/en/latest/using/index.html#examples"> APBS </a></li>
-                            <li><a target="_blank" href="https://pdb2pqr.readthedocs.io/en/latest/using/examples.html"> PDB2PQR </a></li>
+                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_EXAMPLES_APBS}> APBS </a></li>
+                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_EXAMPLES_PDB2PQR}> PDB2PQR </a></li>
                         </ul>
                         <br/>
 

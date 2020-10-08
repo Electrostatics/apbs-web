@@ -106,7 +106,7 @@ class HomePage extends Component{
             <Layout>
                 {this.mainBanner()}
                 <Row type="flex" justify="center">
-                    {this.createCard("http://www.poissonboltzmann.org/", "Go to Project Homepage", "team")}
+                    {this.createCard(window._env_.PROJECT_HOME_URL, "Go to Project Homepage", "team")}
                     {this.createCard(window._env_.REGISTRATION_URL, "Register to help support PDB2PQR & APBS", "form")}
                     <Link to="/documentation">
                         {this.createCard("/documentation", "See Examples", "folder-open")}
