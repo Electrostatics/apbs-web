@@ -51,6 +51,7 @@ class MyFooter extends Component{
         );
     }
 
+    // TODO: 2020/10/15, Elvis - Rebuild footer to provide compact space with links to documentation citations and repositories
     render(){
         // PDB2PQR citation
         let pdb2pqrCitationText =
