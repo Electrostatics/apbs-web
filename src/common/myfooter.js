@@ -4,7 +4,9 @@ import '../styles/myfooter.css';
 
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, GithubOutlined, LinkOutlined } from '@ant-design/icons';
-import { Layout, Tooltip, Col, Row } from 'antd';
+import { Layout, Tooltip, Popover, Typography, Col, Row } from 'antd';
+
+const { Link } = Typography;
 const { Footer } = Layout;
 
 /**
@@ -49,6 +51,7 @@ class MyFooter extends Component{
         );
     }
 
+    // TODO: 2020/10/15, Elvis - Rebuild footer to provide compact space with links to documentation citations and repositories
     render(){
         // PDB2PQR citation
         let pdb2pqrCitationText =
@@ -83,6 +86,13 @@ class MyFooter extends Component{
         const tooltipStyle = {
             fontSize: 26
         }
+
+        // Popover text for GitHub icon in footer
+        let github_popover_content =
+            <div >
+                <Link target="_blank" href={window._env_.REPO_URL_APBS}> APBS </Link>|
+                <Link target="_blank" href={window._env_.REPO_URL_PDB2PQR}> PDB2PQR </Link>
+            </div>
 
         return (
             <Footer className="footer-block">
@@ -144,12 +154,13 @@ class MyFooter extends Component{
                     
                 </Row>
                 
+                {/* Links to APBS & PDB2PQR GitHub */}
                 <Row>
                     <br/>
                     <Col push={10}>
-                        <a href="https://github.com/Electrostatics/apbs-pdb2pqr" target="_BLANK"  rel="noopener noreferrer">
+                        <Popover content={github_popover_content} title="GitHub Repositories" trigger="hover" placement="rightTop">
                             <GithubOutlined className="footer-icon" />
-                        </a>
+                        </Popover>
                     </Col>
                 </Row>
 

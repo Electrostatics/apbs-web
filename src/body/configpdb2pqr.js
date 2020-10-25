@@ -417,7 +417,7 @@ class ConfigPDB2PQR extends ConfigForm{
         <div>
           For continued support of this server, please register your use of this software:
           <br/>
-          <a href='http://eepurl.com/by4eQr' target="_blank" rel="noopener noreferrer">
+          <a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
             <Button
               className='registration-button' 
               type="default"  

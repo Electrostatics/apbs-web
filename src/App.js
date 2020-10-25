@@ -5,6 +5,7 @@ import MyHeader from './common/myheader.js';
 import MyFooter from './common/myfooter.js';
 import HomePage from './body/home.js';
 import AboutPage from './body/about.js';
+import DocumentationPage from './body/documentation.js';
 import ConfigPDB2PQR from './body/configpdb2pqr.js';
 import ConfigAPBS from './body/configapbs.js';
 import JobStatus from './body/jobstatus.js';
@@ -103,9 +104,7 @@ class App extends Component {
     else if (this.state.cur_page === PAGES.documentation){
       document.title = "APBS | Documentation";
       bcrumb = this.createServiceBreadcrumb(['Documentation'])
-      content = <embed 
-        style={{height: '70vh'}}
-        src="https://apbs-pdb2pqr.readthedocs.io/en/latest/"/>;
+      content = <DocumentationPage />;
     }
 
     // DOWNLOAD page
