@@ -4,7 +4,7 @@ phases:
     commands:
       - npm ci -automatic
       - cd env 
-      - bash env/env.sh 
+      - bash ./env.sh 
       - cd ..
       - npm run build
       - cd build
