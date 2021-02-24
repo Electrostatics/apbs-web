@@ -268,33 +268,113 @@ class ConfigPDB2PQR extends ConfigForm{
         })  
       }
 
-      // Submit form data to the workflow service
-      let successful_submit = false
-      fetch(form_post_url, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: form_post_headers,
+      /**
+       * Get presigned URLs for files we plan to upload
+       */
+      // Prepare file list and token request payload
+      let job_file_name = 'pdb2pqr-job.json'
+      let upload_file_list = []
+      let upload_file_data = {}
+      if( self.state['PDBFILE'] !== "" ){
+        upload_file_list.push( self.state['PDBFILE'] )
+        upload_file_data[self.state['PDBFILE'] ] = self.state.pdbFileList[0]
+      }
+      if( self.state['USERFFFILE'] !== "" ) {
+        upload_file_list.push( self.state['USERFFFILE'] )
+        upload_file_data[self.state['USERFFFILE'] ] = self.state.userffFileList[0]
+      }
+      if( self.state['NAMESFILE'] !== "" )  {
+        upload_file_list.push( self.state['NAMESFILE'] )
+        upload_file_data[self.state['NAMESFILE'] ] = self.state.namesFileList[0]
+      }
+      if( self.state['LIGANDFILE'] !== "" ) {
+        upload_file_list.push( self.state['LIGANDFILE'] )
+        upload_file_data[self.state['LIGANDFILE'] ] = self.state.ligandFileList[0]
+      }
+
+      upload_file_list.push( job_file_name )
+      upload_file_data[job_file_name] = payload
+
+      let token_request_payload = {
+        file_list: upload_file_list,
+      }
+
+      console.log( upload_file_list )
+
+      
+      // Attempt to upload all input files
+      // fetch(window.__env__.API_TOKEN_URL,{
+      fetch(process.env.API_TOKEN_URL,{
+        method: 'GET',
+        body: JSON.stringify(token_request_payload)
       })
-        .then(function(response) {
-          if (response.status === 202){
-            successful_submit = true
-          }else if(response.status >= 400){
-          // }else if(response.status === 400 || response.status === 500){
-            successful_submit = false
-            self.setState({ job_submit: false })
-          }
-          return response.json()
-        })
-        .then(data => {
-          self.setState({ successful_submit: successful_submit })
-          if ( successful_submit ){
-            console.log('Success: ', data)
-            // window.location.assign(`/jobstatus?jobtype=pdb2pqr&jobid=${self.state.jobid}`)
-          }else{
-            message.error(data['error'])
-          }
-        })
-        .catch(error => console.error('Error: ', error))
+      .then( response => response.json() )
+      .then( data => {
+        let jobid = data['job_id']
+        let url_table = data['urls']
+
+        // Create payload for job config file (*job.json)
+        // For every URL
+        //    - fetch file to S3
+        for( let file_name of Object.keys(url_table) ){
+          let presigned_url = url_table[file_name]
+          let fetch_list = []
+
+          // Add fetch to rpmist list
+          fetch_list.push(
+            fetch(presigned_url,{
+              method: 'PUT',
+              body: upload_file_data[file_name]
+            })
+          )
+
+          let successful_submit = true
+          Promise.all( fetch_list )
+            .then(function(all_response){
+              // Check response codes of each upload response
+              for( let response of all_response ){
+                if( response.status < 200 && response.status >= 300 ){
+                  successful_submit = false
+                  break
+                }
+              }
+
+              // Might do additional stuff here
+
+              // Set flag to redirect to job status page
+              self.setState({ successful_submit: successful_submit })
+            })
+            .catch(error => console.error('Error: ', error))
+        }
+      })
+
+      // // Submit form data to the workflow service
+      // let successful_submit = false
+      // fetch(form_post_url, {
+      //   method: 'POST',
+      //   body: JSON.stringify(payload),
+      //   headers: form_post_headers,
+      // })
+      //   .then(function(response) {
+      //     if (response.status === 202){
+      //       successful_submit = true
+      //     }else if(response.status >= 400){
+      //     // }else if(response.status === 400 || response.status === 500){
+      //       successful_submit = false
+      //       self.setState({ job_submit: false })
+      //     }
+      //     return response.json()
+      //   })
+      //   .then(data => {
+      //     self.setState({ successful_submit: successful_submit })
+      //     if ( successful_submit ){
+      //       console.log('Success: ', data)
+      //       // window.location.assign(`/jobstatus?jobtype=pdb2pqr&jobid=${self.state.jobid}`)
+      //     }else{
+      //       message.error(data['error'])
+      //     }
+      //   })
+      //   .catch(error => console.error('Error: ', error))
     }
   }
 
@@ -408,7 +488,8 @@ class ConfigPDB2PQR extends ConfigForm{
     }
 
     self.setState({ form_values })
-    return true;
+    // return true;
+    return false;
   }
 
   renderRegistrationButton(){
