@@ -303,8 +303,7 @@ class ConfigPDB2PQR extends ConfigForm{
 
       
       // Attempt to upload all input files
-      // fetch(window.__env__.API_TOKEN_URL,{
-      fetch(process.env.API_TOKEN_URL,{
+      fetch(window.__env__.API_TOKEN_URL,{
         method: 'GET',
         body: JSON.stringify(token_request_payload)
       })
