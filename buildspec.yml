@@ -1,0 +1,12 @@
+version: 0.2
+phases:
+  build:
+    commands:
+      - npm ci -automatic
+      - ./env/env.sh
+      - npm run build
+      - cd build
+      - aws s3 sync . s3://apbs-web/test/
+artifacts:
+  files:
+    - '**/*'
