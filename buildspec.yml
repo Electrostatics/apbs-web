@@ -3,7 +3,9 @@ phases:
   build:
     commands:
       - npm ci -automatic
-      - cd env && bash env/env.sh && cd ..
+      - cd env 
+      - bash env/env.sh 
+      - cd ..
       - npm run build
       - cd build
       - aws s3 sync . s3://apbs-web/test/
