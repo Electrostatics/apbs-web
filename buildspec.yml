@@ -8,6 +8,7 @@ phases:
       - npm run build
       - cd build
       - aws s3 sync . s3://apbs-web/test/
+      - aws cloudfront create-invalidation --distribution-id $CFID --paths '/*'
 artifacts:
   files:
     - '**/*'
