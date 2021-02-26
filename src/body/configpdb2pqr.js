@@ -194,37 +194,132 @@ class ConfigPDB2PQR extends ConfigForm{
       let payload = {
         form : this.state.form_values
       }
+      
+      let form_post_headers = {
+        'x-requested-with': '',
+        'Content-Type': 'application/json'
+      }
 
-      // Submit form data to the workflow service
-      let successful_submit = false
-      fetch(form_post_url, {
+      if( this.hasAnalyticsId() ){
+        ReactGA.ga(function(tracker){
+          let clientId = tracker.get('clientId')
+          // console.log('GA client ID: ' + clientId)
+          form_post_headers['X-APBS-Client-ID'] = clientId
+        })  
+      }
+
+      /**
+       * Get presigned URLs for files we plan to upload
+       */
+      // Prepare file list and token request payload
+      let job_file_name = 'pdb2pqr-job.json'
+      let upload_file_list = []
+      let upload_file_data = {}
+      if( this.state.form_values['PDBFILE'] !== "" ){
+        upload_file_list.push( this.state.form_values['PDBFILE'] )
+        upload_file_data[this.state.form_values['PDBFILE'] ] = this.state.pdbFileList[0]
+      }
+      if( this.state.form_values['USERFFFILE'] !== "" ) {
+        upload_file_list.push( this.state.form_values['USERFFFILE'] )
+        upload_file_data[this.state.form_values['USERFFFILE'] ] = this.state.userffFileList[0]
+      }
+      if( this.state.form_values['NAMESFILE'] !== "" )  {
+        upload_file_list.push( this.state.form_values['NAMESFILE'] )
+        upload_file_data[this.state.form_values['NAMESFILE'] ] = this.state.namesFileList[0]
+      }
+      if( this.state.form_values['LIGANDFILE'] !== "" ) {
+        upload_file_list.push( this.state.form_values['LIGANDFILE'] )
+        upload_file_data[this.state.form_values['LIGANDFILE'] ] = this.state.ligandFileList[0]
+      }
+
+      upload_file_list.push( job_file_name )
+      upload_file_data[job_file_name] = payload
+
+      let token_request_payload = {
+        file_list: upload_file_list,
+      }
+
+      console.log( upload_file_list )
+
+      
+      // Attempt to upload all input files
+      fetch(window._env_.API_TOKEN_URL,{
         method: 'POST',
-        body: JSON.stringify(payload),
-        headers: {
-          'x-requested-with': '',
-          'Content-Type': 'application/json'
+        body: JSON.stringify(token_request_payload)
+      })
+      .then( response => response.json() )
+      .then( data => {
+        let jobid = data['job_id']
+        let url_table = data['urls']
+
+        // Create payload for job config file (*job.json)
+        // For every URL
+        //    - fetch file to S3
+        for( let file_name of Object.keys(url_table) ){
+          let presigned_url = url_table[file_name]
+          let fetch_list = []
+
+          // Add fetch to rpmist list
+          let body = new FormData()
+          body.append('file', upload_file_data[file_name])
+          fetch_list.push(
+            fetch(presigned_url,{
+              method: 'POST',
+              // body: upload_file_data[file_name]
+              body: body
+            })
+          )
+
+          let successful_submit = true
+          Promise.all( fetch_list )
+            .then(function(all_response){
+              // Check response codes of each upload response
+              for( let response of all_response ){
+                if( response.status < 200 && response.status >= 300 ){
+                  successful_submit = false
+                  break
+                }
+              }
+
+              // Might do additional stuff here
+
+              // Set flag to redirect to job status page
+              this.setState({ successful_submit: successful_submit })
+            })
+            .catch(error => console.error('Error: ', error))
         }
       })
-        .then(function(response) {
-          if (response.status === 202){
-            successful_submit = true
-          }else if(response.status >= 400){
-          // }else if(response.status === 400 || response.status === 500){
-            successful_submit = false
-            this.setState({ job_submit: false })
-          }
-          return response.json()
-        })
-        .then(data => {
-          this.setState({ successful_submit: successful_submit })
-          if ( successful_submit ){
-            console.log('Success: ', data)
-            // window.location.assign(`/jobstatus?jobtype=pdb2pqr&jobid=${self.state.jobid}`)
-          }else{
-            message.error(data['error'])
-          }
-        })
-        .catch(error => console.error('Error: ', error))
+
+      // // Submit form data to the workflow service
+      // let successful_submit = false
+      // fetch(form_post_url, {
+      //   method: 'POST',
+      //   body: JSON.stringify(payload),
+      //   headers: {
+      //     'x-requested-with': '',
+      //     'Content-Type': 'application/json'
+      //   }
+      // })
+      //   .then(function(response) {
+      //     if (response.status === 202){
+      //       successful_submit = true
+      //     }else if(response.status >= 400){
+      //     // }else if(response.status === 400 || response.status === 500){
+      //       successful_submit = false
+      //       this.setState({ job_submit: false })
+      //     }
+      //     return response.json()
+      //   })
+      //   .then(data => {
+      //     this.setState({ successful_submit: successful_submit })
+      //     if ( successful_submit ){
+      //       console.log('Success: ', data)
+      //       // window.location.assign(`/jobstatus?jobtype=pdb2pqr&jobid=${self.state.jobid}`)
+      //     }else{
+      //       message.error(data['error'])
+      //     }
+      //   })
+      //   .catch(error => console.error('Error: ', error))
     }
   }
 
@@ -303,7 +398,7 @@ class ConfigPDB2PQR extends ConfigForm{
 
       
       // Attempt to upload all input files
-      fetch(window.__env__.API_TOKEN_URL,{
+      fetch(window._env_.API_TOKEN_URL,{
         method: 'GET',
         body: JSON.stringify(token_request_payload)
       })
