@@ -240,7 +240,7 @@ class JobStatus extends Component{
           console.error(error)
         });
     
-    }, 5000);
+    }, 1000);
     return interval;
   }
 
