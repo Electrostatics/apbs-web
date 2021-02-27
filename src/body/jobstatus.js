@@ -54,7 +54,9 @@ class JobStatus extends Component{
   constructor(props){
     super(props);
     if( window._env_.GA_TRACKING_ID !== "" ) {
+      // TODO: modify event to send to lambda
       let apbs_event_url = `${window._env_.WORKFLOW_URL}/${props.jobid}/${props.jobtype}/event`
+
       ReactGA.set({dimension1: props.jobid})
       ReactGA.ga('_setCustomVar',1,'jobid',props.jobid,3)
       ReactGA.pageview(window.location.pathname + window.location.search)
@@ -120,7 +122,7 @@ class JobStatus extends Component{
       apbsColor: null,
       pdb2pqr: {
         // status: "pdb2pqrStatus",
-        status: 'no_job',
+        // status: 'no_job',
         // status: null,
         startTime: null, // in seconds
         endTime: null, // in seconds
@@ -210,14 +212,14 @@ class JobStatus extends Component{
     let statusStates = ["complete", "error", null];
     
     // Initialize interval to continually compute elapsed time
-    if(self.elapsedIntervalPDB2PQR == null)
+    if(self.elapsedIntervalPDB2PQR === null)
       self.elapsedIntervalPDB2PQR = self.computeElapsedTime('pdb2pqr');
-    if(self.elapsedIntervalAPBS == null)
+    if(self.elapsedIntervalAPBS === null)
       self.elapsedIntervalAPBS = self.computeElapsedTime('apbs')
-
+    
+    let status_filename = `${jobtype}-status.json`
     let interval = setInterval(function(){
-      // fetch(self.jobServerDomain+'/api/jobstatus?jobid='+self.props.jobid +'&'+jobtype+'=true')
-      fetch(`${window._env_.WORKFLOW_URL}/${self.props.jobid}/${jobtype}`)
+      fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${self.props.jobid}/${status_filename}`)
         .then(response => response.json())
         .then(data => {
             // Update job-respective component states
@@ -233,9 +235,12 @@ class JobStatus extends Component{
               },
             });
         })
-        .catch(error => console.error(error));
+        .catch(error => {
+          clearInterval( interval )
+          console.error(error)
+        });
     
-    }, 1000);
+    }, 5000);
     return interval;
   }
 
@@ -484,13 +489,13 @@ class JobStatus extends Component{
 
   createFileListItem(item){
     let action_list = [
-      <a href={window._env_.STORAGE_URL+'/'+item}><DownloadOutlined /> Download </a>
+      <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>
     ]
 
     // Add view option if extension is .txt, .json, or .mc
     if( item.endsWith('.txt') || item.endsWith('.json') || item.endsWith('.mc')){
       action_list.unshift(
-        <a href={window._env_.STORAGE_URL+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>
+        <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>
       )
     }
 
@@ -501,6 +506,8 @@ class JobStatus extends Component{
     )
   }
 
+  // TODO: 2021/02/28, Elvis - Handle status subtasks in Fargate container;
+  //                             adapt function below to accommodate non-Kubernetes environment
   getReasonForFailure(jobtype){
     let reason = null
     let task_name = null
@@ -748,8 +755,8 @@ class JobStatus extends Component{
                 // dataSource={(jobtype === "pdb2pqr") ? this.state.pdb2pqr.files : this.state.apbs.files}
                 renderItem={ item => (
                     <List.Item actions={[
-                      <a href={window._env_.STORAGE_URL+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>,
-                      <a href={window._env_.STORAGE_URL+'/'+item}><DownloadOutlined /> Download </a>,
+                      <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>,
+                      <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>,
                     ]}>
                     {/* <List.Item actions={[<a href={window._env_.STORAGE_URL+'/'+item}><Button type="primary" icon="download">Download</Button></a>]}> */}
                       {item.split('/')[1]}
