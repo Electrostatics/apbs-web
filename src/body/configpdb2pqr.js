@@ -96,7 +96,8 @@ class ConfigPDB2PQR extends ConfigForm{
       this.setState({ jobid: this.props.jobid })
     }
     else{
-      this.getNewJobID()
+      // AWS: We get new jobid at submission time
+      // this.getNewJobID()
     }
   }
 
@@ -171,6 +172,7 @@ class ConfigPDB2PQR extends ConfigForm{
   // handleJobSubmit = (e, self) => {
   newHandleJobSubmit = values => {
     // e.preventDefault();
+    let self = this
     if(this.state.job_submit)
       alert("Job is submitted. Redirecting to job status page");
     else{
@@ -217,24 +219,26 @@ class ConfigPDB2PQR extends ConfigForm{
       let upload_file_data = {}
       if( this.state.form_values['PDBFILE'] !== "" ){
         upload_file_list.push( this.state.form_values['PDBFILE'] )
-        upload_file_data[this.state.form_values['PDBFILE'] ] = this.state.pdbFileList[0]
+        upload_file_data[this.state.form_values['PDBFILE'] ] = this.state.pdbFileList[0].originFileObj
       }
       if( this.state.form_values['USERFFFILE'] !== "" ) {
         upload_file_list.push( this.state.form_values['USERFFFILE'] )
-        upload_file_data[this.state.form_values['USERFFFILE'] ] = this.state.userffFileList[0]
+        upload_file_data[this.state.form_values['USERFFFILE'] ] = this.state.userffFileList[0].originFileObj
       }
       if( this.state.form_values['NAMESFILE'] !== "" )  {
         upload_file_list.push( this.state.form_values['NAMESFILE'] )
-        upload_file_data[this.state.form_values['NAMESFILE'] ] = this.state.namesFileList[0]
+        upload_file_data[this.state.form_values['NAMESFILE'] ] = this.state.namesFileList[0].originFileObj
       }
       if( this.state.form_values['LIGANDFILE'] !== "" ) {
         upload_file_list.push( this.state.form_values['LIGANDFILE'] )
-        upload_file_data[this.state.form_values['LIGANDFILE'] ] = this.state.ligandFileList[0]
+        upload_file_data[this.state.form_values['LIGANDFILE'] ] = this.state.ligandFileList[0].originFileObj
       }
 
+      // Add job config file/data to upload lists
       upload_file_list.push( job_file_name )
-      upload_file_data[job_file_name] = payload
+      upload_file_data[job_file_name] = JSON.stringify(payload)
 
+      // Create upload payload
       let token_request_payload = {
         file_list: upload_file_list,
       }
@@ -255,39 +259,54 @@ class ConfigPDB2PQR extends ConfigForm{
         // Create payload for job config file (*job.json)
         // For every URL
         //    - fetch file to S3
+        let fetch_list = []
         for( let file_name of Object.keys(url_table) ){
           let presigned_url = url_table[file_name]
-          let fetch_list = []
 
           // Add fetch to rpmist list
           let body = new FormData()
           body.append('file', upload_file_data[file_name])
           fetch_list.push(
             fetch(presigned_url,{
-              method: 'POST',
-              // body: upload_file_data[file_name]
-              body: body
+              method: 'PUT',
+              body: upload_file_data[file_name],
+              // body: body,
+              headers: {
+                'Content-Type': '', // Removed in order to successfully PUT to S3
+                // 'Content-Length': upload_file_data[file_name].size
+              }
             })
           )
-
-          let successful_submit = true
-          Promise.all( fetch_list )
-            .then(function(all_response){
-              // Check response codes of each upload response
-              for( let response of all_response ){
-                if( response.status < 200 && response.status >= 300 ){
-                  successful_submit = false
-                  break
-                }
-              }
-
-              // Might do additional stuff here
-
-              // Set flag to redirect to job status page
-              this.setState({ successful_submit: successful_submit })
-            })
-            .catch(error => console.error('Error: ', error))
         }
+
+        let successful_submit = true
+        // let successful_submit = false
+        Promise.all( fetch_list )
+          .then(function(all_response){
+            // Check response codes of each upload response
+            for( let response of all_response ){
+              if( response.status < 200 || response.status >= 300 ){
+                successful_submit = false
+                break
+              }
+            }
+
+            // Might do additional stuff here
+
+          })
+          .catch(error => {
+            console.error('Error: ', error)
+            successful_submit = false
+          })
+          .finally(() => {
+            // Set flag to redirect to job status page
+            self.setState({ 
+              jobid: jobid,
+              successful_submit: successful_submit,
+              job_submit: false,
+            })
+          })
+
       })
 
       // // Submit form data to the workflow service
