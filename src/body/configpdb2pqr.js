@@ -215,35 +215,35 @@ class ConfigPDB2PQR extends ConfigForm{
        */
       // Prepare file list and token request payload
       let job_file_name = 'pdb2pqr-job.json'
-      let upload_file_list = []
+      let upload_file_names = []
       let upload_file_data = {}
       if( this.state.form_values['PDBFILE'] !== "" ){
-        upload_file_list.push( this.state.form_values['PDBFILE'] )
+        upload_file_names.push( this.state.form_values['PDBFILE'] )
         upload_file_data[this.state.form_values['PDBFILE'] ] = this.state.pdbFileList[0].originFileObj
       }
       if( this.state.form_values['USERFFFILE'] !== "" ) {
-        upload_file_list.push( this.state.form_values['USERFFFILE'] )
+        upload_file_names.push( this.state.form_values['USERFFFILE'] )
         upload_file_data[this.state.form_values['USERFFFILE'] ] = this.state.userffFileList[0].originFileObj
       }
       if( this.state.form_values['NAMESFILE'] !== "" )  {
-        upload_file_list.push( this.state.form_values['NAMESFILE'] )
+        upload_file_names.push( this.state.form_values['NAMESFILE'] )
         upload_file_data[this.state.form_values['NAMESFILE'] ] = this.state.namesFileList[0].originFileObj
       }
       if( this.state.form_values['LIGANDFILE'] !== "" ) {
-        upload_file_list.push( this.state.form_values['LIGANDFILE'] )
+        upload_file_names.push( this.state.form_values['LIGANDFILE'] )
         upload_file_data[this.state.form_values['LIGANDFILE'] ] = this.state.ligandFileList[0].originFileObj
       }
 
       // Add job config file/data to upload lists
-      upload_file_list.push( job_file_name )
+      upload_file_names.push( job_file_name )
       upload_file_data[job_file_name] = JSON.stringify(payload)
 
       // Create upload payload
       let token_request_payload = {
-        file_list: upload_file_list,
+        file_list: upload_file_names,
       }
 
-      console.log( upload_file_list )
+      console.log( upload_file_names )
 
       
       // Attempt to upload all input files
@@ -263,7 +263,7 @@ class ConfigPDB2PQR extends ConfigForm{
         for( let file_name of Object.keys(url_table) ){
           let presigned_url = url_table[file_name]
 
-          // Add fetch to rpmist list
+          // Add fetch to promise list
           let body = new FormData()
           body.append('file', upload_file_data[file_name])
           fetch_list.push(
@@ -282,9 +282,9 @@ class ConfigPDB2PQR extends ConfigForm{
         let successful_submit = true
         // let successful_submit = false
         Promise.all( fetch_list )
-          .then(function(all_response){
+          .then(function(all_responses){
             // Check response codes of each upload response
-            for( let response of all_response ){
+            for( let response of all_responses ){
               if( response.status < 200 || response.status >= 300 ){
                 successful_submit = false
                 break

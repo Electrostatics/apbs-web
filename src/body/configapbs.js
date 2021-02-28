@@ -185,33 +185,121 @@ class ConfigAPBS extends ConfigForm {
         })  
       }
 
-      let successful_submit = false
-      fetch(form_post_url, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: form_post_headers,
-      })
-        // .then(response => response.json())
-        .then(function(response) {
-          if (response.status === 202){
-            successful_submit = true
-          }else if(response.status >= 400){
-            successful_submit = false
-            self.setState({ job_submit: false })
-          }
-          return response.json()
+      
+      /**
+       * Get presigned URLs for files we plan to upload
+       */
+
+      // Prepare file list and token request payload
+      let job_file_name = 'apbs-job.json'
+      let upload_file_names = []
+      let upload_file_data = {}      
+      let token_request_payload = {}
+      if( self.props.jobid ){
+
+      }else{
+        // Add file names and data to token request payloads
+        for( let file of [].concat( self.state.infileList, self.state.readfileList ) ){
+          upload_file_names.push( file.name )
+          upload_file_data[ file.name ] = file.originFileObj
+        }
+  
+        // Add job config file/data to upload lists
+        upload_file_names.push( job_file_name )
+        upload_file_data[job_file_name] = JSON.stringify(payload)
+  
+        // Create upload payload
+        token_request_payload = {
+          file_list: upload_file_names,
+        }
+
+        // Attempt to upload all input files
+        fetch(window._env_.API_TOKEN_URL,{
+          method: 'POST',
+          body: JSON.stringify(token_request_payload)
         })
-        .then(data => {
-          self.setState({ successful_submit: successful_submit })
-          console.log(data)
-          // window.location.assign(`/jobstatus?jobtype=apbs&jobid=${self.state.jobid}`)
-          if ( successful_submit ){
-            console.log('Success: ', data)
-          }else{
-            message.error(data['error'])
-          }
-        })
-        .catch(error => console.error('Error: ', error))
+          .then( response => response.json() )
+          .then( data => {
+            // TODO: uplift the following into a function (formutils.js); use in PDB2PQR as well
+            let jobid = data['job_id']
+            let url_table = data['urls']
+
+            // Create payload for job config file (*.job.json)
+            let fetch_list = []
+            for( let file_name of Object.keys(url_table) ){
+              let presigned_url = url_table[file_name]
+    
+              // Add fetch to promise list
+              let body = new FormData()
+              body.append('file', upload_file_data[file_name])
+              fetch_list.push(
+                fetch(presigned_url,{
+                  method: 'PUT',
+                  body: upload_file_data[file_name],
+                  // body: body,
+                  headers: {
+                    'Content-Type': '', // Removed in order to successfully PUT to S3
+                    // 'Content-Length': upload_file_data[file_name].size
+                  }
+                })
+              )
+            }
+
+            let successful_submit = true
+            Promise.all( fetch_list )
+              .then( all_responses => {
+                // Check response codes of each upload response
+                for( let response of all_responses ){
+                  if( response.status < 200 || response.status >= 300 ){
+                    successful_submit = false
+                    break
+                  }
+                }
+                // Might do additional stuff here
+              })
+              .catch((error) => {
+                console.error('Error: ', error)
+                successful_submit = false    
+              })
+              .finally(() => {
+                // Set flag to redirect to job status page
+                self.setState({ 
+                  jobid: jobid,
+                  successful_submit: successful_submit,
+                  job_submit: false,
+                })                
+              })
+    
+          })
+      }  
+
+      // let successful_submit = false
+      // fetch(form_post_url, {
+      //   method: 'POST',
+      //   body: JSON.stringify(payload),
+      //   headers: form_post_headers,
+      // })
+      //   // .then(response => response.json())
+      //   .then(function(response) {
+      //     if (response.status === 202){
+      //       successful_submit = true
+      //     }else if(response.status >= 400){
+      //       successful_submit = false
+      //       self.setState({ job_submit: false })
+      //     }
+      //     return response.json()
+      //   })
+      //   .then(data => {
+      //     self.setState({ successful_submit: successful_submit })
+      //     console.log(data)
+      //     // window.location.assign(`/jobstatus?jobtype=apbs&jobid=${self.state.jobid}`)
+      //     if ( successful_submit ){
+      //       console.log('Success: ', data)
+      //     }else{
+      //       message.error(data['error'])
+      //     }
+      //   })
+      //   .catch(error => console.error('Error: ', error))
     }
   }
 
@@ -222,7 +310,7 @@ class ConfigAPBS extends ConfigForm {
       this.toggleRegisterButton(true)
     }
     else{
-      this.getNewJobID()
+      // this.getNewJobID()
     }
   }
 
