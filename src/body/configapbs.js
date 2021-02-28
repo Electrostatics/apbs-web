@@ -59,6 +59,7 @@ class ConfigAPBS extends ConfigForm {
       use_input_file: true,
       infileList: [],
       readfileList: [],
+      expected_input_files: [],
       show_apbs_misc_upload: false,
 
       v2_form_values: {
@@ -306,13 +307,6 @@ class ConfigAPBS extends ConfigForm {
   renderInfileUpload(){
     return (
       <div>
-        {/* Use an APBS input file:<br/> */}
-        {/* <Switch
-          checked={this.state.use_input_file}
-          onChange={() => {this.setState({use_input_file: !this.state.use_input_file})}}
-        /> */}
-
-        {/* <div hidden={!this.state.use_input_file}> */}
           <Form.Item label="Choose the APBS input file">
             <Upload
               name='file_data'
@@ -321,6 +315,12 @@ class ConfigAPBS extends ConfigForm {
               fileList={this.state.infileList}
               beforeUpload={ (e) => this.inspectReadfile(e, this, 'infile') }
               onChange={ (e) => this.handleInfileUpload(e, this) }
+              rules={[
+                {
+                  required: true,
+                  message: 'Please choose a *.in file to upload',
+                }
+              ]}
             >
               <Button icon={<UploadOutlined />} disabled={!this.state.use_input_file}>
                 Upload APBS input file
@@ -337,6 +337,12 @@ class ConfigAPBS extends ConfigForm {
               fileList={this.state.readfileList}
               beforeUpload={ (e) => this.inspectReadfile(e, this) }
               onChange={ (e) => this.handleReadfileUpload(e, this) }
+              rules={[
+                {
+                  required: true,
+                  message: `Please upload supporting files ${this.state.expected_input_files}`,
+                }
+              ]}
             >
               <Button icon={<UploadOutlined />} disabled={!this.state.show_apbs_misc_upload}>
                 Upload APBS read files
@@ -369,6 +375,52 @@ class ConfigAPBS extends ConfigForm {
     console.log(self.state.infileList)    
   }
   
+  extractAdditionalInputFiles(apbs_infile_text){
+    let lines = apbs_infile_text.split( /\r\n|\n/ )
+    let READ_start = false
+    let READ_end = false
+    let file_list = []
+    for( let line of lines ){
+      let line_stripped = line.trim()
+      let split_line = line_stripped.split(' ')
+
+      if( READ_start && READ_end){ 
+        break
+      }
+
+      else if( !READ_start && !READ_end ){
+        if( !line_stripped.startsWith('#') ){ // Ignore comment lines of *.in file
+          if( split_line.length > 0 ){
+            if( split_line[0].toUpperCase() === 'READ' ){
+              READ_start = true
+            }
+            else if( split_line[0].toUpperCase() === 'END' ){
+              READ_end = true
+            }
+          }
+        }
+      }
+
+      else if( READ_start && !READ_end ){
+        if( !line_stripped.startsWith('#') ){
+          if( split_line.length > 0 ){
+            if( split_line[0].toUpperCase() === 'END' ){
+              READ_end = true
+            }
+            else{
+              for( let arg of split_line.slice(2) ){
+                file_list.push( arg )
+              }
+            }
+          }
+        }
+      }
+
+    }
+
+    return file_list
+  }
+
   inspectReadfile(file, self, file_type){
     if ( file_type === 'infile'){
       if(!file.name.endsWith('.in')){
@@ -379,15 +431,50 @@ class ConfigAPBS extends ConfigForm {
         let v2_form_values = self.state.v2_form_values;
         v2_form_values['filename'] = file.name;
         // v2_form_values['support_files'] = [] //TODO: use later to communicate to server the expected READ files
+
+        // read file, checking READ section for related input files (e.g. *.pqr files)
+        // Record names of additional inputs files
+        // Record number of additional input files ( len(namefile_list) )
+        
+        // Use commented code below if file.text() isn't working in Safari
+        // file.arrayBuffer()
+        //   .then(buffer => {
+        //     let file_text = decodeURIComponent(escape(String.fromCharCode.apply(null, new Uint8Array(buffer))))
+        //     return file_text
+        //   })
+        file.text()
+          .then(readfile_text => {
+            // Get list of expected supporting files (e.g. *.pqr, etc.)
+            let expected_input_files = self.extractAdditionalInputFiles( readfile_text )
+            // TODO: If no READ section is found, return false (don't upload)
+
+            // Reset file list if supporting files are already selected
+            let readfileList = self.state.readfileList
+            if( self.state.readfileList.length > 0 ){
+              readfileList = []
+            }
+
+            // Update state
+            self.setState({ 
+              expected_input_files: expected_input_files,
+              show_apbs_misc_upload: true,
+              readfileList,
+            })
+          })
+          .catch(error => {
+            console.error( error )
+            self.setState({
+              show_apbs_misc_upload: false
+            })
+          })
+
+        // Update form values 
         self.setState({ v2_form_values });
       }
     }
-    
-    // read file, checking READ section for related input files (e.g. *.pqr files)
-    // Record names of additional inputs files
-    // Record number of additional input files ( len(namefile_list) )
 
-    // If no READ section is found, return false (don't upload)
+    // Prevent auto-upload
+    return false
   }
 
   handleReadfileUpload(info, self){
@@ -403,6 +490,12 @@ class ConfigAPBS extends ConfigForm {
     }
     
     self.toggleRegisterButton(true)
+    
+    // Show message error if file not in expected support files
+    if( !self.state.expected_input_files.includes(info.file.name) ){
+      message.error(`Cannot upload ${info.file.name}. Please upload file(s) defined in ${self.state.v2_form_values['filename']}: ${self.state.expected_input_files}.`);
+      return
+    }
 
     // have file list show most recent upload
     self.setState({ readfileList: info.fileList })
