@@ -196,82 +196,80 @@ class ConfigAPBS extends ConfigForm {
       let upload_file_data = {}      
       let token_request_payload = {}
       if( self.props.jobid ){
-
+        token_request_payload['job_id'] = this.state.jobid
       }else{
         // Add file names and data to token request payloads
         for( let file of [].concat( self.state.infileList, self.state.readfileList ) ){
           upload_file_names.push( file.name )
           upload_file_data[ file.name ] = file.originFileObj
         }
+      } 
+      
+      // Create upload payload
+      token_request_payload['file_list'] = upload_file_names
+
+      // Add job config file/data to upload lists
+      upload_file_names.push( job_file_name )
+      upload_file_data[job_file_name] = JSON.stringify(payload)
+
+      // Attempt to upload all input files
+      fetch(window._env_.API_TOKEN_URL,{
+        method: 'POST',
+        body: JSON.stringify(token_request_payload)
+      })
+        .then( response => response.json() )
+        .then( data => {
+          // TODO: uplift the following into a function (formutils.js); use in PDB2PQR as well
+          let jobid = data['job_id']
+          let url_table = data['urls']
+
+          // Create payload for job config file (*.job.json)
+          let fetch_list = []
+          for( let file_name of Object.keys(url_table) ){
+            let presigned_url = url_table[file_name]
   
-        // Add job config file/data to upload lists
-        upload_file_names.push( job_file_name )
-        upload_file_data[job_file_name] = JSON.stringify(payload)
-  
-        // Create upload payload
-        token_request_payload = {
-          file_list: upload_file_names,
-        }
-
-        // Attempt to upload all input files
-        fetch(window._env_.API_TOKEN_URL,{
-          method: 'POST',
-          body: JSON.stringify(token_request_payload)
-        })
-          .then( response => response.json() )
-          .then( data => {
-            // TODO: uplift the following into a function (formutils.js); use in PDB2PQR as well
-            let jobid = data['job_id']
-            let url_table = data['urls']
-
-            // Create payload for job config file (*.job.json)
-            let fetch_list = []
-            for( let file_name of Object.keys(url_table) ){
-              let presigned_url = url_table[file_name]
-    
-              // Add fetch to promise list
-              let body = new FormData()
-              body.append('file', upload_file_data[file_name])
-              fetch_list.push(
-                fetch(presigned_url,{
-                  method: 'PUT',
-                  body: upload_file_data[file_name],
-                  // body: body,
-                  headers: {
-                    'Content-Type': '', // Removed in order to successfully PUT to S3
-                    // 'Content-Length': upload_file_data[file_name].size
-                  }
-                })
-              )
-            }
-
-            let successful_submit = true
-            Promise.all( fetch_list )
-              .then( all_responses => {
-                // Check response codes of each upload response
-                for( let response of all_responses ){
-                  if( response.status < 200 || response.status >= 300 ){
-                    successful_submit = false
-                    break
-                  }
+            // Add fetch to promise list
+            let body = new FormData()
+            body.append('file', upload_file_data[file_name])
+            fetch_list.push(
+              fetch(presigned_url,{
+                method: 'PUT',
+                body: upload_file_data[file_name],
+                // body: body,
+                headers: {
+                  'Content-Type': '', // Removed in order to successfully PUT to S3
+                  // 'Content-Length': upload_file_data[file_name].size
                 }
-                // Might do additional stuff here
               })
-              .catch((error) => {
-                console.error('Error: ', error)
-                successful_submit = false    
-              })
-              .finally(() => {
-                // Set flag to redirect to job status page
-                self.setState({ 
-                  jobid: jobid,
-                  successful_submit: successful_submit,
-                  job_submit: false,
-                })                
-              })
-    
-          })
-      }  
+            )
+          }
+
+          let successful_submit = true
+          Promise.all( fetch_list )
+            .then( all_responses => {
+              // Check response codes of each upload response
+              for( let response of all_responses ){
+                if( response.status < 200 || response.status >= 300 ){
+                  successful_submit = false
+                  break
+                }
+              }
+              // Might do additional stuff here
+            })
+            .catch((error) => {
+              console.error('Error: ', error)
+              successful_submit = false    
+            })
+            .finally(() => {
+              // Set flag to redirect to job status page
+              self.setState({ 
+                jobid: jobid,
+                successful_submit: successful_submit,
+                job_submit: false,
+              })                
+            })
+  
+        })
 
       // let successful_submit = false
       // fetch(form_post_url, {
@@ -320,17 +318,12 @@ class ConfigAPBS extends ConfigForm {
 
     console.log('jobid: '+ jobid)
     console.log('comp: ')
-    // console.log(self.calc_method_component)
-    // this.calc_method_component = this.renderMethodFormItems()
-    // console.log(server_domain.concat('/api/autofill/jobs/apbs/',jobid))
-    console.log(`${window._env_.AUTOFILL_URL}/${jobid}/apbs`)
-    // console.log(`${window._env_.AUTOFILL_URL}/api/autofill/${jobid}/apbs`)
-
-    fetch(`${window._env_.AUTOFILL_URL}/${jobid}/apbs`)
-    // fetch(`${window._env_.AUTOFILL_URL}/api/autofill/${jobid}/apbs`)
+    // fetch(`${window._env_.AUTOFILL_URL}/${jobid}/apbs`)
+    fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${jobid}-input.json`)
       .then(response => response.json())
       .then(data => {
         console.log(data)
+        data['response_id'] = jobid
 
         self.setState({
           autofill_data: data,
