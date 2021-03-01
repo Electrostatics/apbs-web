@@ -222,6 +222,18 @@ class JobStatus extends Component{
       fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${self.props.jobid}/${status_filename}`)
         .then(response => response.json())
         .then(data => {
+            // Convert any urls in inputFiles to {jobid}/{filename}
+            let inputFiles = []
+            for( let path of data[jobtype].inputFiles ){
+              if( path.startsWith('https://') ){
+                let path_basename = path.split('/').slice(-1)[0]
+                let converted_path = `${data.jobid}/${path_basename}`
+                inputFiles.push( converted_path )
+              }else{
+                inputFiles.push( path )
+              }
+            }
+
             // Update job-respective component states
             self.setState({
               [jobtype]: {
@@ -230,7 +242,7 @@ class JobStatus extends Component{
                 endTime: data[jobtype].endTime,
                 subtasks: data[jobtype].subtasks,
                 files: data[jobtype].files,
-                files_input: data[jobtype].inputFiles,
+                files_input: inputFiles,
                 files_output: data[jobtype].outputFiles,
               },
             });

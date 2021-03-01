@@ -126,6 +126,7 @@ class ConfigPDB2PQR extends ConfigForm{
         break;
         
       case "PDBID":
+        // TODO: 2021/03/01, Elvis - check if PDB ID exists in RCSB
         this.toggleRegisterButton(true)
         break;
 
