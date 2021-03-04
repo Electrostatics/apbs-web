@@ -90,6 +90,11 @@ class JobStatus extends Component{
     this.fetchIntervalAPBS = null;
     this.elapsedIntervalPDB2PQR = null;
     this.elapsedIntervalAPBS = null;
+    this.fetchIntervalErrorLimit = 10
+    this.fetchIntervalErrorCount = {
+      apbs: 0,
+      pdb2pqr: 0,
+    }
 
     this.colorCompleteStatus  = "#52C41A";
     this.colorRunningStatus   = "#1890FF";
@@ -248,7 +253,13 @@ class JobStatus extends Component{
             });
         })
         .catch(error => {
-          clearInterval( interval )
+          // Continue checking for status until max retry is reached
+          // TODO: 2021/03/02, Elvis - Try using the backoff method
+          if( self.fetchIntervalErrorCount[jobtype] > self.fetchIntervalErrorLimit ){
+            clearInterval( interval )
+          } else { 
+            self.fetchIntervalErrorCount[jobtype]++ 
+          }
           console.error(error)
         });
     
