@@ -81,6 +81,7 @@ class ConfigAPBS extends ConfigForm {
         calcenergy: 'total',
         calcforce: 'no',
         output_scalar: ['writepot'],
+        removewater: false,
         writeformat: 'dx',
         
         /** Hidden element holdovers from original website */
@@ -160,6 +161,14 @@ class ConfigAPBS extends ConfigForm {
         // console.log(self.state.child_form_values);
         Object.assign(combined_form_data, self.state.child_form_values);
         // console.log(combined_form_data);
+
+        // Delete 'removewater' from payload if false
+        if( combined_form_data.removewater ){
+          combined_form_data.removewater = 'on'
+        }else{
+          delete combined_form_data.removewater
+        }
+
         payload = {
           form : combined_form_data
         }
@@ -992,7 +1001,13 @@ class ConfigAPBS extends ConfigForm {
               >
                 {/** Choose whether to remove water from the calculations */}
                 <Form.Item>
-                  <Checkbox name='removewater' value='on'>Remove water from calculations and visualizations</Checkbox>
+                  <Checkbox 
+                    name='removewater' 
+                    value={this.state.parent_form_values.removewater} 
+                    onChange={(e) => this.handleParentFormChange(e, 'removewater', !this.state.parent_form_values.removewater)}
+                  >
+                    Remove water from calculations and visualization
+                  </Checkbox>
                 </Form.Item>
                 {/* <Form.Item label='Remove water from calculations and visualizations'>
                   <Switch name='removewater' value='on' checked={true}/>
