@@ -195,7 +195,8 @@ class ConfigPDB2PQR extends ConfigForm{
       // let form_post_url = `${window._env_.WORKFLOW_URL}/api/workflow/${self.state.jobid}/pdb2pqr`;
       let form_post_url = `${window._env_.WORKFLOW_URL}/${this.state.jobid}/pdb2pqr`;
       let payload = {
-        form : this.state.form_values
+        form : this.state.form_values,
+        metadata: { }
       }
       
       let form_post_headers = {
@@ -207,7 +208,10 @@ class ConfigPDB2PQR extends ConfigForm{
         ReactGA.ga(function(tracker){
           let clientId = tracker.get('clientId')
           // console.log('GA client ID: ' + clientId)
-          form_post_headers['X-APBS-Client-ID'] = clientId
+          // form_post_headers['X-APBS-Client-ID'] = clientId
+          payload['metadata']['ga'] = { }
+          payload['metadata']['ga']['client_id'] = clientId
+          payload['metadata']['ga']['user_agent'] = navigator.userAgent
         })  
       }
 

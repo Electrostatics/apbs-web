@@ -170,12 +170,14 @@ class ConfigAPBS extends ConfigForm {
         }
 
         payload = {
-          form : combined_form_data
+          form : combined_form_data,
+          metadata: { }
         }
       }
       else{
         payload = {
-          form : self.state.v2_form_values
+          form : self.state.v2_form_values,
+          metadata: { }
         }
       }
       console.log(payload)
@@ -190,7 +192,11 @@ class ConfigAPBS extends ConfigForm {
         ReactGA.ga(function(tracker){
           let clientId = tracker.get('clientId')
           // console.log('GA client ID: ' + clientId)
-          form_post_headers['X-APBS-Client-ID'] = clientId
+          // form_post_headers['X-APBS-Client-ID'] = clientId
+          payload['metadata']['ga'] = { }
+          payload['metadata']['ga']['client_id'] = clientId
+          payload['metadata']['ga']['user_agent'] = navigator.userAgent
+
         })  
       }
 
