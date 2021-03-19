@@ -6,6 +6,7 @@ import {
 //   Switch,
 } from 'react-router-dom'
 import App from './App';
+import VizLegacyPage from './body/old-viz-layout'
 import './App.css';
 import 'antd/dist/antd.css';
 import PAGES from './common/pagenames.js';
@@ -139,6 +140,13 @@ class ServerRouter extends Component{
                                 submenuOnClick={j => this.submenuOnClick(j)}
                                 onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
                                 query={props.location.search}/>
+                        )}
+                    />
+                    <Route path="/viz/3dmol"
+                        render={ props => (
+                            <VizLegacyPage
+                                query={props.location.search}
+                            />
                         )}
                     />
                     {/* </Switch> */}
