@@ -299,6 +299,8 @@ class VizLegacyPage extends Component{
     surface_vis(e){
         //console.log(here);
         // if(e.target.checked)
+        // this.setState({ surfaceOn: e })
+        this.surfaceOn = e 
         if(e === true){
             this.on_surface();
         }
@@ -312,6 +314,8 @@ class VizLegacyPage extends Component{
     surface_opacity(make_opaque){
         //console.log(here);
         // if(checkbox.checked)
+        // this.setState({ surfaceOpacity: make_opaque })
+        // this.surfaceOpacity = make_opaque
         if(make_opaque){
             this.update_surface(3);
         }
@@ -427,7 +431,12 @@ class VizLegacyPage extends Component{
             console.log(`Could not remove surface: ${previous_surf.surfid}`)
             console.log(previous_surf)
         }
-        this.surf = this.glviewer.addSurface(this.protein.surface, {opacity:this.protein.opacity, voldata: this.volumedata, volscheme: volscheme_to_use});
+        
+        // if( this.state.surfaceOn ){
+        if( this.surfaceOn ){
+            this.surf = this.glviewer.addSurface(this.protein.surface, {opacity:this.protein.opacity, voldata: this.volumedata, volscheme: volscheme_to_use});
+        }
+
         // this.surf = this.glviewer.addSurface(this.protein.surface, {opacity:this.protein.opacity, voldata: this.volumedata, volscheme: volscheme_to_use}, {}, {}, {}, (e) => this.setState({surfid: e}) );
         // let surf = this.glviewer.addSurface(this.protein.surface, {opacity:this.protein.opacity, voldata: this.volumedata, volscheme: volscheme_to_use});
         // this.setState({surfid: surf.surfid})
