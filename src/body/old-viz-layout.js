@@ -5,22 +5,17 @@ import { Layout, Col, Row } from 'antd';
 import { Typography } from 'antd';
 import { Switch, Slider, InputNumber } from 'antd';
 import { Select } from 'antd';
+import { Button } from 'antd';
 
 import * as JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
 // import { ExportOutlined } from '@ant-design/icons'
-// import './viz/static'
-// import './viz/static/3dmol/js/visualize_html'
-// import './viz/static/3dmol/js/3dmol'
-// import './viz/static/3dmol/js/3dmol'
 import * as $3Dmol from '3dmol/build/3Dmol'
-// require('3dmol/build/3Dmol')
-// import * as $3Dmol from '3dmol/build/3Dmol-nojquery'
 
 // Styles and images
-import './viz/static/3dmol/css/foundation.css'
-import './viz/static/3dmol/css/pure-min.css'
+// import './viz/static/3dmol/css/foundation.css'
+// import './viz/static/3dmol/css/pure-min.css'
 import './viz/static/3dmol/css/toggles.css'
 import './viz/static/3dmol/css/pdb2pqr_3dmol.css'
 import RWB_image from './viz/static/3dmol/images/rwb.png'
@@ -577,140 +572,6 @@ class VizLegacyPage extends Component{
         this.glviewer.render()    
     }
 
-    // build_page(){
-    //     //jobid = 1234;
-    //     document.title = "3Dmol Visualization " + this.jobid
-    
-    //     let a = 
-    //     "<div id='gldiv'></div>" +
-    //     "<!--<hr style='margin: 0;'>-->" +
-    //     "<br>" +
-    //     "<div id='outer'>" +
-    //     "<div id='buttons'>" 
-        
-    //     //change surface
-    //     let b = 
-    //     "<!--<br><table border='1' width='100%' cellspacing='0' cellpadding='0'><tr><td valign='top'>--> " +
-    //     "<font style='color:white; font-size:12pt'>Surface:</font>" + 
-    //     "<br>" +
-    //     "    <select class='styled-select' id='selected_surface' onchange='update_surface(1)' style='max-width:50%;'>" +
-    //     "       <option style='color: black;' value='SAS'>Solvent Accessible</option>" +
-    //     "<option style='color: black;' value='SES'>Solvent Excluded</option>" +
-    //     "<option style='color: black;' value='VDW'>Van Der Waals</option>" +
-    //     "</select><br>" +
-        
-    //     "<!--<div class='inner'><ul class='button-group round' class='leftbutton'><input type='button' button class='button-backbone pure-button' style='width: 85px; height: 30px; color: black' value='On' onclick='on_surface()'></button></input>" +
-        
-    //     "    <input type='button' button class='button-backbone pure-button' style='width: 85px; height: 30px; color: black' input type='button' value='Off' onclick='glviewer.removeSurface(surf)'></button></input></ul></div><br>-->" +
-        
-    //     "<table border='0' cellspacing='0' cellpadding='0'><tr><td>" +
-    //     "<label class='switch1'> " +
-    //         "<input class='switch1-input' type='checkbox' onclick='surface_vis(this)' checked/>" +
-    //         "<span class='switch1-label' data-on='Show' data-off='Hide'></span> " +
-    //         "<span class='switch1-handle'></span>" +
-    //     "</label>" +
-        
-    //     "</td>" +
-        
-    //     "<td>" +
-    //     "<!--<div class='inner'><ul class='button-group round' class='rightbutton'><input type='button' button class='button-labela pure-button' style='width: 85px; height: 30px; color: black; font-size: 10pt' value='Translucent' onclick='update_surface(2)'></button></input>" +
-        
-    //     "    <input type='button' button class='button-unlabela pure-button' style='width: 85px; height: 30px; color: black' input type='button' value='Opaque' onclick='update_surface(3)'></button></input></ul></div>-->" +
-        
-    //     "<label class='switch2'>" +
-    //         "<input class='switch2-input' type='checkbox' onclick='surface_opacity(this)' checked/>" +
-    //         "<span class='switch2-label'   data-on='Opaque' data-off='Translucent'></span> " +
-    //         "<span class='switch2-handle'></span> " +
-    //     "</label>" +
-        
-    //     "</td></tr></table>"+
-        
-    //     "<br><font style='color:white; font-size:12pt'>Surface Potential:</font>" +
-        
-    //     //change min isoval
-    //     " <p style='color:white; font-size: 16px'> Min <input type=range min=-50 max=50 value=-5 id='min_isoval2' step=1 oninput='set_min_isoval2(value)'>&nbsp;&nbsp;&nbsp;&nbsp;<span id='min_isoval'>-5 </span> kT/e </p>  " +
-        
-    //     //change max isoval
-    //     " <p style='color:white; font-size: 16px'> Max <input type=range min=-50 max=50 value=5 id='max_isoval2' step=1 oninput='set_max_isoval2(value)'>&nbsp;&nbsp;&nbsp;&nbsp;<span id='max_isoval'> 5 </span> kT/e </p>  " +
-        
-    //     //reset button
-    //     "<div class='inner'><ul class='button-group round'></input>" +
-    //     "    <input type='button' button class='button-backbone pure-button' style='width: 85px; height: 30px; color: black' input type='button' value='Reset' onclick='reset_vals()'></button></input></ul></div>" +
-        
-    //     "<br><font style='color:white; font-size:12pt'>Model:</font>&nbsp;&nbsp;" +
-        
-    //     "<select class='styled-select' id='selected_vis' onchange='set_vis()' style='max-width:50%;'>"+
-    //     "        <option style='color: black;' value='line'>Line </option> "+
-    //     "        <option style='color: black;' value='stick'>Stick </option>" +
-    //     "        <option style='color: black;' value='cross'>Cross </option>"+
-    //     "        <option style='color: black;' value='sphere'>Sphere </option>"+
-    //     "        <option style='color: black;' value='cartoon'>Cartoon </option>"+
-    //     "    </select>" 
-    //     +  "<br><br>"  +
-        
-    //     //change color scheme 
-    //     "<font style='color:white; font-size:12pt'>Scheme: </font>" +
-        
-        
-        
-    //     "<select class='styled-select' id='selected_scheme' onchange='update_surface(0);show_colorbar();' style='max-width:50%;'>" +
-        
-    //     "        <option style='color: black;' value='RWB'>Red-White-Blue </option>" +
-    //     "        <option style='color: black;' value='RGB'>Red-Green-Blue </option>" +
-    //     "        <!--<option style='color: black;' value='BWR'>Blue-White-Red </option>-->" +
-    //     "    </select><br>" +
-    //     "<!--<table border='0' cellspacing='0'><tr><td valign='top'>RWB<br>RGB</td><td valign='top'><img src='/viz/static/3dmol/images/rwb.png' width='250'><br><img src='/viz/static/3dmol/images/rgb.png' width='250'></td></tr></table>-->" +
-    //     "<span id='colorbar'><img id='rwb' src='/viz/static/3dmol/images/rwb.png' width='250'></span>" +
-        
-    //     "    <!--<div class='inner'><ul class='button-group round'><input type='button' button class='button-labela pure-button' style='width: 90px; height: 30px; color: black' value='Add labels'" +
-    //     "        onclick='addLabels(glviewer); glviewer.render();'></button></input>" +
-    //     "    <input type='button' button class='button-unlabela pure-button' style='width: 95px; height: 30px; color: black' value='Remove labels'" +
-    //     "        onclick='removetheLabels(glviewer); glviewer.render();'></button></input></ul></div>-->"  +
-        
-    //     "<table><tr><td>" +
-    //     "<font style='color:white; font-size:12pt'>Labels: </font></td><td><label class='switch3'>" +
-    //         "<input class='switch3-input' onclick='surface_labels(this)' type='checkbox' checked/>" +
-    //         "<span class='switch3-label' data-on='Remove' data-off='Add'></span>" +
-    //         "<span class='switch3-handle'></span> " +
-    //     "</label>" +
-        
-    //     "</td></tr></table>"+
-        
-        
-    //     "<div class='inner'><ul class='button-group round'><input type='button' button class='button-backbone pure-button' style='width: 85px; height: 30px; color: black' input type='button' value='Recenter' onclick='glviewer.zoomTo();'></button></input></ul></div>" +
-        
-    //     // Background Transparency slider
-    //     "<div id='transparency-div'>"+
-    //     // "<br><font style='color:white; font-size:12pt'>Background Transparency:</font>" +
-    //     "<font style='color:white; font-size:12pt'>Background Transparency:</font>" +
-    //     " <p style='color:white; font-size: 16px'> <input type=range min=0 max=100 value=0 id='transparency_slider' step=5 oninput='adjustBackgroundTransparency(value)'>&nbsp;&nbsp;&nbsp;&nbsp; <span id='bg_alpha_val'> 0 </span> </p>  " +
-    //     "</div>"+
-        
-    //     // Export Options
-    //     "<div>" + 
-    //     "	<font style='color:white; font-size:12pt'>Export as: </font>" +
-    //     `	<select class='styled-select' id='select_export_type' onchange='renderExportButtonText(value)' style='max-width:50%;'>`+
-    //     "       <option style='color: black;' value='png'> PNG </option> "+
-    //     "       <option style='color: black;' value='pymol'> PyMol </option>" +
-    //     "   	<option style='color: black;' value='unitymol'> UnityMol </option>"+
-    //     "   </select>" +
-        
-        
-    //     // Export button
-    //     "	<div class='inner'><ul class='button-group round'><input type='button' button class='button-backbone pure-button' style='width: 85px; height: 30px; color: black; margin-top: 10px' input type='button' id='export-button' value='Export' onclick='savePng()'></button></input></ul></div>" +
-    //     "</div>" + 
-        
-        
-    //     // Save PNG button
-    //     // "<div class='inner'><ul class='button-group round'><input type='button' button class='button-backbone pure-button' style='width: 85px; height: 30px; color: black' input type='button' value='Save PNG' onclick='savePng();'></button></input></ul></div>" +
-        
-    //     // End
-    //     "<br></div></div>" +
-    //     "<!--</td></tr></table>-->" 
-    
-    //     return( a + b)
-    
-    // }
 
     update_selected_surface(e, option){
         this.update_surface(option);
@@ -920,6 +781,7 @@ class VizLegacyPage extends Component{
     build_page(){
         let self = this
         return(
+            // TODO: 2021/03/20, Elvis - Fix formatting of control panel elements using Ant Design Row/Col components
             <div>
                 <div id='gldiv'></div>
                 {/* <!--<hr style='margin: 0;'>--> */}
@@ -984,7 +846,7 @@ class VizLegacyPage extends Component{
                         
                         </td></tr></table>
                         
-                        <br/><font style={{color: 'white', fontSize:'12pt'}}>Surface Potential:</font>
+                        <font style={{color: 'white', fontSize:'12pt'}}>Surface Potential:</font>
                         
                         {/* change min isoval */}
                         {/* <p style={{color: 'white', fontSize: '16px'}}> Min <input type='range' min={-50} max={50} value={-5} id='min_isoval2' step={1} oninput='set_min_isoval2(value)'/>&nbsp;&nbsp;&nbsp;&nbsp;<span id='min_isoval'>-5 </span> kT/e </p> */}
@@ -1066,7 +928,13 @@ class VizLegacyPage extends Component{
                         {/* <div class='inner'><ul class='button-group round'></input> */}
                         <div className='inner'>
                             <ul className='button-group round'>
-                                <input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Reset' onClick={this.reset_vals}></input>
+                                {/* <input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Reset' onClick={this.reset_vals}></input> */}
+                                <Button 
+                                    // style={{width: '85px', height: '30px', color: 'black'}} 
+                                    // style={{marginLeft: '10px'}} 
+                                    onClick={this.reset_vals}
+                                    shape='round'
+                                >Reset</Button>
                             </ul>
                         </div>
                         
@@ -1134,7 +1002,12 @@ class VizLegacyPage extends Component{
                         
                         
                         {/* <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Recenter' onClick='glviewer.zoomTo();'></input></ul></div> */}
-                        <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Recenter' onClick={(e) => {self.glviewer.zoomTo()}}></input></ul></div>
+                        {/* <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Recenter' onClick={(e) => {self.glviewer.zoomTo()}}></input></ul></div> */}
+                        <div>
+                            <Button onClick={(e) => {self.glviewer.zoomTo()}} shape='round'> Recenter </Button>
+                            <br/>
+                            <br/>
+                        </div>
                         
                         {/* Background Transparency slider */}
                         <div id='transparency-div'>
@@ -1188,7 +1061,7 @@ class VizLegacyPage extends Component{
                             
                             {/* Export button */}
                                 {/* <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black', marginTop: '10px'}} input type='button' id='export-button' value='Export' onclick='savePng()'></input></ul></div> */}
-                                <div className='inner'>
+                                {/* <div className='inner'>
                                     <ul className='button-group round'>
                                         <input 
                                             type='button' 
@@ -1201,7 +1074,8 @@ class VizLegacyPage extends Component{
                                             onClick={this.handleExportClick}
                                         />
                                     </ul>
-                                </div>
+                                </div> */}
+                            <Button shape='round' onClick={this.handleExportClick} disabled={this.state.disable_export_button}> Export </Button>
                         </div>
                         
                         
@@ -1226,33 +1100,10 @@ class VizLegacyPage extends Component{
         let storage_host = window._env_.OUTPUT_BUCKET_HOST
         console.log('WE ARE RENDERING')
         return(
-            
             <div>
-                <div>
-                    {/* <link rel="stylesheet" type="text/css" href="/viz/static/3dmol/css/pure-min.css" media="screen" />
-                    <script type="text/JavaScript" src="/viz/static/3dmol/js/pitt_3Dmol.js"></script>
-                    <script type="text/JavaScript" src="/viz/static/lib/jszip.min.js"></script>
-                    <script type="text/JavaScript" src="/viz/static/lib/FileSaver.min.js"></script>
-                    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-                    <script type="text/JavaScript" src="/viz/static/3dmol/js/visualize_html.js"></script>
-                    <script type="text/JavaScript" src="/viz/static/3dmol/js/3dmol.js"></script>
-
-                    */}
-                </div>
-                <div>
-                    {/* {build_page(`${ jobid }, '${ storage_host }`)}
-                    {getpqr(`${ jobid }', '${ pqr_prefix }', '${ storage_host }`)}
-                    {getcube(`${ jobid }', '${ pqr_prefix }', '${ storage_host }`)} */}
-                    
-                    {/* {build_page(jobid, storage_host)}
-                    {getpqr(jobid, pqr_prefix, storage_host)}
-                    {getcube(jobid, pqr_prefix, storage_host)} */}
-
                     {this.build_page()}
                     {this.getpqr( this.jobid, this.pqr_prefix, this.storage_host )}
                     {this.getcube( this.jobid, this.pqr_prefix, this.storage_host )}
-                    {/* {this.getpqr( this.jobid, this.pqr_prefix, this.storage_host )} */}
-                </div>
             </div>
         )
     }
