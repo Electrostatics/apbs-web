@@ -87,6 +87,9 @@ class VizLegacyPage extends Component{
             // Scheme
             color_scheme: 'RWB',
             colorbar_image: RWB_image,
+
+            // BG Transparency
+            transparancy_val: 0,
         }
 
         this.set_vis = this.set_vis.bind(this)
@@ -545,6 +548,13 @@ class VizLegacyPage extends Component{
         }
     }
 
+    adjustBackgroundTransparency(alpha_val){
+        // document.getElementById("bg_alpha_val").innerHTML = alpha_val;
+        this.setState({ transparancy_val: alpha_val })
+        this.glviewer.setBackgroundColor('black', 1-(alpha_val/100))
+        this.glviewer.render()    
+    }
+
     // build_page(){
     //     //jobid = 1234;
     //     document.title = "3Dmol Visualization " + this.jobid
@@ -920,8 +930,40 @@ class VizLegacyPage extends Component{
                         <div id='transparency-div'>
                             {/* // "<br><font style='color:white; font-size:12pt'>Background Transparency:</font>" + */}
                             <font style={{color:'white', fontSize:'12pt'}}>Background Transparency:</font>
-                            <p style={{color:'white', fontSize: '16px'}}> <input type='range' min={0} max={100} value={0} id='transparency_slider' step={5} onInput='adjustBackgroundTransparency(value)'/>&nbsp;&nbsp;&nbsp;&nbsp; <span id='bg_alpha_val'> 0 </span> </p>
+                            {/* <p style={{color:'white', fontSize: '16px'}}> <input type='range' min={0} max={100} value={0} id='transparency_slider' step={5} onInput='adjustBackgroundTransparency(value)'/>&nbsp;&nbsp;&nbsp;&nbsp; <span id='bg_alpha_val'> 0 </span> </p> */}
+                            <Row>
+                                <Col span={12}>
+                                {/* <br/> */}
+                                    <Slider 
+                                        min={0}
+                                        max={100}
+                                        step={5}
+                                        // value={-5}
+                                        // value={this.protein.min_isoval}
+                                        value={this.state.transparancy_val}
+                                        onChange={(e) => this.adjustBackgroundTransparency(e)}
+                                        // marks={{
+                                        //     '-50': '-50 kT/e',
+                                        //     '50':  '50 kT/e'
+                                        // }}
+                                    />
+                                </Col>
+                                <Col span={4}>
+                                    <InputNumber
+                                        min={0}
+                                        max={100}
+                                        step={5}
+                                        style={{ margin: '0 16px' }}
+                                        value={this.state.transparancy_val}
+                                        formatter={value => `${value}`}
+                                        parser={value => value.replace(/[^0-9]+/g, '')}
+                                        onChange={(e) => this.adjustBackgroundTransparency(e)}
+                                        // disabled
+                                    />
+                                </Col>
+                            </Row>                        
                             
+
                             {/* Export Options */}
                             <div>
                                 <font style={{color: 'white', fontSize:'12pt'}}>Export as: </font>
