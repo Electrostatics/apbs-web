@@ -6,6 +6,8 @@ import { Typography } from 'antd';
 import { Switch, Slider, InputNumber } from 'antd';
 import { Select } from 'antd';
 
+import * as JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 // import { ExportOutlined } from '@ant-design/icons'
 // import './viz/static'
@@ -66,8 +68,8 @@ class VizLegacyPage extends Component{
         this.cube_loaded = false
 
         this.state = {
-            jobid: this.props.query.jobid,
-            pqr_prefix: this.props.query.pqr,
+            jobid: parsed_query.jobid,
+            pqr_prefix: parsed_query.pqr,
             storage_host: window._env_.OUTPUT_BUCKET_HOST,
 
             // Protein
@@ -90,16 +92,27 @@ class VizLegacyPage extends Component{
 
             // BG Transparency
             transparancy_val: 0,
+
+            // Export options
+            export_type: 'png',
+            disable_export_menu: false,
+            disable_export_button: false,
         }
 
+        // General bindings
         this.set_vis = this.set_vis.bind(this)
         this.reset_vals = this.reset_vals.bind(this)
+
+        // Surface bindings
         this.update_surface = this.update_surface.bind(this)
         this.update_selected_surface = this.update_selected_surface.bind(this)
         this.update_selected_scheme = this.update_selected_scheme.bind(this)
 
         // Toggle bindings
         // this.toggleSurface = this.toggleSurface.bind(this)
+
+        // Export bindings
+        this.handleExportClick = this.handleExportClick.bind(this)
     }
 
     componentDidMount(){
@@ -376,7 +389,7 @@ class VizLegacyPage extends Component{
         this.setState({
             model_type: value
         })
-}
+    }
 
     set_color(color_scheme){
         //inefficient -- need to fix!
@@ -707,6 +720,194 @@ class VizLegacyPage extends Component{
         })
     }
 
+    enableExportOptions(enable_button){
+        this.setState({
+            disable_export_menu: !enable_button,    // export button
+            disable_export_button: !enable_button   // select export-type button
+        })
+    }
+
+    handleExportClick(){
+        if( this.state.export_type === 'png' ){
+            this.savePng()
+            // TODO: Use native glviewer export
+        }
+        else if( this.state.export_type === 'pymol' ){
+            this.savePymol()
+        }
+        else if( this.state.export_type === 'unitymol' ){
+            this.saveUnitymol()
+        }
+    }
+
+    // Adapted from the savePng function from new versions of 3Dmol
+    savePng(){
+        // Get query string params
+        // let querystring_params = (new URL(document.location)).searchParams
+        let job_id = this.state.jobid
+        // let pqr_name = this.state.pqr_prefix
+
+        // Retrieve 3Dmol canvas data from GLViewer
+        let filename = `${job_id}_3dmol.png`;
+        let text = this.glviewer.pngURI();
+        let ImgData = text;
+
+        // Create anchor element from which to download image
+        let link = document.createElement('a');
+        link.href = ImgData;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+
+    // Create and download PyMol script
+    // TODO: 2020/12/06, Elvis - Explore writing export script based on template file rather than in code
+    savePymol(){
+        let job_id = this.state.jobid
+        let script_filename = `${job_id}_PyMol.pml`
+        let zip_export_filename = `${job_id}_PyMol.zip`
+
+        // Set beginning text
+        const heading_text = 
+            '# As long as the .pqr and .dx files are in this same directory, no path to the files is necessary\n'
+            + '# If needed, be sure to unzip any *.gz files referenced in this script\n\n'
+
+            + '# Drag this script into an open PyMOL window\n'
+            + '# The model will be loaded and also saved as a .pse file for ease of starting over\n\n'
+
+            + '# Load the files\n'
+
+        // Set file/path names
+        const structure_name = `${job_id}_APBS`
+        const pqr_name = `${job_id}.pqr`
+        const dx_name = `${job_id}-pot.dx`
+
+        // Write remainder text
+        const remaining_text = 
+            `load ${pqr_name}, molecule\n`
+            + `load ${dx_name}, electrostaticmap\n\n`
+
+            + `# Set scale for coloring protein surface\n`
+            + `ramp_new espramp, electrostaticmap, [ -3, 0, 3]\n\n`
+            
+            + `# Show the surface\n`
+            + `show surface\n\n`
+            
+            + `# Set surface colors from dx\n`
+            + `set surface_color, espramp\n`
+            + `set surface_ramp_above_mode\n\n`
+            
+            + `# Setup export\n`
+            + `set pse_export_version, 1.7\n\n`
+
+            + `# Save file as .pse\n`
+            + `save ${structure_name}.pse\n`
+
+
+        // Combine and create full script text
+        const all_data = heading_text + remaining_text
+
+        // Download PyMol file
+        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, `${dx_name}.gz`])
+    }
+
+    // Create and download UnityMol script
+    // TODO: 2020/12/06, Elvis - Explore writing export script based on template file rather than in code
+    saveUnitymol(){
+        let job_id = this.state.jobid
+        let script_filename = `${job_id}_UnityMol.py`
+        let zip_export_filename = `${job_id}_UnityMol.zip`
+        
+        // Set beginning text
+        const heading_text = 
+            '# As long as the .pqr and .dx files are in this same directory, no path to the files is necessary\n'
+            + '# If needed, be sure to unzip any *.gz files referenced in this script\n\n'
+            
+            + '# Open this file in UnityMol using the "Load Script" button\n\n'
+
+            + '# Load files\n'
+
+        // Set file/path names
+        const structure_name = `${job_id}_APBS`
+        const pqr_name = `${job_id}.pqr`
+        const dx_name = `${job_id}-pot.dx`
+
+        // Write remainder text
+        const remaining_text = 
+            `load(filePath="${pqr_name}", readHetm=True, forceDSSP=False, showDefaultRep=True, center=False);\n`
+            + `loadDXmap("${structure_name}", "${dx_name}")\n\n`
+            
+            + `# Set selection and center\n`
+            + `setCurrentSelection("all(${structure_name})")\n`
+            + `centerOnSelection("all(${structure_name})", True)\n\n`
+            
+            + `# Show surface\n`
+            + `showSelection("all(${structure_name})", "s")\n\n`
+
+            + `# Color surface by charge\n`
+            + `colorByCharge("all(${structure_name})", False, -10.000, 10.000)\n\n`
+
+        // Combine and create full script text
+        const all_data = heading_text + remaining_text
+
+        // Download UnityMol file
+        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, `${dx_name}.gz`])
+    }
+
+    // Download files and bundle via JSZip
+    bundleScriptFiles(job_id, zip_filename, script_filename, script_data, inputfile_list){
+        // Disable export button until export completes
+        this.enableExportOptions(false)
+
+        // Create zip archive
+        let zipfile_basename = zip_filename.slice(0,-4)
+        let zip_archive = new JSZip();
+        console.log('zip archive created')
+        
+        // Add PyMol/UnityMol script to zip
+        zip_archive.file(`${zipfile_basename}/${script_filename}`, script_data)
+        console.log(`File '${script_filename}' added to archive`)
+        
+        // For every file in list, download and add to zip archive
+        let promise_list = []
+        console.log(window._env_.OUTPUT_BUCKET_HOST)
+        for( let input_name of inputfile_list){
+            let file_url = `${window._env_.OUTPUT_BUCKET_HOST}/${job_id}/${input_name}`
+            console.log(`Fetching file '${input_name}'`)
+            console.log(`${file_url}`)
+            promise_list.push( fetch( file_url ) )
+        }
+
+        Promise.all(promise_list)
+            .then((all_responses) => {
+                for(let i=0; i < all_responses.length; i++){
+                    let response = all_responses[i]
+                    let fetched_file_name = inputfile_list[i]
+
+                    // zip_archive.file(fetched_file_name, response.text())
+                    // zip_archive.file(fetched_file_name, response.arrayBuffer(), {binary: true})
+                    zip_archive.file(`${zipfile_basename}/${fetched_file_name}`, response.blob('text/plain'), {binary: true})
+                    console.log(`File '${fetched_file_name}' added to archive`)
+                }
+            })
+            .then(() => {
+                console.log(zip_archive)
+                zip_archive.generateAsync({type:"blob"})
+                .then(function (blob) {
+                    console.log(`Saving zip archive`)
+                    saveAs(blob, zip_filename);
+                    console.log(`Zip archive saved`)
+                })
+                .finally(() => {
+                    // Reenable export button
+                    this.enableExportOptions(true)
+                })
+            })
+        ;    
+    }
+
     build_page(){
         let self = this
         return(
@@ -967,16 +1168,31 @@ class VizLegacyPage extends Component{
                             {/* Export Options */}
                             <div>
                                 <font style={{color: 'white', fontSize:'12pt'}}>Export as: </font>
-                                <select className='styled-select' id='select_export_type' onChange='renderExportButtonText(value)' style={{maxWidth:'50%'}}>
-                                    <option style={{color: 'black'}} value='png'> PNG </option>
-                                    <option style={{color: 'black'}} value='pymol'> PyMol </option>
-                                    <option style={{color: 'black'}} value='unitymol'> UnityMol </option>
-                                </select>
+                                {/* <Select className='styled-select' id='select_export_type' value={this.state.export_type} onChange={(value) => this.renderExportButtonText(value)} style={{maxWidth:'50%'}}> */}
+                                <Select className='styled-select' id='select_export_type' value={this.state.export_type} disabled={this.state.disable_export_menu} onChange={(value) => this.setState({ export_type: value })} style={{maxWidth:'50%'}}>
+                                    <Option style={{color: 'black'}} value='png'> PNG </Option>
+                                    <Option style={{color: 'black'}} value='pymol'> PyMol </Option>
+                                    <Option style={{color: 'black'}} value='unitymol'> UnityMol </Option>
+                                </Select>
                             </div>
                             
                             
                             {/* Export button */}
-                                <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black', marginTop: '10px'}} input type='button' id='export-button' value='Export' onclick='savePng()'></input></ul></div>
+                                {/* <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black', marginTop: '10px'}} input type='button' id='export-button' value='Export' onclick='savePng()'></input></ul></div> */}
+                                <div className='inner'>
+                                    <ul className='button-group round'>
+                                        <input 
+                                            type='button' 
+                                            button 
+                                            className='button-backbone pure-button' 
+                                            style={{width: '85px', height: '30px', color: 'black', marginTop: '10px'}} 
+                                            input 
+                                            type='button' id='export-button' value='Export'
+                                            disabled={this.state.disable_export_button}
+                                            onClick={this.handleExportClick}
+                                        />
+                                    </ul>
+                                </div>
                         </div>
                         
                         
