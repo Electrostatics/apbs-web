@@ -70,19 +70,27 @@ class VizLegacyPage extends Component{
             pqr_prefix: this.props.query.pqr,
             storage_host: window._env_.OUTPUT_BUCKET_HOST,
 
+            // Protein
+            min_isoval: -5,
+            max_isoval: 5,
+
             // 3dmol states
             surfid: null,
             surfaceOn:      true,
             surfaceOpacity: true,
             modelLabels:    false,
 
+            // Model/Surface
             surface_type: 'SAS',
             model_type: 'line',
+
+            // Scheme
             color_scheme: 'RWB',
             colorbar_image: RWB_image,
         }
 
         this.set_vis = this.set_vis.bind(this)
+        this.reset_vals = this.reset_vals.bind(this)
         this.update_surface = this.update_surface.bind(this)
         this.update_selected_surface = this.update_selected_surface.bind(this)
         this.update_selected_scheme = this.update_selected_scheme.bind(this)
@@ -463,24 +471,26 @@ class VizLegacyPage extends Component{
     reset_vals() {
         this.set_min_isoval2(-5);
         this.set_max_isoval2(5);
-        document.getElementById("min_isoval2").value = "-5";
-        document.getElementById("max_isoval2").value = "5";
+        // document.getElementById("min_isoval2").value = "-5";
+        // document.getElementById("max_isoval2").value = "5";
         this.update_surface(0);
-        return false;
+        // return false;
     }
     
     //change output for min_isoval range, not perfect
     set_min_isoval2(min_val) {
-        document.getElementById("min_isoval").innerHTML = min_val;
+        // document.getElementById("min_isoval").innerHTML = min_val;
         this.protein.min_isoval = Number(min_val);
-        console.log(document.getElementById('min_isoval').value);
+        this.setState({ min_isoval: min_val })
+        // console.log(document.getElementById('min_isoval').value);
         this.update_surface(0);
     }
 
     //change output for max_isoval range, not perfect
     set_max_isoval2(max_val) {
-        document.getElementById("max_isoval").innerHTML = max_val;
+        // document.getElementById("max_isoval").innerHTML = max_val;
         this.protein.max_isoval = Number(max_val);
+        this.setState({ max_isoval: max_val })
         this.update_surface(0);
     }
 
@@ -757,8 +767,8 @@ class VizLegacyPage extends Component{
                         <br/><font style={{color: 'white', fontSize:'12pt'}}>Surface Potential:</font>
                         
                         {/* change min isoval */}
-                        <p style={{color: 'white', fontSize: '16px'}}> Min <input type='range' min={-50} max={50} value={-5} id='min_isoval2' step={1} oninput='set_min_isoval2(value)'/>&nbsp;&nbsp;&nbsp;&nbsp;<span id='min_isoval'>-5 </span> kT/e </p>
-                        <Slider 
+                        {/* <p style={{color: 'white', fontSize: '16px'}}> Min <input type='range' min={-50} max={50} value={-5} id='min_isoval2' step={1} oninput='set_min_isoval2(value)'/>&nbsp;&nbsp;&nbsp;&nbsp;<span id='min_isoval'>-5 </span> kT/e </p> */}
+                        {/* <Slider 
                             min={-50}
                             max={50}
                             value={-5}
@@ -766,15 +776,79 @@ class VizLegacyPage extends Component{
                                 '-50': '-50 kT/e',
                                 '50':  '50 kT/e'
                             }}
-                        />
+                        /> */}
+                        <Row>
+                            <p style={{color: 'white', fontSize: '16px'}}> Min </p>
+                            <Col span={12}>
+                            {/* <br/> */}
+                            <Slider 
+                                min={-50}
+                                max={50}
+                                step={1}
+                                // value={-5}
+                                // value={this.protein.min_isoval}
+                                value={this.state.min_isoval}
+                                onChange={(e) => this.set_min_isoval2(e)}
+                                // marks={{
+                                //     '-50': '-50 kT/e',
+                                //     '50':  '50 kT/e'
+                                // }}
+                            />
+                            </Col>
+                            <Col span={4}>
+                            <InputNumber
+                                min={-50}
+                                max={50}
+                                style={{ margin: '0 16px' }}
+                                value={this.state.min_isoval}
+                                formatter={value => `${value} kT/e`}
+                                parser={value => value.replace(/[^-0-9]+/g, '')}
+                                // value={this.protein.min_isoval}
+                                onChange={(e) => this.set_min_isoval2(e)}
+                                // disabled
+                            />
+                            </Col>
+                        </Row>                        
 
                         {/* change max isoval */}
-                        <p style={{color: 'white', fontSize: '16px'}}> Max <input type='range' min={-50} max={50} value={5} id='max_isoval2' step={1} oninput='set_max_isoval2(value)'/>&nbsp;&nbsp;&nbsp;&nbsp;<span id='max_isoval'> 5 </span> kT/e </p>
+                        {/* <p style={{color: 'white', fontSize: '16px'}}> Max <input type='range' min={-50} max={50} value={5} id='max_isoval2' step={1} oninput='set_max_isoval2(value)'/>&nbsp;&nbsp;&nbsp;&nbsp;<span id='max_isoval'> 5 </span> kT/e </p> */}
+                        <Row>
+                            <p style={{color: 'white', fontSize: '16px'}}> Max </p>
+                            <Col span={12}>
+                            {/* <br/> */}
+                            <Slider 
+                                min={-50}
+                                max={50}
+                                step={1}
+                                value={this.state.max_isoval}
+                                onChange={(e) => this.set_max_isoval2(e)}
+                                // marks={{
+                                //     '-50': '-50 kT/e',
+                                //     '50':  '50 kT/e'
+                                // }}
+                            />
+                            </Col>
+                            <Col span={4}>
+                            <InputNumber
+                                min={-50}
+                                max={50}
+                                style={{ margin: '0 16px' }}
+                                value={this.state.max_isoval}
+                                formatter={value => `${value} kT/e`}
+                                parser={value => value.replace(/[^-0-9]+/g, '')}
+                                onChange={(e) => this.set_max_isoval2(e)}
+                                // disabled
+                            />
+                            </Col>
+                        </Row>                        
                         
                         {/* reset button */}
                         {/* <div class='inner'><ul class='button-group round'></input> */}
-                        <div className='inner'><ul className='button-group round'>
-                            <input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Reset' onClick='reset_vals()'></input></ul></div>
+                        <div className='inner'>
+                            <ul className='button-group round'>
+                                <input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Reset' onClick={this.reset_vals}></input>
+                            </ul>
+                        </div>
                         
                         <br/><font style={{color:'white', fontSize: '12pt'}}>Model:</font>&nbsp;&nbsp;
                         
