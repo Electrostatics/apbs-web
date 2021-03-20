@@ -51,6 +51,7 @@ class VizLegacyPage extends Component{
         }
 
 
+        this.surface_type = 'SAS'
         this.glviewer = null;
         this.volumedata = null;
         this.surf = null;
@@ -246,7 +247,8 @@ class VizLegacyPage extends Component{
 
         if( e !== null){
             // let x = e.options[e.selectedIndex].value;
-            let x = e.value;
+            // let x = e.value;
+            let x = this.surface_type;
             // if( this.surf !== undefined) 
             //     this.glviewer.removeSurface(this.surf.surfid);
             switch (action){
@@ -575,6 +577,7 @@ class VizLegacyPage extends Component{
 
 
     update_selected_surface(e, option){
+        this.surface_type = e
         this.update_surface(option);
         this.setState({
             // surface_type: e.target.value
