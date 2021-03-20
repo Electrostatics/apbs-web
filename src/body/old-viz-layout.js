@@ -16,10 +16,11 @@ import * as $3Dmol from '3dmol/build/3Dmol'
 // Styles and images
 // import './viz/static/3dmol/css/foundation.css'
 // import './viz/static/3dmol/css/pure-min.css'
+// import './viz/static/3dmol/css/pdb2pqr_3dmol.css'
 import './viz/static/3dmol/css/toggles.css'
-import './viz/static/3dmol/css/pdb2pqr_3dmol.css'
 import RWB_image from './viz/static/3dmol/images/rwb.png'
 import RGB_image from './viz/static/3dmol/images/rgb.png'
+import '../styles/old-viz-layout.css';
 
 const { Content } = Layout;
 const { Title, Text, Link } = Typography;
@@ -790,7 +791,8 @@ class VizLegacyPage extends Component{
                     <div id='buttons'>
                 
                         {/* <!--<br><table border='1' width='100%' cellspacing='0' cellpadding='0'><tr><td valign='top'>-->  */}
-                        <font style={{color: 'white', fontSize:'12pt'}}>Surface:</font>
+                        {/* <font style={{color: 'white', fontSize:'12pt'}}>Surface:</font> */}
+                        <font style={{ fontSize:'12pt' }}><b> Surface: </b></font>
                         <br/>
                         {/* <select className='styled-select' id='selected_surface' value={this.state.surface_type} onChange={(e) => this.update_surface(e, 1)} style={{maxWidth:'50%'}}> */}
                         {/* <select className='styled-select' id='selected_surface' value={this.state.surface_type} onChange={(e) => this.update_selected_surface(e, 1)} style={{maxWidth:'50%'}}>
@@ -846,7 +848,8 @@ class VizLegacyPage extends Component{
                         
                         </td></tr></table>
                         
-                        <font style={{color: 'white', fontSize:'12pt'}}>Surface Potential:</font>
+                        {/* <font style={{color: 'white', fontSize:'12pt'}}>Surface Potential:</font> */}
+                        <font style={{fontSize:'12pt'}}><b> Surface Potential: </b></font>
                         
                         {/* change min isoval */}
                         {/* <p style={{color: 'white', fontSize: '16px'}}> Min <input type='range' min={-50} max={50} value={-5} id='min_isoval2' step={1} oninput='set_min_isoval2(value)'/>&nbsp;&nbsp;&nbsp;&nbsp;<span id='min_isoval'>-5 </span> kT/e </p> */}
@@ -860,7 +863,8 @@ class VizLegacyPage extends Component{
                             }}
                         /> */}
                         <Row>
-                            <p style={{color: 'white', fontSize: '16px'}}> Min </p>
+                            {/* <p style={{color: 'white', fontSize: '16px'}}> Min </p> */}
+                            <p style={{fontSize: '16px'}}>Min</p>
                             <Col span={12}>
                             {/* <br/> */}
                             <Slider 
@@ -895,7 +899,8 @@ class VizLegacyPage extends Component{
                         {/* change max isoval */}
                         {/* <p style={{color: 'white', fontSize: '16px'}}> Max <input type='range' min={-50} max={50} value={5} id='max_isoval2' step={1} oninput='set_max_isoval2(value)'/>&nbsp;&nbsp;&nbsp;&nbsp;<span id='max_isoval'> 5 </span> kT/e </p> */}
                         <Row>
-                            <p style={{color: 'white', fontSize: '16px'}}> Max </p>
+                            {/* <p style={{color: 'white', fontSize: '16px'}}> Max </p> */}
+                            <p style={{fontSize: '16px'}}> Max </p>
                             <Col span={12}>
                             {/* <br/> */}
                             <Slider 
@@ -926,19 +931,28 @@ class VizLegacyPage extends Component{
                         
                         {/* reset button */}
                         {/* <div class='inner'><ul class='button-group round'></input> */}
-                        <div className='inner'>
-                            <ul className='button-group round'>
+                        {/* <div className='inner'> */}
+                            {/* <ul className='button-group round'> */}
                                 {/* <input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Reset' onClick={this.reset_vals}></input> */}
-                                <Button 
+                                {/* <Button 
                                     // style={{width: '85px', height: '30px', color: 'black'}} 
                                     // style={{marginLeft: '10px'}} 
                                     onClick={this.reset_vals}
                                     shape='round'
-                                >Reset</Button>
-                            </ul>
-                        </div>
+                                >Reset</Button> */}
+                            {/* </ul> */}
+                        {/* </div> */}
+                        <Button 
+                            // style={{width: '85px', height: '30px', color: 'black'}} 
+                            // style={{marginLeft: '10px'}} 
+                            onClick={this.reset_vals}
+                            shape='round'
+                        >Reset</Button>
+                        <br/>
+                        <br/>
                         
-                        <br/><font style={{color:'white', fontSize: '12pt'}}>Model:</font>&nbsp;&nbsp;
+                        {/* <font style={{color:'white', fontSize: '12pt'}}>Model:</font>&nbsp;&nbsp; */}
+                        <font style={{fontSize: '12pt'}}><b> Model: </b></font>&nbsp;&nbsp;
                         
                         {/* <select className='styled-select' id='selected_vis' value={this.model_type} onChange={this.set_vis} style={{maxWidth: '50%'}}>
                             <option style={{color: 'black'}} value='line'>Line </option> 
@@ -957,7 +971,7 @@ class VizLegacyPage extends Component{
                         <br/><br/>
                         
                         {/* Change color scheme  */}
-                        <font style={{color: 'white', fontSize: '12pt'}}>Scheme: </font>
+                        <font style={{fontSize: '12pt'}}><b> Scheme: </b></font>
                         
                         
                         
@@ -981,25 +995,19 @@ class VizLegacyPage extends Component{
                                 onclick='addLabels(glviewer); glviewer.render();'></button></input>
                             <input type='button' button class='button-unlabela pure-button' style='width: 95px; height: 30px; color: black' value='Remove labels'
                                 onclick='removetheLabels(glviewer); glviewer.render();'></button></input></ul></div>--> */}
+                        <br/>
+                        <br/>
                         
-                        <table><tr><td>
-                        <font style={{color:'white', fontSize:'12pt'}}>Labels: </font></td><td><label className='switch3'>
-                            {/* <input className='switch3-input' onClick='surface_labels(this)' type='checkbox' checked/> */}
-                            {/* <input className='switch3-input' onClick='surface_labels(this)' type='checkbox' checked/> */}
-                            {/* <input className='switch3-input' onClick={(e) => this.surface_labels(e)} type='checkbox' checked/> */}
-                            <Switch 
+                        <font style={{fontSize:'12pt'}}><b> Labels: </b></font>
+                        <Switch 
                                 // className='switch3-input'
                                 checkedChildren='Add'
                                 unCheckedChildren='Remove'
                                 // defaultChecked
                                 onClick={(e) => this.surface_labels(e)}
-                            />
-                            {/* <span className='switch3-label' data-on='Remove' data-off='Add'></span>
-                            <span className='switch3-handle'></span>  */}
-                        </label>
-                        
-                        </td></tr></table>
-                        
+                        />
+                        <br/>
+                        <br/>
                         
                         {/* <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Recenter' onClick='glviewer.zoomTo();'></input></ul></div> */}
                         {/* <div className='inner'><ul className='button-group round'><input type='button' button className='button-backbone pure-button' style={{width: '85px', height: '30px', color: 'black'}} input type='button' value='Recenter' onClick={(e) => {self.glviewer.zoomTo()}}></input></ul></div> */}
@@ -1012,7 +1020,8 @@ class VizLegacyPage extends Component{
                         {/* Background Transparency slider */}
                         <div id='transparency-div'>
                             {/* // "<br><font style='color:white; font-size:12pt'>Background Transparency:</font>" + */}
-                            <font style={{color:'white', fontSize:'12pt'}}>Background Transparency:</font>
+                            {/* <font style={{color:'white', fontSize:'12pt'}}>Background Transparency:</font> */}
+                            <font style={{fontSize:'12pt'}}><b> Background Transparency: </b></font>
                             {/* <p style={{color:'white', fontSize: '16px'}}> <input type='range' min={0} max={100} value={0} id='transparency_slider' step={5} onInput='adjustBackgroundTransparency(value)'/>&nbsp;&nbsp;&nbsp;&nbsp; <span id='bg_alpha_val'> 0 </span> </p> */}
                             <Row>
                                 <Col span={12}>
@@ -1045,11 +1054,12 @@ class VizLegacyPage extends Component{
                                     />
                                 </Col>
                             </Row>                        
-                            
+                            <br/>
 
                             {/* Export Options */}
                             <div>
-                                <font style={{color: 'white', fontSize:'12pt'}}>Export as: </font>
+                                {/* <font style={{color: 'white', fontSize:'12pt'}}>Export as: </font> */}
+                                <font style={{fontSize:'12pt'}}><b> Export as: </b></font>
                                 {/* <Select className='styled-select' id='select_export_type' value={this.state.export_type} onChange={(value) => this.renderExportButtonText(value)} style={{maxWidth:'50%'}}> */}
                                 <Select className='styled-select' id='select_export_type' value={this.state.export_type} disabled={this.state.disable_export_menu} onChange={(value) => this.setState({ export_type: value })} style={{maxWidth:'50%'}}>
                                     <Option style={{color: 'black'}} value='png'> PNG </Option>
