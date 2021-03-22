@@ -8,6 +8,7 @@ import { Select } from 'antd';
 import { Button } from 'antd';
 
 import * as JSZip from 'jszip';
+import * as Pako from 'pako';
 import { saveAs } from 'file-saver';
 
 // import { ExportOutlined } from '@ant-design/icons'
@@ -62,7 +63,9 @@ class VizLegacyPage extends Component{
 
         // Initial render flags
         this.pqr_loaded = false
+        this.volume_loaded = false
         this.cube_loaded = false
+        this.dx_loaded = false
 
         this.state = {
             jobid: parsed_query.jobid,
@@ -130,6 +133,137 @@ class VizLegacyPage extends Component{
         return glviewer
     }
 
+    getpqr(jobid, pqr_prefix, storage_url){
+        if( !this.pqr_loaded ){
+            let self = this
+            // let xhr = new XMLHttpRequest();
+            // jobid = 14357857643;
+            // let url = storage_url+"/"+jobid+"/"+pqr_prefix+".pqr";
+            let pqr_url = `${storage_url}/${jobid}/${pqr_prefix}.pqr`
+
+            fetch(pqr_url)
+            .then(response => response.text())
+            .then(data => {
+                self.addpqr(data);
+                self.pqr_loaded = true
+            })
+        }
+    }
+
+    addpqr(data){
+        //moldata = data = $("#moldata_pdb_large").val();
+        //console.log(data); //see contents of file
+        let receptorModel = this.glviewer.addModel(data, "pqr");
+    
+        let atoms = receptorModel.selectedAtoms({});
+    
+        /* removed until remove atom functionality is fixed
+        for ( var i in atoms) {
+            var atom = atoms[i];
+            atom.clickable = true;
+            atom.callback = atomcallback;
+        }
+        */
+        this.glviewer.mapAtomProperties($3Dmol.applyPartialCharges);
+        this.glviewer.zoomTo();
+        this.glviewer.render();
+    };
+
+    get_volume_data(jobid, pqr_prefix, format){
+        if( !this.volume_loaded ){
+            let self = this
+
+            let volume_url
+            if(format === 'dx')
+                volume_url = `${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${pqr_prefix}-pot.dx.gz`
+            
+            else if(format === 'cube')
+                volume_url = `${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${pqr_prefix}.cube.gz`
+            
+            // Retrieve file from S3
+            fetch(volume_url)
+            .then( response => response.arrayBuffer() )
+            .then( data => {
+                let inflated_response = Pako.inflate(data, {to: 'string'})
+                self.add_volume(inflated_response, format)
+                self.volume_loaded = true
+            })
+
+        }
+    }
+
+    add_volume(volumedata, format){
+        this.volumedata = new $3Dmol.VolumeData(volumedata, format);
+        this.glviewer.render();
+        this.create_surface();
+    }
+
+    getcube(jobid, pqr_prefix, storage_url){
+        if( !this.cube_loaded ){
+            let self = this
+            let xhr = new XMLHttpRequest();
+            // let cube_url = `${storage_url}/${jobid}/${pqr_prefix}.cube`
+            let cube_url = `${storage_url}/${jobid}/${pqr_prefix}.cube.gz`
+            
+            // Get file 
+            fetch(cube_url)
+            // .then( response => response.text() )
+            // .then( data => {
+            //     self.addcube(data);
+            //     self.cube_loaded = true
+            // })
+            .then( response => response.arrayBuffer() )
+            .then( data => {
+                let inflated_response = Pako.inflate(data, {to: 'string'})
+                self.addcube(inflated_response);
+                self.cube_loaded = true
+            })
+
+        }
+    }
+
+    addcube(volumedata){
+        //protein.volumedata = volumedata;
+        this.volumedata = new $3Dmol.VolumeData(volumedata, "cube");
+        // this.volumedata = new $3Dmol.VolumeData(volumedata, "cube.gz");
+        
+        // window.volumedata = new $3Dmol.VolumeData(volumedata, "cube");
+        //glviewer.addIsosurface(volumedata, {isoval: -5, color:"red", smoothness: 10})
+        //glviewer.addIsosurface(volumedata, {isoval: 5, color:"blue", smoothness: 1})
+        
+        this.glviewer.render();
+        this.create_surface();
+    };
+
+    get_dx(jobid, pqr_prefix, storage_url){
+        if( !this.dx_loaded ){
+            let self = this
+            let dx_url = `${storage_url}/${jobid}/${pqr_prefix}-pot.dx.gz`
+
+            // Get file 
+            fetch(dx_url)
+            .then( response => response.arrayBuffer() )
+            .then( data => {
+                let inflated_response = Pako.inflate(data, {to: 'string'})
+                self.add_dx(inflated_response);
+                self.dx_loaded = true
+            })
+            
+        }
+    }
+
+    add_dx(volumedata){
+        //protein.volumedata = volumedata;
+        this.volumedata = new $3Dmol.VolumeData(volumedata, "dx");
+        // window.volumedata = new $3Dmol.VolumeData(volumedata, "cube");
+        //volumedata = $("#volumetric_data").val();
+        //glviewer.addIsosurface(volumedata, {isoval: -5, color:"red", smoothness: 10})
+        //glviewer.addIsosurface(volumedata, {isoval: 5, color:"blue", smoothness: 1})
+        
+        this.glviewer.render();
+        this.create_surface();
+    };
+
     addLabels() {
         let atoms = this.glviewer.getModel().selectedAtoms({
             atom : "CA"
@@ -168,37 +302,6 @@ class VizLegacyPage extends Component{
         
         this.labels = []
     
-    };
-
-    addpqr(data){
-        //moldata = data = $("#moldata_pdb_large").val();
-        //console.log(data); //see contents of file
-        let receptorModel = this.glviewer.addModel(data, "pqr");
-    
-        let atoms = receptorModel.selectedAtoms({});
-    
-        /* removed until remove atom functionality is fixed
-        for ( var i in atoms) {
-            var atom = atoms[i];
-            atom.clickable = true;
-            atom.callback = atomcallback;
-        }
-        */
-        this.glviewer.mapAtomProperties($3Dmol.applyPartialCharges);
-        this.glviewer.zoomTo();
-        this.glviewer.render();
-    };
-
-    addcube(volumedata){
-        //protein.volumedata = volumedata;
-        this.volumedata = new $3Dmol.VolumeData(volumedata, "cube");
-        // window.volumedata = new $3Dmol.VolumeData(volumedata, "cube");
-        //volumedata = $("#volumetric_data").val();
-        //glviewer.addIsosurface(volumedata, {isoval: -5, color:"red", smoothness: 10})
-        //glviewer.addIsosurface(volumedata, {isoval: 5, color:"blue", smoothness: 1})
-        
-        this.glviewer.render();
-        this.create_surface();
     };
 
     backbone(){
@@ -515,57 +618,6 @@ class VizLegacyPage extends Component{
         this.protein.max_isoval = Number(max_val);
         this.setState({ max_isoval: max_val })
         this.update_surface(0);
-    }
-
-    getpqr(jobid, pqr_prefix, storage_url){
-        if( !this.pqr_loaded ){
-            let self = this
-            let xhr = new XMLHttpRequest();
-            //jobid = 14357857643;
-            let url = storage_url+"/"+jobid+"/"+pqr_prefix+".pqr";
-            // console.log(url)
-            // url = "http://nbcr-222.ucsd.edu/pdb2pqr_2.1.1/tmp/"+jobid+"/"+jobid+".pqr";
-            //url = "../3dmol/files/1fas.pqr";
-            xhr.open("GET", url);
-            //xhr.responseType = 'blob';
-    
-            xhr.onload = function(e) {
-              if (this.status == 200) {
-                // Note: .response instead of .responseText
-                //var blob = new Blob([this.response], {type: 'text/plain'});
-                //readText(this.response);
-                self.addpqr(this.response);
-                self.pqr_loaded = true
-              }
-              
-            };
-            xhr.send(null);
-        }
-    }
-
-    getcube(jobid, pqr_prefix, storage_url){
-        if( !this.cube_loaded ){
-            let self = this
-            let xhr = new XMLHttpRequest();
-            xhr.open("GET", storage_url+"/"+jobid+"/"+pqr_prefix+".cube");
-            // console.log(storage_url+"/"+jobid+"/"+jobid+".cube")
-            // xhr.open("GET", "http://nbcr-222.ucsd.edu/pdb2pqr_2.1.1/tmp/"+jobid+"/"+jobid+".cube");
-            //xhr.open("GET", "../3dmol/files/1fas.cube");
-            //xhr.responseType = 'blob';
-    
-            xhr.onload = function(e) {
-              if (this.status == 200) {
-                // Note: .response instead of .responseText
-                //var blob = new Blob([this.response], {type: 'text/plain'});
-                //readText(this.response);
-                self.addcube(this.response);
-                self.cube_loaded = true
-              }
-              
-            };
-            xhr.send(null);
-            
-        }
     }
 
     adjustBackgroundTransparency(alpha_val){
@@ -1116,7 +1168,9 @@ class VizLegacyPage extends Component{
             <div>
                     {this.build_page()}
                     {this.getpqr( this.jobid, this.pqr_prefix, this.storage_host )}
-                    {this.getcube( this.jobid, this.pqr_prefix, this.storage_host )}
+                    {/* {this.getcube( this.jobid, this.pqr_prefix, this.storage_host )} */}
+                    {/* {this.get_dx( this.jobid, this.pqr_prefix, this.storage_host )} */}
+                    {this.get_volume_data( this.jobid, this.pqr_prefix, 'dx' )}
             </div>
         )
     }
