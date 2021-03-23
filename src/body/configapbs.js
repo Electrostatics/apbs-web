@@ -144,23 +144,10 @@ class ConfigAPBS extends ConfigForm {
         job_submit: true
       })
 
-      // Obtain a job id if not within props
-      // if(self.state.jobid == undefined)
-      // self.getNewJobID()
-
-      // let form_post_url = window._env_.API_URL + "/submit/apbs/json";
-      // let form_post_url = window._env_.WORKFLOW_URL + "/submit/apbs/json";
-      // let form_post_url = `${window._env_.WORKFLOW_URL}/api/workflow/${self.state.jobid}/apbs?task=1`;
-      let form_post_url = `${window._env_.WORKFLOW_URL}/${self.state.jobid}/apbs?`;
-      console.log(form_post_url)
-
       let payload;
       if ( self.props.jobid ){
         let combined_form_data = self.state.parent_form_values;
-        // console.log(self.state.parent_form_values);
-        // console.log(self.state.child_form_values);
         Object.assign(combined_form_data, self.state.child_form_values);
-        // console.log(combined_form_data);
 
         // Delete 'removewater' from payload if false
         if( combined_form_data.removewater ){
@@ -188,19 +175,6 @@ class ConfigAPBS extends ConfigForm {
         'Content-Type': 'application/json'
       }
 
-      if( self.hasAnalyticsId() ){
-        ReactGA.ga(function(tracker){
-          let clientId = tracker.get('clientId')
-          // console.log('GA client ID: ' + clientId)
-          // form_post_headers['X-APBS-Client-ID'] = clientId
-          payload['metadata']['ga'] = { }
-          payload['metadata']['ga']['client_id'] = clientId
-          payload['metadata']['ga']['user_agent'] = navigator.userAgent
-
-        })  
-      }
-
-      
       /**
        * Get presigned URLs for files we plan to upload
        */
@@ -285,34 +259,6 @@ class ConfigAPBS extends ConfigForm {
             })
   
         })
-
-      // let successful_submit = false
-      // fetch(form_post_url, {
-      //   method: 'POST',
-      //   body: JSON.stringify(payload),
-      //   headers: form_post_headers,
-      // })
-      //   // .then(response => response.json())
-      //   .then(function(response) {
-      //     if (response.status === 202){
-      //       successful_submit = true
-      //     }else if(response.status >= 400){
-      //       successful_submit = false
-      //       self.setState({ job_submit: false })
-      //     }
-      //     return response.json()
-      //   })
-      //   .then(data => {
-      //     self.setState({ successful_submit: successful_submit })
-      //     console.log(data)
-      //     // window.location.assign(`/jobstatus?jobtype=apbs&jobid=${self.state.jobid}`)
-      //     if ( successful_submit ){
-      //       console.log('Success: ', data)
-      //     }else{
-      //       message.error(data['error'])
-      //     }
-      //   })
-      //   .catch(error => console.error('Error: ', error))
     }
   }
 
