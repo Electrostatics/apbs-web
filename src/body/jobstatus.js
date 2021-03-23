@@ -54,33 +54,9 @@ class JobStatus extends Component{
   constructor(props){
     super(props);
     if( window._env_.GA_TRACKING_ID !== "" ) {
-      // TODO: modify event to send to lambda
-      let apbs_event_url = `${window._env_.WORKFLOW_URL}/${props.jobid}/${props.jobtype}/event`
-
       ReactGA.set({dimension1: props.jobid})
       ReactGA.ga('_setCustomVar',1,'jobid',props.jobid,3)
       ReactGA.pageview(window.location.pathname + window.location.search)
-
-      
-      let ga_event_headers = {}
-      if( window._env_.GA_TRACKING_ID !== "" ){
-        ReactGA.ga(function(tracker){
-          let clientId = tracker.get('clientId')
-          // console.log('GA client ID: ' + clientId)
-          ga_event_headers['X-APBS-Client-ID'] = clientId
-        })  
-      }
-
-      fetch(apbs_event_url, {
-        method: 'POST',
-        headers: ga_event_headers
-      })
-      .then(function(response) {
-        if (response.status === 200){
-        }else if(response.status >= 400){}
-        return response.json()
-      })
-      .then(data => {})
     }
 
     this.jobServerDomain = window._env_.API_URL
@@ -695,7 +671,7 @@ class JobStatus extends Component{
         }
         // load visualizer button link if on the respective job status page
         // let viz_3dmol_url = `/viz/3dmol?jobid=${this.props.jobid}&pqr=${pqr_prefix}`
-        let viz_3dmol_url = `${window._env_.VIZ_URL}/3dmol?jobid=${this.props.jobid}&pqr=${pqr_prefix}`
+        let viz_3dmol_url = `${window._env_.VIZ_URL}?jobid=${this.props.jobid}&pqr=${pqr_prefix}`
         let is_disabled = true;
         if (this.state[jobtype].status === 'complete') is_disabled = false;
         viz_button_block = 

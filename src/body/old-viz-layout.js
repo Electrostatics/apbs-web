@@ -173,14 +173,15 @@ class VizLegacyPage extends Component{
         if( !this.volume_loaded ){
             let self = this
 
-            let volume_url
+            let volume_filename
             if(format === 'dx')
-                volume_url = `${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${pqr_prefix}-pot.dx.gz`
-            
+                volume_filename = `${pqr_prefix}-pot.dx.gz`
+
             else if(format === 'cube')
-                volume_url = `${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${pqr_prefix}.cube.gz`
-            
+                volume_filename = `${pqr_prefix}.cube.gz`
+
             // Retrieve file from S3
+            let volume_url = `${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${volume_filename}`
             fetch(volume_url)
             .then( response => response.arrayBuffer() )
             .then( data => {
@@ -188,7 +189,6 @@ class VizLegacyPage extends Component{
                 self.add_volume(inflated_response, format)
                 self.volume_loaded = true
             })
-
         }
     }
 
