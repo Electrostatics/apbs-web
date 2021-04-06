@@ -377,7 +377,7 @@ class ConfigPDB2PQR extends ConfigForm{
     // console.log(file.name.endsWith('.pdb'))
     let form_values = self.state.form_values;
     if( file_type === 'pdb' ){
-      if(!file.name.endsWith('.pdb')){
+      if(!file.name.toLowerCase().endsWith('.pdb')){
         message.error('You must upload a PDB (*.pdb) file!');
         return false;
       }
@@ -386,8 +386,8 @@ class ConfigPDB2PQR extends ConfigForm{
       }
     }
     else if( file_type === 'userff' ){
-      if(!file.name.endsWith('.DAT')){
-        message.error('You must upload a Force Field (*.DAT) file!');
+      if(!file.name.toLowerCase().endsWith('.dat')){
+        message.error('You must upload a Force Field (*.dat) file!');
         return false;
       }
       else{
@@ -395,7 +395,7 @@ class ConfigPDB2PQR extends ConfigForm{
       }      
     }
     else if( file_type === 'names' ){      
-      if(!file.name.endsWith('.names')){
+      if(!file.name.toLowerCase().endsWith('.names')){
         message.error('You must upload a Names (*.names) file!');
         return false;
       }
@@ -404,7 +404,7 @@ class ConfigPDB2PQR extends ConfigForm{
       }
     }
     else if( file_type === 'ligand' ){
-      if(!file.name.endsWith('.mol2')){
+      if(!file.name.toLowerCase().endsWith('.mol2')){
         message.error('You must upload a Ligand (*.mol2) file!');
         return false;
       }
