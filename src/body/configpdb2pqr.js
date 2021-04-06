@@ -54,11 +54,13 @@ class ConfigPDB2PQR extends ConfigForm{
 
     this.state = {
       
+      // File lists
       pdbFileList: [],
       userffFileList: [],
       namesFileList: [],
       ligandFileList: [],
 
+      // Form visual toggle flags
       pdb_upload_hidden: true,
       ff_upload_hidden: true,
       mol2_upload_hidden: true,
@@ -80,6 +82,7 @@ class ConfigPDB2PQR extends ConfigForm{
         OPTIONS:        [ 'atomsnotclose', 'optimizeHnetwork', 'makeapbsin', 'removewater' ],
       },
 
+      // Submission flags
       job_submit: false,
       successful_submit: false,
 
@@ -418,6 +421,17 @@ class ConfigPDB2PQR extends ConfigForm{
     return false;
   }
 
+  removeSelectedUploadFile(e, self, form_key, file_list_key){
+    // Reset form value keys when file is unselected
+    let form_values = this.state.form_values;
+    form_values[form_key] = '';
+
+    this.setState({ 
+      [file_list_key]: [],
+      form_values: form_values,
+    })
+  }
+
   renderRegistrationButton(){
     if( this.state.show_register_button ){
       return(
@@ -483,7 +497,7 @@ class ConfigPDB2PQR extends ConfigForm{
             fileList={this.state.pdbFileList}
             beforeUpload={ (e) => this.beforeUpload(e, this, 'pdb')}
             onChange={ (e) => this.handleUpload(e, this, 'pdb') }
-            // onChange={ (e) => this.handlePdbUpload(e, this) }
+            onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'PDBFILE', 'pdbFileList') }
           >
             <Button icon={<UploadOutlined />}>
               Select File
@@ -564,6 +578,7 @@ class ConfigPDB2PQR extends ConfigForm{
           fileList={this.state.userffFileList}
           beforeUpload={ (e) => this.beforeUpload(e, this, 'userff')}
           onChange={ (e) => this.handleUpload(e, this, 'userff') }
+          onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'USERFFFILE', 'userffFileList') }
         >
           <Button icon={<UploadOutlined />}> Select File </Button>
         </Upload>
@@ -576,6 +591,7 @@ class ConfigPDB2PQR extends ConfigForm{
           fileList={this.state.namesFileList}
           beforeUpload={ (e) => this.beforeUpload(e, this, 'names')}
           onChange={ (e) => this.handleUpload(e, this, 'names') }
+          onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'NAMESFILE', 'namesFileList') }
         >
           <Button icon={<UploadOutlined />}> Select File </Button>
         </Upload>
@@ -604,6 +620,7 @@ class ConfigPDB2PQR extends ConfigForm{
         fileList={this.state.ligandFileList}
         beforeUpload={ (e) => this.beforeUpload(e, this, 'ligand')}
         onChange={ (e) => this.handleUpload(e, this, 'ligand') }
+        onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'LIGANDFILE', 'ligandFileList') }
       >
         <Button icon={<UploadOutlined />}> Select File </Button>
       </Upload>
