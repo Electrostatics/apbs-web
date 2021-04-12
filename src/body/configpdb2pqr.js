@@ -10,16 +10,17 @@ import {
   Layout,
   Menu,
   Button,
-  Switch,
+  // Switch,
   Input,
   Radio,
   Checkbox,
   Row,
   Col,
   InputNumber,
-  Tooltip,
+  Popover,
+  // Tooltip,
   Upload,
-  Spin,
+  // Spin,
   message,
 } from 'antd';
 import { Redirect } from 'react-router-dom';
@@ -52,13 +53,19 @@ class ConfigPDB2PQR extends ConfigForm{
       ReactGA.pageview(window.location.pathname + window.location.search)
     }
 
+    // Dynamic command line building
+    this.show_cli = this.props.show_cli
+    this.cli_options = this.getCommandLineDict()
+    
     this.state = {
       
+      // File lists
       pdbFileList: [],
       userffFileList: [],
       namesFileList: [],
       ligandFileList: [],
 
+      // Form visual toggle flags
       pdb_upload_hidden: true,
       ff_upload_hidden: true,
       mol2_upload_hidden: true,
@@ -80,6 +87,7 @@ class ConfigPDB2PQR extends ConfigForm{
         OPTIONS:        [ 'atomsnotclose', 'optimizeHnetwork', 'makeapbsin', 'removewater' ],
       },
 
+      // Submission flags
       job_submit: false,
       successful_submit: false,
 
@@ -98,6 +106,125 @@ class ConfigPDB2PQR extends ConfigForm{
     else{
       // AWS: We get new jobid at submission time
       // this.getNewJobID()
+    }
+  }
+
+  getCommandLineDict(){
+    let cli_dict = {
+      // pKa options
+      ph_calc_method: { name: '--ph-calc-method', type: 'string', placeholder_text: 'PH_METHOD' },
+      with_ph:        { name: '--with-ph',        type: 'float',  placeholder_text: 'PH' },
+
+      // Forcefield options
+      ff:         { name: '--ff',        type: 'string', placeholder_text: 'FIELD_NAME' },
+      userff:     { name: '--userff',    type: 'string', placeholder_text: 'USER_FIELD_FILE' },
+      usernames:  { name: '--usernames', type: 'string', placeholder_text: 'USER_NAME_FILE' },
+      ffout:      { name: '--ffout',     type: 'string', placeholder_text: 'FIELD_NAME' },
+      
+      // Ligand option
+      ligand:     { name: '--ligand', type: 'string', placeholder_text: 'LIGAND_FILE' },
+      
+      // Additional options
+      debump:     { name: '--nodebump',   type: 'bool', placeholder_text: null },
+      opt:        { name: '--noopt',      type: 'bool', placeholder_text: null },
+      apbsinput:  { name: '--apbs-input', type: 'bool', placeholder_text: null },
+      chain:      { name: '--chain',      type: 'bool', placeholder_text: null },
+      whitespace: { name: '--whitespace', type: 'bool', placeholder_text: null },
+      typemap:    { name: '--typemap',    type: 'bool', placeholder_text: null },
+      neutraln:   { name: '--neutraln',   type: 'bool', placeholder_text: null },
+      neutralc:   { name: '--neutralc',   type: 'bool', placeholder_text: null },
+      dropwater:  { name: '--drop-water', type: 'bool', placeholder_text: null },
+
+    }
+
+    return cli_dict
+  }
+
+  getCLIPopoverContents(additional_options){
+    let popover_titles
+    let popover_contents = {}
+
+    // PDB file
+    // popover_contents['pdb'] = 
+
+    // Forcefield used
+    let ff_text
+    if( this.state.form_values['FF'] !== 'user' ){
+      ff_text = <div> {this.cli_options.ff.name}=<b>{this.state.form_values['FF']}</b> </div>
+    }else{
+      let userff_filename = this.state.form_values['USERFFFILE']
+      let names_filename = this.state.form_values['NAMESFILE']
+
+      if( userff_filename === '' ) userff_filename = this.cli_options.userff.placeholder_text
+      if( names_filename === '' ) names_filename = this.cli_options.usernames.placeholder_text
+
+      ff_text = <div> {this.cli_options.userff.name}=<b>{userff_filename}</b> </div>
+      ff_text = <div> {this.cli_options.userff.name}=<b>{userff_filename}</b> {this.cli_options.usernames.name}=<b>{names_filename}</b> </div>
+    }
+    popover_contents['ff'] = 
+      <div>
+        <code>
+          {/* {this.cli_options.ff.name}=<b>{this.state.form_values['FF']}</b> {this.cli_options.ff.name}=<b>{this.state.form_values['PH']}</b> */}
+          {ff_text}
+        </code>
+      </div>
+    
+    // Forcefield output naming scheme
+    let ffout_text
+    if( this.state.form_values['FFOUT'] === 'internal' ){
+      // ffout_text = <div> {this.cli_options.ffout.name}=<b>{this.state.form_values['FFOUT']}</b> </div>
+      ffout_text = <s> {this.cli_options.ffout.name}=<b>{this.cli_options.ffout.placeholder_text}</b> </s>
+    }else{
+      ffout_text = <div> {this.cli_options.ffout.name}=<b>{this.state.form_values['FFOUT']}</b> </div>
+    }
+    popover_contents['ffout'] =
+      <div>
+        <code> {ffout_text} </code>
+      </div>
+
+    // pKa Options
+    popover_contents['pka'] = 
+      <div>
+        <code>
+          {this.cli_options.ph_calc_method.name}=<b>{this.state.form_values['PKACALCMETHOD']}</b> {this.cli_options.with_ph.name}=<b>{this.state.form_values['PH']}</b>
+        </code>
+      </div>
+
+    // Mol2
+    let ligand_filename = this.state.form_values['LIGANDFILE']
+    if( ligand_filename === '' ) ligand_filename = this.cli_options.ligand.placeholder_text
+
+    popover_contents['ligand'] =
+      <div>
+        <code>
+          {this.cli_options.ligand.name}=<b>{ligand_filename}</b>
+        </code>
+      </div>
+    
+    // Additional boolean options
+    for( let option of additional_options ){
+      if( !(option.cli in popover_contents) ){
+        let cli_arg
+        if( this.state.form_values.OPTIONS.includes(option.value) && ['atomsnotclose', 'optimizeHnetwork'].includes(option.value) ){
+          // Having these options checked means we don't use in command line
+          cli_arg = <s> {this.cli_options[option.cli].name} </s> 
+        }
+        else{
+          cli_arg = this.cli_options[option.cli].name
+        }
+        
+        popover_contents[option.cli] =
+          <div>
+            <code>
+              {cli_arg}
+            </code>
+          </div>
+      }
+    }
+
+    return {
+      title: 'CLI',
+      contents: popover_contents
     }
   }
 
@@ -377,7 +504,7 @@ class ConfigPDB2PQR extends ConfigForm{
     // console.log(file.name.endsWith('.pdb'))
     let form_values = self.state.form_values;
     if( file_type === 'pdb' ){
-      if(!file.name.endsWith('.pdb')){
+      if(!file.name.toLowerCase().endsWith('.pdb')){
         message.error('You must upload a PDB (*.pdb) file!');
         return false;
       }
@@ -386,8 +513,8 @@ class ConfigPDB2PQR extends ConfigForm{
       }
     }
     else if( file_type === 'userff' ){
-      if(!file.name.endsWith('.DAT')){
-        message.error('You must upload a Force Field (*.DAT) file!');
+      if(!file.name.toLowerCase().endsWith('.dat')){
+        message.error('You must upload a Force Field (*.dat) file!');
         return false;
       }
       else{
@@ -395,7 +522,7 @@ class ConfigPDB2PQR extends ConfigForm{
       }      
     }
     else if( file_type === 'names' ){      
-      if(!file.name.endsWith('.names')){
+      if(!file.name.toLowerCase().endsWith('.names')){
         message.error('You must upload a Names (*.names) file!');
         return false;
       }
@@ -404,7 +531,7 @@ class ConfigPDB2PQR extends ConfigForm{
       }
     }
     else if( file_type === 'ligand' ){
-      if(!file.name.endsWith('.mol2')){
+      if(!file.name.toLowerCase().endsWith('.mol2')){
         message.error('You must upload a Ligand (*.mol2) file!');
         return false;
       }
@@ -416,6 +543,17 @@ class ConfigPDB2PQR extends ConfigForm{
     self.setState({ form_values })
     // return true;
     return false;
+  }
+
+  removeSelectedUploadFile(e, self, form_key, file_list_key){
+    // Reset form value keys when file is unselected
+    let form_values = this.state.form_values;
+    form_values[form_key] = '';
+
+    this.setState({ 
+      [file_list_key]: [],
+      form_values: form_values,
+    })
   }
 
   renderRegistrationButton(){
@@ -483,7 +621,7 @@ class ConfigPDB2PQR extends ConfigForm{
             fileList={this.state.pdbFileList}
             beforeUpload={ (e) => this.beforeUpload(e, this, 'pdb')}
             onChange={ (e) => this.handleUpload(e, this, 'pdb') }
-            // onChange={ (e) => this.handlePdbUpload(e, this) }
+            onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'PDBFILE', 'pdbFileList') }
           >
             <Button icon={<UploadOutlined />}>
               Select File
@@ -564,6 +702,7 @@ class ConfigPDB2PQR extends ConfigForm{
           fileList={this.state.userffFileList}
           beforeUpload={ (e) => this.beforeUpload(e, this, 'userff')}
           onChange={ (e) => this.handleUpload(e, this, 'userff') }
+          onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'USERFFFILE', 'userffFileList') }
         >
           <Button icon={<UploadOutlined />}> Select File </Button>
         </Upload>
@@ -576,6 +715,7 @@ class ConfigPDB2PQR extends ConfigForm{
           fileList={this.state.namesFileList}
           beforeUpload={ (e) => this.beforeUpload(e, this, 'names')}
           onChange={ (e) => this.handleUpload(e, this, 'names') }
+          onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'NAMESFILE', 'namesFileList') }
         >
           <Button icon={<UploadOutlined />}> Select File </Button>
         </Upload>
@@ -590,7 +730,6 @@ class ConfigPDB2PQR extends ConfigForm{
       );
     }
   }
-  // handleUserForcefieldUpload(info, self){}
 
   renderMol2UploadButton(){
     if(this.state.mol2_upload_hidden) return;
@@ -604,6 +743,7 @@ class ConfigPDB2PQR extends ConfigForm{
         fileList={this.state.ligandFileList}
         beforeUpload={ (e) => this.beforeUpload(e, this, 'ligand')}
         onChange={ (e) => this.handleUpload(e, this, 'ligand') }
+        onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'LIGANDFILE', 'ligandFileList') }
       >
         <Button icon={<UploadOutlined />}> Select File </Button>
       </Upload>
@@ -617,8 +757,6 @@ class ConfigPDB2PQR extends ConfigForm{
       )
     }
   }
-  // handleMol2Upload(info, self){}
-
 
   /** Creates and returns the sidebar component. */
   renderSidebar(){
@@ -658,28 +796,35 @@ class ConfigPDB2PQR extends ConfigForm{
 
   /** Creates and returns the PDB2PQR configuration form. */
   renderConfigForm(){
-    /** Builds checkbox options for the Additional Options header */
+    /** Labels for the Additional Options header */
     const additionalOptions = [
-      {name: 'DEBUMP',      value: 'atomsnotclose',    label: 'Ensure that new atoms are not rebuilt too close to existing atoms',  disabled: false},
-      {name: 'OPT',         value: 'optimizeHnetwork', label: 'Optimize the hydrogen bonding network',                              disabled: false},
-      {name: 'LIGANDCHECK', value: 'assignfrommol2',   label: 'Assign charges to the ligand specified in a MOL2 file',              disabled: false},
-      {name: 'INPUT',       value: 'makeapbsin',       label: 'Create an APBS input file',                                          disabled: false},
-      {name: 'CHAIN',       value: 'keepchainids',     label: 'Add/keep chain IDs in the PQR file',                                 disabled: false},
-      {name: 'WHITESPACE',  value: 'insertwhitespace', label: 'Insert whitespaces between atom name and residue name, between x and y, and between y and z', disabled: false},
-      {name: 'TYPEMAP',     value: 'maketypemap',      label: 'Create Typemap output',                                              disabled: false},
-      {name: 'NEUTRALN',    value: 'neutralnterminus', label: 'Make the protein\'s N-terminus neutral (requires PARSE forcefield)', disabled: this.state.no_NC_terminus, },
-      {name: 'NEUTRALC',    value: 'neutralcterminus', label: 'Make the protein\'s C-terminus neutral (requires PARSE forcefield)', disabled: this.state.no_NC_terminus, },
-      {name: 'DROPWATER',   value: 'removewater',      label: 'Remove the waters from the output file',                             disabled: false},
+      {name: 'DEBUMP',      value: 'atomsnotclose',    cli: 'debump',     label: 'Ensure that new atoms are not rebuilt too close to existing atoms',  disabled: false},
+      {name: 'OPT',         value: 'optimizeHnetwork', cli: 'opt',        label: 'Optimize the hydrogen bonding network',                              disabled: false},
+      {name: 'LIGANDCHECK', value: 'assignfrommol2',   cli: 'ligand',     label: 'Assign charges to the ligand specified in a MOL2 file',              disabled: false},
+      {name: 'INPUT',       value: 'makeapbsin',       cli: 'apbsinput',  label: 'Create an APBS input file',                                          disabled: false},
+      {name: 'CHAIN',       value: 'keepchainids',     cli: 'chain',      label: 'Add/keep chain IDs in the PQR file',                                 disabled: false},
+      {name: 'WHITESPACE',  value: 'insertwhitespace', cli: 'whitespace', label: 'Insert whitespaces between atom name and residue name, between x and y, and between y and z', disabled: false},
+      {name: 'TYPEMAP',     value: 'maketypemap',      cli: 'typemap',    label: 'Create Typemap output',                                              disabled: false},
+      {name: 'NEUTRALN',    value: 'neutralnterminus', cli: 'neutraln',   label: 'Make the protein\'s N-terminus neutral (requires PARSE forcefield)', disabled: this.state.no_NC_terminus, },
+      {name: 'NEUTRALC',    value: 'neutralcterminus', cli: 'neutralc',   label: 'Make the protein\'s C-terminus neutral (requires PARSE forcefield)', disabled: this.state.no_NC_terminus, },
+      {name: 'DROPWATER',   value: 'removewater',      cli: 'dropwater',  label: 'Remove the waters from the output file',                             disabled: false},
     ]     
+
+    /** Get customized header/label options for CLI popover */
+    const cli_popovers = this.getCLIPopoverContents(additionalOptions)
+
+    /** Builds checkbox options for the Additional Options header */
     let optionChecklist = [];
     additionalOptions.forEach(function(element){
       if (element['name'] == 'LIGANDCHECK'){
         optionChecklist.push(
           <div>
-            <Row>
-              <Checkbox name={element['name']} value={element['value']} onChange={ (e) => this.handleFormChange(e, element['name'])}> {element['label']} </Checkbox>
-              {this.renderMol2UploadButton()}
-            </Row>
+            <Popover placement="left" title={cli_popovers.title} content={cli_popovers.contents.ligand}>
+              <Row>
+                <Checkbox name={element['name']} value={element['value']} onChange={ (e) => this.handleFormChange(e, element['name'])}> {element['label']} </Checkbox>
+                {this.renderMol2UploadButton()}
+              </Row>
+            </Popover>
           </div>
         );
       }
@@ -687,7 +832,9 @@ class ConfigPDB2PQR extends ConfigForm{
       else{
         optionChecklist.push(
           <div>
-            <Row><Checkbox name={element['name']} value={element['value']} disabled={element['disabled']}> {element['label']} </Checkbox></Row>
+            <Popover placement="left" title={cli_popovers.title} content={cli_popovers.contents[element['cli']]}>
+              <Row><Checkbox name={element['name']} value={element['value']} disabled={element['disabled']}> {element['label']} </Checkbox></Row>
+            </Popover>
           </div>
         );
       }
@@ -747,56 +894,62 @@ class ConfigPDB2PQR extends ConfigForm{
             {this.renderRegistrationButton()}
             
             {/** Form item for pKa option*/}
-            <Form.Item
-              // id="pka"
-              label="pKa Options"
-            >
-              {/* <Switch checkedChildren="pKa Calculation" unCheckedChildren="pKa Calculation" defaultChecked={true} /><br/> */}
-              pH: <InputNumber name="PH" min={0} max={14} step={0.5} value={this.state.form_values.PH} onChange={(e) => this.handleFormChange(e, 'PH')} /><br/>
-              <Radio.Group name="PKACALCMETHOD" defaultValue={this.state.form_values.PKACALCMETHOD} onChange={this.handleFormChange} >
-                <Radio style={radioVertStyle} id="pka_none" value="none">    No pKa calculation </Radio>
-                <Radio style={radioVertStyle} id="pka_propka" value="propka">  Use PROPKA to assign protonation states at provided pH </Radio>
-                <Tooltip placement="right" title="requires PARSE forcefield">
-                  <Radio style={radioVertStyle} id="pka_pdb2pka" value="pdb2pka"> Use PDB2PKA to parametrize ligands and assign pKa values <b>(requires PARSE forcefield)</b> at provided pH </Radio>
-                </Tooltip>
-              </Radio.Group>
-            </Form.Item>
+            <Popover placement="bottomLeft" title={cli_popovers.title} content={cli_popovers.contents.pka}>
+              <Form.Item
+                // id="pka"
+                label="pKa Options"
+              >
+                {/* <Switch checkedChildren="pKa Calculation" unCheckedChildren="pKa Calculation" defaultChecked={true} /><br/> */}
+                pH: <InputNumber name="PH" min={0} max={14} step={0.5} value={this.state.form_values.PH} onChange={(e) => this.handleFormChange(e, 'PH')} /><br/>
+                <Radio.Group name="PKACALCMETHOD" defaultValue={this.state.form_values.PKACALCMETHOD} onChange={this.handleFormChange} >
+                  <Radio style={radioVertStyle} id="pka_none" value="none">    No pKa calculation </Radio>
+                  <Radio style={radioVertStyle} id="pka_propka" value="propka">  Use PROPKA to assign protonation states at provided pH </Radio>
+                  {/* <Tooltip placement="right" title="requires PARSE forcefield"> */}
+                    <Radio style={radioVertStyle} id="pka_pdb2pka" value="pdb2pka"> Use PDB2PKA to parametrize ligands and assign pKa values <b>(requires PARSE forcefield)</b> at provided pH </Radio>
+                  {/* </Tooltip> */}
+                </Radio.Group>
+              </Form.Item>
+            </Popover>
   
             {/** Form item for forcefield choice */}
-            <Form.Item
-              id="forcefield"
-              label="Please choose a forcefield to use"
-            >
-              <Radio.Group name="FF" value={this.state.form_values.FF} buttonStyle="solid" onChange={this.handleFormChange}>
-                <Radio.Button disabled={this.state.only_parse} value="amber">  AMBER   </Radio.Button>
-                <Radio.Button disabled={this.state.only_parse} value="charmm"> CHARMM  </Radio.Button>
-                <Radio.Button disabled={this.state.only_parse} value="peoepb"> PEOEPB  </Radio.Button>
-                <Radio.Button value="parse">  PARSE   </Radio.Button>
-                <Radio.Button disabled={this.state.only_parse} value="swanson">SWANSON </Radio.Button>
-                <Radio.Button disabled={this.state.only_parse} value="tyl06">  TYL06   </Radio.Button>
-                <Radio.Button disabled={this.state.only_parse} value="user">   User-defined Forcefield </Radio.Button>
-              </Radio.Group><br/>
-              {this.renderUserForcefieldUploadButton()}
-              {/* Forcefield file: <input type="file" name="USERFF" />
-              Names file (*.names): <input type="file" name="USERNAMES" accept=".names" /> */}
-            </Form.Item>
+            <Popover placement="bottomLeft" title={cli_popovers.title} content={cli_popovers.contents.ff}>
+              <Form.Item
+                id="forcefield"
+                label="Please choose a forcefield to use"
+              >
+                <Radio.Group name="FF" value={this.state.form_values.FF} buttonStyle="solid" onChange={this.handleFormChange}>
+                  <Radio.Button disabled={this.state.only_parse} value="amber">  AMBER   </Radio.Button>
+                  <Radio.Button disabled={this.state.only_parse} value="charmm"> CHARMM  </Radio.Button>
+                  <Radio.Button disabled={this.state.only_parse} value="peoepb"> PEOEPB  </Radio.Button>
+                  <Radio.Button value="parse">  PARSE   </Radio.Button>
+                  <Radio.Button disabled={this.state.only_parse} value="swanson">SWANSON </Radio.Button>
+                  <Radio.Button disabled={this.state.only_parse} value="tyl06">  TYL06   </Radio.Button>
+                  <Radio.Button disabled={this.state.only_parse} value="user">   User-defined Forcefield </Radio.Button>
+                </Radio.Group><br/>
+                {this.renderUserForcefieldUploadButton()}
+                {/* Forcefield file: <input type="file" name="USERFF" />
+                Names file (*.names): <input type="file" name="USERNAMES" accept=".names" /> */}
+              </Form.Item>
+            </Popover>
   
             {/** Form item for output scheme choice*/}
-            <Form.Item
-              id="outputscheme"
-              label="Please choose an output naming scheme to use"
-            >
-              <Radio.Group name="FFOUT" defaultValue={this.state.form_values.FFOUT} buttonStyle="solid" onChange={this.handleFormChange}>
-                <Radio.Button value="internal"> Internal naming scheme </Radio.Button>
-                {/* <Radio.Button value="internal"> Internal naming scheme <Tooltip placement="bottomLeft" title="This is placeholder help text to tell the user what this option means"><Icon type="question-circle" /></Tooltip> </Radio.Button> */}
-                <Radio.Button value="amber">  AMBER   </Radio.Button>
-                <Radio.Button value="charmm"> CHARMM  </Radio.Button>
-                <Radio.Button value="parse">  PARSE   </Radio.Button>
-                <Radio.Button value="peoepb"> PEOEPB  </Radio.Button>
-                <Radio.Button value="swanson">SWANSON </Radio.Button>
-                <Radio.Button value="tyl06">  TYL06   </Radio.Button>
-              </Radio.Group>
-            </Form.Item>
+            <Popover placement="bottomLeft" title={cli_popovers.title} content={cli_popovers.contents.ffout}>
+              <Form.Item
+                id="outputscheme"
+                label="Please choose an output naming scheme to use"
+              >
+                <Radio.Group name="FFOUT" defaultValue={this.state.form_values.FFOUT} buttonStyle="solid" onChange={this.handleFormChange}>
+                  <Radio.Button value="internal"> Internal naming scheme </Radio.Button>
+                  {/* <Radio.Button value="internal"> Internal naming scheme <Tooltip placement="bottomLeft" title="This is placeholder help text to tell the user what this option means"><Icon type="question-circle" /></Tooltip> </Radio.Button> */}
+                  <Radio.Button value="amber">  AMBER   </Radio.Button>
+                  <Radio.Button value="charmm"> CHARMM  </Radio.Button>
+                  <Radio.Button value="parse">  PARSE   </Radio.Button>
+                  <Radio.Button value="peoepb"> PEOEPB  </Radio.Button>
+                  <Radio.Button value="swanson">SWANSON </Radio.Button>
+                  <Radio.Button value="tyl06">  TYL06   </Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+            </Popover>
             
             {/** Form item for choosing additional options (defined earlier) */}
             <Form.Item
@@ -807,7 +960,7 @@ class ConfigPDB2PQR extends ConfigForm{
                 {optionChecklist}
               </Checkbox.Group>
             </Form.Item>
-            
+
             {/** Where the submission button lies */}
             <Form.Item>
               <Col offset={18}>
@@ -823,7 +976,6 @@ class ConfigPDB2PQR extends ConfigForm{
                 </Affix>
               </Col>
             </Form.Item>
-  
           </Form>
         </Col>
       )
