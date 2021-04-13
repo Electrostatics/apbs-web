@@ -117,6 +117,7 @@ class ServerRouter extends Component{
                                 openSubmenus={this.state.openSubmenus}
                                 submenuOnClick={j => this.submenuOnClick(j)}
                                 onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                query={props.location.search}
                             />
                         )}
                     />

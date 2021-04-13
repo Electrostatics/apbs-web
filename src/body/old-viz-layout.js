@@ -33,12 +33,10 @@ class VizLegacyPage extends Component{
         if( window._env_.GA_TRACKING_ID !== "" ) 
             ReactGA.pageview(window.location.pathname + window.location.search)
 
-        let queryParser = require('query-string-es5')
-        let parsed_query = queryParser.parse(this.props.query)
+        let query_args = new URLSearchParams(this.props.query)
 
-
-        this.jobid = parsed_query['jobid']
-        this.pqr_prefix = parsed_query['pqr']
+        this.jobid = query_args.get('jobid')
+        this.pqr_prefix = query_args.get('pqr')
         this.storage_host = window._env_.OUTPUT_BUCKET_HOST
     
         // 3dmol global objects
@@ -68,8 +66,8 @@ class VizLegacyPage extends Component{
         this.dx_loaded = false
 
         this.state = {
-            jobid: parsed_query.jobid,
-            pqr_prefix: parsed_query.pqr,
+            jobid: query_args.get('jobid'),
+            pqr_prefix: query_args.get('pqr'),
             storage_host: window._env_.OUTPUT_BUCKET_HOST,
 
             // Protein
