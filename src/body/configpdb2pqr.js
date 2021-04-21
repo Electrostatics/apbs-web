@@ -498,7 +498,7 @@ class ConfigPDB2PQR extends ConfigForm{
   //   })
   // }
 
-  beforeUpload(file, self, file_type){
+  beforeUpload(file, fileList, self, file_type){
     console.log("we in beforeUpload")
     // console.log(file)
     // console.log(file.name.endsWith('.pdb'))
@@ -510,6 +510,10 @@ class ConfigPDB2PQR extends ConfigForm{
       }
       else{
         form_values['PDBFILE'] = file.name;
+        self.setState({
+          pdbFileList: fileList.slice(-1),
+          show_register_button: true,
+        })  
       }
     }
     else if( file_type === 'userff' ){
@@ -519,6 +523,7 @@ class ConfigPDB2PQR extends ConfigForm{
       }
       else{
         form_values['USERFFFILE'] = file.name;
+        self.setState({ userffFileList: fileList.slice(-1) })
       }      
     }
     else if( file_type === 'names' ){      
@@ -528,6 +533,7 @@ class ConfigPDB2PQR extends ConfigForm{
       }
       else{
         form_values['NAMESFILE'] = file.name;
+        self.setState({ namesFileList: fileList.slice(-1) })
       }
     }
     else if( file_type === 'ligand' ){
@@ -537,6 +543,7 @@ class ConfigPDB2PQR extends ConfigForm{
       }
       else{
         form_values['LIGANDFILE'] = file.name;
+        self.setState({ ligandFileList: fileList.slice(-1) })
       }
     }
 
@@ -619,8 +626,8 @@ class ConfigPDB2PQR extends ConfigForm{
             accept=".pdb"
             action={upload_url}
             fileList={this.state.pdbFileList}
-            beforeUpload={ (e) => this.beforeUpload(e, this, 'pdb')}
-            onChange={ (e) => this.handleUpload(e, this, 'pdb') }
+            beforeUpload={ (e, fileList) => this.beforeUpload(e, fileList, this, 'pdb')}
+            // onChange={ (e) => this.handleUpload(e, this, 'pdb') }
             onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'PDBFILE', 'pdbFileList') }
           >
             <Button icon={<UploadOutlined />}>
@@ -700,8 +707,8 @@ class ConfigPDB2PQR extends ConfigForm{
           accept=".DAT"
           action={upload_url}
           fileList={this.state.userffFileList}
-          beforeUpload={ (e) => this.beforeUpload(e, this, 'userff')}
-          onChange={ (e) => this.handleUpload(e, this, 'userff') }
+          beforeUpload={ (e, fileList) => this.beforeUpload(e, fileList, this, 'userff')}
+          // onChange={ (e) => this.handleUpload(e, this, 'userff') }
           onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'USERFFFILE', 'userffFileList') }
         >
           <Button icon={<UploadOutlined />}> Select File </Button>
@@ -713,8 +720,8 @@ class ConfigPDB2PQR extends ConfigForm{
           accept=".names"
           action={upload_url}
           fileList={this.state.namesFileList}
-          beforeUpload={ (e) => this.beforeUpload(e, this, 'names')}
-          onChange={ (e) => this.handleUpload(e, this, 'names') }
+          beforeUpload={ (e, fileList) => this.beforeUpload(e, fileList, this, 'names')}
+          // onChange={ (e) => this.handleUpload(e, this, 'names') }
           onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'NAMESFILE', 'namesFileList') }
         >
           <Button icon={<UploadOutlined />}> Select File </Button>
@@ -741,8 +748,8 @@ class ConfigPDB2PQR extends ConfigForm{
         accept=".mol2"
         action={upload_url}
         fileList={this.state.ligandFileList}
-        beforeUpload={ (e) => this.beforeUpload(e, this, 'ligand')}
-        onChange={ (e) => this.handleUpload(e, this, 'ligand') }
+        beforeUpload={ (e, fileList) => this.beforeUpload(e, fileList, this, 'ligand')}
+        // onChange={ (e) => this.handleUpload(e, this, 'ligand') }
         onRemove={ (e) => this.removeSelectedUploadFile(e, this, 'LIGANDFILE', 'ligandFileList') }
       >
         <Button icon={<UploadOutlined />}> Select File </Button>
