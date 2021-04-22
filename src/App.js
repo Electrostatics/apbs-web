@@ -119,9 +119,12 @@ class App extends Component {
     // PDB2PQR page
     // Renders configuration elements to set up an PDB2PQR job
     else if (this.state.cur_page === PAGES.pdb2pqr){
+      let query_args = new URLSearchParams(this.props.query)
+      let show_cli_args = query_args.get('show_cli')
+
       document.title = "Tools | Configure a PDB2PQR job";
       bcrumb = this.createServiceBreadcrumb(['Tools', 'PDB2PQR Job Configuration'])
-      content = <ConfigPDB2PQR />;
+      content = <ConfigPDB2PQR show_cli={show_cli_args}/>;
     }
     
     // APBS page
