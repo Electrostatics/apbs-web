@@ -938,7 +938,7 @@ class ConfigPDB2PQR extends ConfigForm{
     ]     
 
     /** Get customized header/label options for CLI popover */
-    const title_level = 4
+    const title_level = 5
     const cli_popovers = this.renderCLIPopoverContents(additionalOptions)
     let cli_builder = null
     if( this.show_cli === true ){
