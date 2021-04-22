@@ -8,6 +8,7 @@ import '@ant-design/compatible/assets/index.css';
 import {
   Affix,
   Layout,
+  Typography,
   Menu,
   Button,
   // Switch,
@@ -27,6 +28,7 @@ import { Redirect } from 'react-router-dom';
 import ConfigForm from './utils/formutils';
 // import '../styles/configJob.css'
 const { Content, Sider } = Layout;
+const { Text, Title, Paragraph } = Typography;
 
 const OptionsMapping = {
   'atomsnotclose'   : 'DEBUMP',
@@ -54,8 +56,9 @@ class ConfigPDB2PQR extends ConfigForm{
     }
 
     // Dynamic command line building
-    this.show_cli = this.props.show_cli
-    this.cli_options = this.getCommandLineDict()
+    this.show_cli = true ? this.props.show_cli === 'true' : false
+    this.options_mapping = this.getOptionsCliMapping()
+    this.cli_options = this.getCommandLineArgsDict()
     
     this.state = {
       
@@ -87,6 +90,9 @@ class ConfigPDB2PQR extends ConfigForm{
         OPTIONS:        [ 'atomsnotclose', 'optimizeHnetwork', 'makeapbsin', 'removewater' ],
       },
 
+      // CLI Tracking
+      cli_command: null,
+
       // Submission flags
       job_submit: false,
       successful_submit: false,
@@ -100,17 +106,41 @@ class ConfigPDB2PQR extends ConfigForm{
   }
 
   componentDidMount(){
-    if(this.props.jobid){
-      this.setState({ jobid: this.props.jobid })
-    }
-    else{
-      // AWS: We get new jobid at submission time
-      // this.getNewJobID()
-    }
+    // Initialize cli_command string
+    this.setState({ 
+      cli_command: this.getCommandLine(this.state.form_values)
+    })
+
+    // if(this.props.jobid){
+    //   this.setState({ jobid: this.props.jobid })
+    // }
+    // else{
+    //   // AWS: We get new jobid at submission time
+    //   // this.getNewJobID()
+    // }
   }
 
-  getCommandLineDict(){
+  getOptionsCliMapping(){
+    return({
+      'atomsnotclose'   : 'debump',
+      'optimizeHnetwork': 'opt',
+      'assignfrommol2'  : 'ligand',
+      'makeapbsin'      : 'apbsinput',
+      'keepchainids'    : 'chain',
+      'insertwhitespace': 'whitespace',
+      'maketypemap'     : 'typemap',
+      'neutralnterminus': 'neutraln',
+      'neutralcterminus': 'neutralc',
+      'removewater'     : 'dropwater',
+    })
+  }
+
+  getCommandLineArgsDict(){
     let cli_dict = {
+      // PDB and PQR positional args
+      pdb_path:    { name: null, type: 'string', placeholder_text: 'PDB_PATH' },
+      pqr_path:    { name: null, type: 'string', placeholder_text: 'PQR_OUTPUT_PATH' },
+
       // pKa options
       ph_calc_method: { name: '--ph-calc-method', type: 'string', placeholder_text: 'PH_METHOD' },
       with_ph:        { name: '--with-ph',        type: 'float',  placeholder_text: 'PH' },
@@ -140,7 +170,90 @@ class ConfigPDB2PQR extends ConfigForm{
     return cli_dict
   }
 
-  getCLIPopoverContents(additional_options){
+  getCommandLine(form_items){
+    let command = 'python pdb2pqr.py'
+    
+    // Append pKa options
+    if( form_items.PKACALCMETHOD !== 'none' ){
+      let pka_args = `${this.cli_options.ph_calc_method.name}=${form_items.PKACALCMETHOD} ${this.cli_options.with_ph.name}=${form_items.PH}`
+      command = `${command} ${pka_args}`
+    }
+
+    // Append forcefield options
+    let ff_args
+    if( form_items.FF === 'user' ){
+      let userff_filename = form_items.USERFFFILE
+      let names_filename  = form_items.NAMESFILE
+      if( userff_filename === '' ) userff_filename = this.cli_options.userff.placeholder_text
+      if( names_filename === '' ) names_filename = this.cli_options.usernames.placeholder_text
+
+      ff_args = `${this.cli_options.ff.name}=${userff_filename} ${this.cli_options.usernames.name}=${names_filename}`
+    }else{
+      ff_args = `${this.cli_options.ff.name}=${form_items.FF}`
+    }
+    command = `${command} ${ff_args}`
+
+    // Append output forcefield options
+    let ffout_args = ''
+    if( form_items.FFOUT !== 'internal' ){
+      ffout_args = `${this.cli_options.ffout.name}=${form_items.FFOUT}`
+      command = `${command} ${ffout_args}`
+    }
+    
+    // Append ligand options
+    let ligand_args
+    if( form_items.LIGANDFILE !== '' && form_items.OPTIONS.includes('assignfrommol2')){
+      ligand_args = `${this.cli_options.ligand.name}=${form_items.LIGANDFILE}`
+      command = `${command} ${ligand_args}`
+    }
+
+    // Append other options
+    let additional_args = ''
+    let to_debump = true
+    let to_opt = true
+    for( let option of Object.keys(this.options_mapping) ){
+      if( form_items.OPTIONS.includes(option) && ['atomsnotclose', 'optimizeHnetwork'].includes(option) ){
+        if( option === 'atomsnotclose' ) to_debump = false
+        else if( option === 'optimizeHnetwork' ) to_opt = false
+      }else if( form_items.OPTIONS.includes(option) ){
+        let cli_arg = this.cli_options[ this.options_mapping[option] ].name
+        additional_args = `${additional_args} ${cli_arg}`
+      }
+    }
+    if( to_debump ) command = `${command} ${this.cli_options.debump.name}`
+    if( to_opt ) command = `${command} ${this.cli_options.opt.name}`
+    if( additional_args.length > 0 ) command = `${command} ${additional_args}`
+
+    // Append PDB/PQR positional arguments
+    let pdb_arg = this.cli_options.pdb_path.placeholder_text
+    let pqr_arg = this.cli_options.pqr_path.placeholder_text
+    let pdb_name
+    if( form_items.PDBSOURCE === "ID"){
+      pdb_name = form_items.PDBID
+    }
+    else{
+      pdb_name = form_items.PDBFILE.slice(0, -4)
+    }
+    if( pdb_name !== "" ){
+      pdb_arg = `${pdb_name}.pdb`
+      pqr_arg = `${pdb_name}.pqr`
+    }
+    command = `${command} ${pdb_arg} ${pqr_arg}`
+
+    return command
+  }
+
+  renderCommandLine(command_string){
+    return(
+      <div>
+        <Text code copyable>
+          {command_string}
+        </Text>
+      </div>
+    )
+  }
+
+  renderCLIPopoverContents(additional_options){
     let popover_titles
     let popover_contents = {}
 
@@ -183,10 +296,16 @@ class ConfigPDB2PQR extends ConfigForm{
       </div>
 
     // pKa Options
+    let pka_text
+    if( this.state.form_values['PKACALCMETHOD'] === 'none' ){
+      pka_text = <div> {this.cli_options.ph_calc_method.name}=<b>{this.state.form_values['PKACALCMETHOD']}</b> <s>{this.cli_options.with_ph.name}=<b>{this.state.form_values['PH']}</b></s> </div>
+    }else{
+      pka_text = <div> {this.cli_options.ph_calc_method.name}=<b>{this.state.form_values['PKACALCMETHOD']}</b> {this.cli_options.with_ph.name}=<b>{this.state.form_values['PH']}</b> </div>
+    }
     popover_contents['pka'] = 
       <div>
         <code>
-          {this.cli_options.ph_calc_method.name}=<b>{this.state.form_values['PKACALCMETHOD']}</b> {this.cli_options.with_ph.name}=<b>{this.state.form_values['PH']}</b>
+          {pka_text}
         </code>
       </div>
 
@@ -235,10 +354,15 @@ class ConfigPDB2PQR extends ConfigForm{
     // let itemValue = e.target.value;
     // let itemName  = e.target.name;
 
-    // Update form values 
+    // Update form values and update CLI string
     let form_values = this.state.form_values;
     form_values[itemName] = itemValue;
-    this.setState({ form_values })
+    let updated_command = this.getCommandLine( form_values )
+    console.log(updated_command)
+    this.setState({ 
+      form_values: form_values,
+      cli_command: updated_command,
+    })
 
     console.log(itemName +": "+ itemValue);
     switch(itemName){
@@ -313,11 +437,6 @@ class ConfigPDB2PQR extends ConfigForm{
       // if(self.state.jobid == undefined){
       //   self.getNewJobID()
       // }
-
-      let form_and_options = this.state.form_values;
-      for(let option of form_and_options['OPTIONS']){
-        form_and_options[OptionsMapping[option]] = option
-      }
 
       // let form_post_url = `${window._env_.WORKFLOW_URL}/api/workflow/${self.state.jobid}/pdb2pqr`;
       let form_post_url = `${window._env_.WORKFLOW_URL}/${this.state.jobid}/pdb2pqr`;
@@ -503,6 +622,7 @@ class ConfigPDB2PQR extends ConfigForm{
     // console.log(file)
     // console.log(file.name.endsWith('.pdb'))
     let form_values = self.state.form_values;
+    let cli_command = self.state.cli_command
     if( file_type === 'pdb' ){
       if(!file.name.toLowerCase().endsWith('.pdb')){
         message.error('You must upload a PDB (*.pdb) file!');
@@ -547,8 +667,8 @@ class ConfigPDB2PQR extends ConfigForm{
       }
     }
 
-    self.setState({ form_values })
-    // return true;
+    cli_command = self.getCommandLine( form_values ) // update CLI command string
+    self.setState({ form_values, cli_command })
     return false;
   }
 
@@ -818,7 +938,19 @@ class ConfigPDB2PQR extends ConfigForm{
     ]     
 
     /** Get customized header/label options for CLI popover */
-    const cli_popovers = this.getCLIPopoverContents(additionalOptions)
+    const title_level = 4
+    const cli_popovers = this.renderCLIPopoverContents(additionalOptions)
+    let cli_builder = null
+    if( this.show_cli === true ){
+      // cli_builder = this.renderCommandLine(this.state.cli_command)
+      cli_builder = 
+        <div>
+          <Title level={title_level}>Command (debug):</Title>
+          <Paragraph>
+            {this.renderCommandLine(this.state.cli_command)}
+          </Paragraph>
+        </div>
+    }
 
     /** Builds checkbox options for the Additional Options header */
     let optionChecklist = [];
@@ -868,7 +1000,11 @@ class ConfigPDB2PQR extends ConfigForm{
         <Col offset={1}>
           <Form layout="vertical" onFinish={ this.newHandleJobSubmit } >
           {/* <Form onSubmit={ (e) => this.handleJobSubmit(e, this) }> */}
+          
+            {cli_builder}
+
             {/** Form item for PDB Source (id | upload) */}
+            <Title level={title_level}>PDB Selection</Title>
             <Form.Item
               // id="pdbid"
               label="PDB Source"
@@ -901,10 +1037,11 @@ class ConfigPDB2PQR extends ConfigForm{
             {this.renderRegistrationButton()}
             
             {/** Form item for pKa option*/}
+            <Title level={title_level}>pKa Options</Title>
             <Popover placement="bottomLeft" title={cli_popovers.title} content={cli_popovers.contents.pka}>
               <Form.Item
                 // id="pka"
-                label="pKa Options"
+                // label="pKa Options"
               >
                 {/* <Switch checkedChildren="pKa Calculation" unCheckedChildren="pKa Calculation" defaultChecked={true} /><br/> */}
                 pH: <InputNumber name="PH" min={0} max={14} step={0.5} value={this.state.form_values.PH} onChange={(e) => this.handleFormChange(e, 'PH')} /><br/>
@@ -919,6 +1056,7 @@ class ConfigPDB2PQR extends ConfigForm{
             </Popover>
   
             {/** Form item for forcefield choice */}
+            <Title level={title_level}>Forcefield Options</Title>
             <Popover placement="bottomLeft" title={cli_popovers.title} content={cli_popovers.contents.ff}>
               <Form.Item
                 id="forcefield"
@@ -958,10 +1096,11 @@ class ConfigPDB2PQR extends ConfigForm{
               </Form.Item>
             </Popover>
             
+            <Title level={title_level}>Additional Options</Title>
             {/** Form item for choosing additional options (defined earlier) */}
             <Form.Item
               id="addedoptions"
-              label="Additional Options"
+              // label="Additional Options"
             >
               <Checkbox.Group name="OPTIONS" value={this.state.form_values.OPTIONS} onChange={(e) => this.handleFormChange(e, "OPTIONS")}>
                 {optionChecklist}
