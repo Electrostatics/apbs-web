@@ -102,13 +102,13 @@ class MyFooter extends Component{
                 </Col></Row> */}
                    
                 {/* <Row><Col span={20} offset={2}> */}
-                <Row>
+                <Row key='horizontal-rule-footer'>
                     <Col span={20}>
                         {/* <hr/> */}
                         <br/>
                     </Col>
                 </Row>
-                <Row style={{ fontSize: 16 }}>
+                <Row key='citation-prompt' style={{ fontSize: 16 }}>
                     <Col span={20} >
                     <b>If using APBS/PDB2PQR in a publication, please cite the respective software: </b><br/>
                     {/* <i>{pdb2pqrCitationText}</i><br/><br/> */}
@@ -117,11 +117,11 @@ class MyFooter extends Component{
 
                 {/* PDB2PQR citation text plus its tooltips */}
 
-                <Row>
+                <Row key='apbs-citation'>
                     <Col span={2}>
                         <b>APBS: </b>
                     </Col>
-                    <Col span={16}>
+                    <Col span={18}>
                         <i>{apbsCitationText}</i>
                     </Col>
 
@@ -137,11 +137,11 @@ class MyFooter extends Component{
                 </Row>
 
                 {/* PDB2PQR citation text plus its tooltips */}
-                <Row>
+                <Row key='pdb2pqr-citation'>
                     <Col span={2}>
                         <b>PDB2PQR: </b>
                     </Col>
-                    <Col span={16}>
+                    <Col span={18}>
                         <i>{pdb2pqrCitationText}</i>
                     </Col>
                     <Col offset={1}>
@@ -155,7 +155,7 @@ class MyFooter extends Component{
                 </Row>
                 
                 {/* Links to APBS & PDB2PQR GitHub */}
-                <Row>
+                <Row key='github-links'>
                     <br/>
                     <Col push={10}>
                         <Popover content={github_popover_content} title="GitHub Repositories" trigger="hover" placement="rightTop">

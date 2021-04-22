@@ -119,16 +119,19 @@ class App extends Component {
     // PDB2PQR page
     // Renders configuration elements to set up an PDB2PQR job
     else if (this.state.cur_page === PAGES.pdb2pqr){
+      let query_args = new URLSearchParams(this.props.query)
+      let show_cli_args = query_args.get('show_cli')
+
       document.title = "Tools | Configure a PDB2PQR job";
       bcrumb = this.createServiceBreadcrumb(['Tools', 'PDB2PQR Job Configuration'])
-      content = <ConfigPDB2PQR />;
+      content = <ConfigPDB2PQR show_cli={show_cli_args}/>;
     }
     
     // APBS page
     // Renders configuration elements to set up an APBS job
     else if (this.state.cur_page === PAGES.apbs){
-      let queryParser = require('query-string-es5');
-      let job_id = queryParser.parse(this.props.query)['jobid']
+      let query_args = new URLSearchParams(this.props.query)
+      let job_id = query_args.get('jobid')
 
       document.title = "Tools | Configure a APBS job";
       bcrumb = this.createServiceBreadcrumb(['Tools', 'APBS Job Configuration'])
@@ -138,9 +141,9 @@ class App extends Component {
     // JOB STATUS page
     // Renders job status page
     else if (this.state.cur_page === PAGES.status){
-      let queryParser = require('query-string-es5');
-      let job_id = queryParser.parse(this.props.query)['jobid']
-      let job_type = queryParser.parse(this.props.query)['jobtype']
+      let query_args = new URLSearchParams(this.props.query)
+      let job_id = query_args.get('jobid')
+      let job_type = query_args.get('jobtype')
 
       document.title = `Job Status - ${job_id}`;
       bcrumb = this.createServiceBreadcrumb(['Tools', 'Job Status', job_id])
