@@ -503,20 +503,14 @@ class ConfigPDB2PQR extends ConfigForm{
         for( let file_name of Object.keys(url_table) ){
           let presigned_url = url_table[file_name]
 
-          // Add fetch to promise list
-          let body = new FormData()
-          body.append('file', upload_file_data[file_name])
-          fetch_list.push(
-            fetch(presigned_url,{
-              method: 'PUT',
-              body: upload_file_data[file_name],
-              // body: body,
-              headers: {
-                'Content-Type': '', // Removed in order to successfully PUT to S3
-                // 'Content-Length': upload_file_data[file_name].size
-              }
-            })
-          )
+          if( file_name !== job_file_name ){
+            // Add fetch to promise list
+            let body = new FormData()
+            body.append('file', upload_file_data[file_name])
+            fetch_list.push(
+              self.uploadFileToS3(presigned_url, upload_file_data[file_name])
+            )
+          }
         }
 
         let successful_submit = true
@@ -530,6 +524,15 @@ class ConfigPDB2PQR extends ConfigForm{
                 break
               }
             }
+
+            // Upload job config file
+            let job_config_file_url = url_table[ job_file_name ]
+            self.uploadFileToS3( job_config_file_url, upload_file_data[job_file_name] )
+            .then( job_upload_response => {
+              if( job_upload_response.status < 200 || job_upload_response.status >= 300 ){
+                successful_submit = false
+              }
+            })
 
             // Might do additional stuff here
 
@@ -550,6 +553,16 @@ class ConfigPDB2PQR extends ConfigForm{
       })
     }
   }
+
+  // uploadConfigFile(file_url, file_data){
+  //   return fetch(file_url, {
+  //     method: 'PUT',
+  //     body: file_data,
+  //     headers: {
+  //       'Content-Type': '', // Removed in order to successfully PUT to S3
+  //     }
+  //   })
+  // }
 
   togglePdbUploadButton(show_upload){
     this.setState({

@@ -90,7 +90,6 @@ class ConfigForm extends Component{
   saveIdToStorage(jobid){
     
   }
-  
 
   toggleRegisterButton(show_button){
     this.setState({
@@ -122,6 +121,16 @@ class ConfigForm extends Component{
         </Button>
       </a>
     )
+  }
+
+  uploadFileToS3(file_url, file_data){
+    return fetch(file_url, {
+      method: 'PUT',
+      body: file_data,
+      headers: {
+        'Content-Type': '', // Removed in order to successfully PUT to S3
+      }
+    })
   }
 
   /** Submission button rendered by default. If submission button's pressed,

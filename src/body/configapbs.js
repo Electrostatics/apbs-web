@@ -102,6 +102,7 @@ class ConfigAPBS extends ConfigForm {
     // this.handleFormChange = this.handleFormChange.bind(this)
     // this.handlePqrUpload = this.handlePqrUpload.bind(this);
     // this.calc_method_component = this.renderMethodFormItems();
+    // this.handleNewJobSubmit = this.handleNewJobSubmit.bind(this)
   }
 
   renderRegistrationButton(){
@@ -134,8 +135,10 @@ class ConfigAPBS extends ConfigForm {
 
 
   /** If user tries submitting job again, raise alert. */
-  handleNewJobSubmit(e, self){
+  // handleNewJobSubmit(e, self){
+  handleNewJobSubmit(e){
     e.preventDefault();
+    let self = this
     console.log('WE IN NEWJOBSUBMIT')
     if(self.state.job_submit)
       alert("Job is submitted. Redirecting to job status page");
@@ -217,20 +220,14 @@ class ConfigAPBS extends ConfigForm {
           for( let file_name of Object.keys(url_table) ){
             let presigned_url = url_table[file_name]
   
-            // Add fetch to promise list
-            let body = new FormData()
-            body.append('file', upload_file_data[file_name])
-            fetch_list.push(
-              fetch(presigned_url,{
-                method: 'PUT',
-                body: upload_file_data[file_name],
-                // body: body,
-                headers: {
-                  'Content-Type': '', // Removed in order to successfully PUT to S3
-                  // 'Content-Length': upload_file_data[file_name].size
-                }
-              })
-            )
+            if(  file_name !== job_file_name ){
+              // Add fetch to promise list
+              let body = new FormData()
+              body.append('file', upload_file_data[file_name])
+              fetch_list.push(
+                self.uploadFileToS3(presigned_url, upload_file_data[file_name])
+              )
+            }
           }
 
           let successful_submit = true
@@ -243,6 +240,16 @@ class ConfigAPBS extends ConfigForm {
                   break
                 }
               }
+
+              // Upload job config file
+              let job_config_file_url = url_table[ job_file_name ]
+              self.uploadFileToS3( job_config_file_url, upload_file_data[job_file_name] )
+              .then( job_upload_response => {
+                if( job_upload_response.status < 200 || job_upload_response.status >= 300 ){
+                  successful_submit = false
+                }
+              })
+              
               // Might do additional stuff here
             })
             .catch((error) => {
@@ -262,6 +269,15 @@ class ConfigAPBS extends ConfigForm {
     }
   }
 
+  // uploadConfigFile(file_url, file_data){
+  //   return fetch(file_url, {
+  //     method: 'PUT',
+  //     body: file_data,
+  //     headers: {
+  //       'Content-Type': '', // Removed in order to successfully PUT to S3
+  //     }
+  //   })
+  // }
 
   componentDidMount(){
     if(this.props.jobid){
@@ -900,7 +916,7 @@ class ConfigAPBS extends ConfigForm {
   renderConfigFormTabular(){
     // console.log(this.state.parent_form_values.mol)
     return (
-      <Form onSubmit={ (e) => this.handleNewJobSubmit(e, this)} layout="vertical">
+      <Form onSubmit={ (e) => this.handleNewJobSubmit(e)} layout="vertical">
       {/* <Form action={window._env_.API_URL + "/submit/apbs"} method="POST" onSubmit={this.handleJobSubmit} name="thisform" encType="multipart/form-data"> */}
       {/* <Form action={window._env_.API_URL + "/submit/apbs/json"} method="POST" onSubmit={this.handleNewJobSubmit} name="thisform" encType="multipart/form-data"> */}
         <Row>
@@ -1027,7 +1043,7 @@ class ConfigAPBS extends ConfigForm {
   renderConfigFormInfile(){
     // console.log(this.state.parent_form_values.mol)
     return (
-      <Form onSubmit={ (e) => this.handleNewJobSubmit(e, this)} layout="vertical">
+      <Form onSubmit={ (e) => this.handleNewJobSubmit(e)} layout="vertical">
       {/* <Form action={window._env_.API_URL + "/submit/apbs"} method="POST" onSubmit={this.handleJobSubmit} name="thisform" encType="multipart/form-data"> */}
       {/* <Form action={window._env_.API_URL + "/submit/apbs/json"} method="POST" onSubmit={this.handleNewJobSubmit} name="thisform" encType="multipart/form-data"> */}
         <Row>
