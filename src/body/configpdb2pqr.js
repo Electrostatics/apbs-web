@@ -484,73 +484,75 @@ class ConfigPDB2PQR extends ConfigForm{
       }
 
       console.log( upload_file_names )
-
       
       // Attempt to upload all input files
-      fetch(window._env_.API_TOKEN_URL,{
-        method: 'POST',
-        body: JSON.stringify(token_request_payload)
-      })
-      .then( response => response.json() )
-      .then( data => {
-        let jobid = data['job_id']
-        let url_table = data['urls']
+      this.uploadJobFiles(job_file_name, token_request_payload, upload_file_data)
+      
+      // // Attempt to upload all input files
+      // fetch(window._env_.API_TOKEN_URL,{
+      //   method: 'POST',
+      //   body: JSON.stringify(token_request_payload)
+      // })
+      // .then( response => response.json() )
+      // .then( data => {
+      //   let jobid = data['job_id']
+      //   let url_table = data['urls']
 
-        // Create payload for job config file (*job.json)
-        // For every URL
-        //    - fetch file to S3
-        let fetch_list = []
-        for( let file_name of Object.keys(url_table) ){
-          let presigned_url = url_table[file_name]
+      //   // Create payload for job config file (*job.json)
+      //   // For every URL
+      //   //    - fetch file to S3
+      //   let fetch_list = []
+      //   for( let file_name of Object.keys(url_table) ){
+      //     let presigned_url = url_table[file_name]
 
-          if( file_name !== job_file_name ){
-            // Add fetch to promise list
-            let body = new FormData()
-            body.append('file', upload_file_data[file_name])
-            fetch_list.push(
-              self.uploadFileToS3(presigned_url, upload_file_data[file_name])
-            )
-          }
-        }
+      //     if( file_name !== job_file_name ){
+      //       // Add fetch to promise list
+      //       let body = new FormData()
+      //       body.append('file', upload_file_data[file_name])
+      //       fetch_list.push(
+      //         self.uploadFileToS3(presigned_url, upload_file_data[file_name])
+      //       )
+      //     }
+      //   }
 
-        let successful_submit = true
-        // let successful_submit = false
-        Promise.all( fetch_list )
-          .then(function(all_responses){
-            // Check response codes of each upload response
-            for( let response of all_responses ){
-              if( response.status < 200 || response.status >= 300 ){
-                successful_submit = false
-                break
-              }
-            }
+      //   let successful_submit = true
+      //   // let successful_submit = false
+      //   Promise.all( fetch_list )
+      //     .then(function(all_responses){
+      //       // Check response codes of each upload response
+      //       for( let response of all_responses ){
+      //         if( response.status < 200 || response.status >= 300 ){
+      //           successful_submit = false
+      //           break
+      //         }
+      //       }
 
-            // Upload job config file
-            let job_config_file_url = url_table[ job_file_name ]
-            self.uploadFileToS3( job_config_file_url, upload_file_data[job_file_name] )
-            .then( job_upload_response => {
-              if( job_upload_response.status < 200 || job_upload_response.status >= 300 ){
-                successful_submit = false
-              }
-            })
+      //       // Upload job config file
+      //       let job_config_file_url = url_table[ job_file_name ]
+      //       self.uploadFileToS3( job_config_file_url, upload_file_data[job_file_name] )
+      //       .then( job_upload_response => {
+      //         if( job_upload_response.status < 200 || job_upload_response.status >= 300 ){
+      //           successful_submit = false
+      //         }
+      //       })
 
-            // Might do additional stuff here
+      //       // Might do additional stuff here
 
-          })
-          .catch(error => {
-            console.error('Error: ', error)
-            successful_submit = false
-          })
-          .finally(() => {
-            // Set flag to redirect to job status page
-            self.setState({ 
-              jobid: jobid,
-              successful_submit: successful_submit,
-              job_submit: false,
-            })
-          })
+      //     })
+      //     .catch(error => {
+      //       console.error('Error: ', error)
+      //       successful_submit = false
+      //     })
+      //     .finally(() => {
+      //       // Set flag to redirect to job status page
+      //       self.setState({ 
+      //         jobid: jobid,
+      //         successful_submit: successful_submit,
+      //         job_submit: false,
+      //       })
+      //     })
 
-      })
+      // })
     }
   }
 
