@@ -4,30 +4,13 @@ import 'antd/dist/antd.css'
 import { Form } from '@ant-design/compatible';
 import '@ant-design/compatible/assets/index.css';
 import {
-  Affix,
   Layout,
-  Menu,
   Button,
-  Switch,
-  Input,
-  Radio,
-  Checkbox,
-  Row,
-  Col,
-  InputNumber,
-  Tooltip,
-  Upload,
   Collapse,
-  Spin,
 } from 'antd';
 import { FormOutlined } from '@ant-design/icons';
-import RadioGroup from 'antd/lib/radio/group';
 import '../../styles/utils.css'
 import '../../styles/configJob.css';
-
-
-const { Content, Sider } = Layout;
-const Panel = Collapse.Panel;
 
 class ConfigForm extends Component{
   constructor(props){
@@ -71,14 +54,9 @@ class ConfigForm extends Component{
   getNewJobID(){
     console.log('inside getNewJobID')
     let id_gen_url = window._env_.ID_URL
-    // let id_gen_url = window._env_.ID_URL + '/api/uid'
-    // console.log(id_gen_url)
     fetch(id_gen_url)
     .then(response => response.json())
     .then(data => {
-      // console.log(data)
-      // console.log(data.job_id)
-      // console.log(data['job_id'])
       this.setState({
           jobid : data['job_id']
       })
