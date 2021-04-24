@@ -433,23 +433,17 @@ class ConfigPDB2PQR extends ConfigForm{
         job_submit: true
       })
 
-      // // Obtain a job id if not within props
-      // if(self.state.jobid == undefined){
-      //   self.getNewJobID()
-      // }
+      // Map additional options to expected values; add to payload
+      let form_and_options = this.state.form_values;
+      for(let option of form_and_options['OPTIONS']){
+        form_and_options[OptionsMapping[option]] = option
+      }
 
-      // let form_post_url = `${window._env_.WORKFLOW_URL}/api/workflow/${self.state.jobid}/pdb2pqr`;
-      let form_post_url = `${window._env_.WORKFLOW_URL}/${this.state.jobid}/pdb2pqr`;
       let payload = {
-        form : this.state.form_values,
+        form : form_and_options,
         metadata: { }
       }
       
-      let form_post_headers = {
-        'x-requested-with': '',
-        'Content-Type': 'application/json'
-      }
-
       /**
        * Get presigned URLs for files we plan to upload
        */
