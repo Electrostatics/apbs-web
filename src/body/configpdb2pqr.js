@@ -202,8 +202,12 @@ class ConfigPDB2PQR extends ConfigForm{
     
     // Append ligand options
     let ligand_args
-    if( form_items.LIGANDFILE !== '' && form_items.OPTIONS.includes('assignfrommol2')){
-      ligand_args = `${this.cli_options.ligand.name}=${form_items.LIGANDFILE}`
+    if( form_items.OPTIONS.includes('assignfrommol2')){
+      if( form_items.LIGANDFILE !== '' ){
+        ligand_args = `${this.cli_options.ligand.name}=${form_items.LIGANDFILE}`
+      }else{
+        ligand_args = `${this.cli_options.ligand.name}=${this.cli_options.ligand.placeholder_text}`
+      }
       command = `${command} ${ligand_args}`
     }
 
@@ -215,7 +219,7 @@ class ConfigPDB2PQR extends ConfigForm{
       if( form_items.OPTIONS.includes(option) && ['atomsnotclose', 'optimizeHnetwork'].includes(option) ){
         if( option === 'atomsnotclose' ) to_debump = false
         else if( option === 'optimizeHnetwork' ) to_opt = false
-      }else if( form_items.OPTIONS.includes(option) ){
+      }else if( form_items.OPTIONS.includes(option) && option !== 'assignfrommol2' ){
         let cli_arg = this.cli_options[ this.options_mapping[option] ].name
         additional_args = `${additional_args} ${cli_arg}`
       }
@@ -433,23 +437,21 @@ class ConfigPDB2PQR extends ConfigForm{
         job_submit: true
       })
 
-      // // Obtain a job id if not within props
-      // if(self.state.jobid == undefined){
-      //   self.getNewJobID()
-      // }
+      // Map additional options to expected values; add to payload
+      let form_and_options = this.state.form_values;
+      for(let option of form_and_options['OPTIONS']){
+        form_and_options[OptionsMapping[option]] = option
+      }
 
-      // let form_post_url = `${window._env_.WORKFLOW_URL}/api/workflow/${self.state.jobid}/pdb2pqr`;
-      let form_post_url = `${window._env_.WORKFLOW_URL}/${this.state.jobid}/pdb2pqr`;
       let payload = {
-        form : this.state.form_values,
-        metadata: { }
+        form : form_and_options,
+        metadata: {
+          cli: {
+            command: this.state.cli_command
+          }
+        }
       }
       
-      let form_post_headers = {
-        'x-requested-with': '',
-        'Content-Type': 'application/json'
-      }
-
       /**
        * Get presigned URLs for files we plan to upload
        */
@@ -484,70 +486,9 @@ class ConfigPDB2PQR extends ConfigForm{
       }
 
       console.log( upload_file_names )
-
       
       // Attempt to upload all input files
-      fetch(window._env_.API_TOKEN_URL,{
-        method: 'POST',
-        body: JSON.stringify(token_request_payload)
-      })
-      .then( response => response.json() )
-      .then( data => {
-        let jobid = data['job_id']
-        let url_table = data['urls']
-
-        // Create payload for job config file (*job.json)
-        // For every URL
-        //    - fetch file to S3
-        let fetch_list = []
-        for( let file_name of Object.keys(url_table) ){
-          let presigned_url = url_table[file_name]
-
-          // Add fetch to promise list
-          let body = new FormData()
-          body.append('file', upload_file_data[file_name])
-          fetch_list.push(
-            fetch(presigned_url,{
-              method: 'PUT',
-              body: upload_file_data[file_name],
-              // body: body,
-              headers: {
-                'Content-Type': '', // Removed in order to successfully PUT to S3
-                // 'Content-Length': upload_file_data[file_name].size
-              }
-            })
-          )
-        }
-
-        let successful_submit = true
-        // let successful_submit = false
-        Promise.all( fetch_list )
-          .then(function(all_responses){
-            // Check response codes of each upload response
-            for( let response of all_responses ){
-              if( response.status < 200 || response.status >= 300 ){
-                successful_submit = false
-                break
-              }
-            }
-
-            // Might do additional stuff here
-
-          })
-          .catch(error => {
-            console.error('Error: ', error)
-            successful_submit = false
-          })
-          .finally(() => {
-            // Set flag to redirect to job status page
-            self.setState({ 
-              jobid: jobid,
-              successful_submit: successful_submit,
-              job_submit: false,
-            })
-          })
-
-      })
+      this.uploadJobFiles(job_file_name, token_request_payload, upload_file_data)
     }
   }
 

@@ -4,30 +4,13 @@ import 'antd/dist/antd.css'
 import { Form } from '@ant-design/compatible';
 import '@ant-design/compatible/assets/index.css';
 import {
-  Affix,
   Layout,
-  Menu,
   Button,
-  Switch,
-  Input,
-  Radio,
-  Checkbox,
-  Row,
-  Col,
-  InputNumber,
-  Tooltip,
-  Upload,
   Collapse,
-  Spin,
 } from 'antd';
 import { FormOutlined } from '@ant-design/icons';
-import RadioGroup from 'antd/lib/radio/group';
 import '../../styles/utils.css'
 import '../../styles/configJob.css';
-
-
-const { Content, Sider } = Layout;
-const Panel = Collapse.Panel;
 
 class ConfigForm extends Component{
   constructor(props){
@@ -71,14 +54,9 @@ class ConfigForm extends Component{
   getNewJobID(){
     console.log('inside getNewJobID')
     let id_gen_url = window._env_.ID_URL
-    // let id_gen_url = window._env_.ID_URL + '/api/uid'
-    // console.log(id_gen_url)
     fetch(id_gen_url)
     .then(response => response.json())
     .then(data => {
-      // console.log(data)
-      // console.log(data.job_id)
-      // console.log(data['job_id'])
       this.setState({
           jobid : data['job_id']
       })
@@ -90,7 +68,6 @@ class ConfigForm extends Component{
   saveIdToStorage(jobid){
     
   }
-  
 
   toggleRegisterButton(show_button){
     this.setState({
@@ -122,6 +99,86 @@ class ConfigForm extends Component{
         </Button>
       </a>
     )
+  }
+
+  uploadFileToS3(file_url, file_data){
+    return fetch(file_url, {
+      method: 'PUT',
+      body: file_data,
+      headers: {
+        'Content-Type': '', // Removed in order to successfully PUT to S3
+      }
+    })
+  }
+
+  uploadJobFiles(job_file_name, token_request_payload, upload_file_data){
+    let self = this
+
+    // Attempt to upload all input files
+    fetch(window._env_.API_TOKEN_URL,{
+      method: 'POST',
+      body: JSON.stringify(token_request_payload)
+    })
+    .then( response => response.json() )
+    .then( data => {
+      let jobid = data['job_id']
+      let url_table = data['urls']
+
+      // Create payload for job config file (*job.json)
+      // For every URL
+      //    - fetch file to S3
+      let fetch_list = []
+      for( let file_name of Object.keys(url_table) ){
+        let presigned_url = url_table[file_name]
+
+        if( file_name !== job_file_name ){
+          // Add fetch to promise list
+          let body = new FormData()
+          body.append('file', upload_file_data[file_name])
+          fetch_list.push(
+            self.uploadFileToS3(presigned_url, upload_file_data[file_name])
+          )
+        }
+      }
+
+      let successful_submit = true
+      // let successful_submit = false
+      Promise.all( fetch_list )
+        .then(function(all_responses){
+          // Check response codes of each upload response
+          for( let response of all_responses ){
+            if( response.status < 200 || response.status >= 300 ){
+              successful_submit = false
+              break
+            }
+          }
+
+          // Upload job config file
+          let job_config_file_url = url_table[ job_file_name ]
+          self.uploadFileToS3( job_config_file_url, upload_file_data[job_file_name] )
+          .then( job_upload_response => {
+            if( job_upload_response.status < 200 || job_upload_response.status >= 300 ){
+              successful_submit = false
+            }
+          })
+
+          // Might do additional stuff here
+
+        })
+        .catch(error => {
+          console.error('Error: ', error)
+          successful_submit = false
+        })
+        .finally(() => {
+          // Set flag to redirect to job status page
+          self.setState({ 
+            jobid: jobid,
+            successful_submit: successful_submit,
+            job_submit: false,
+          })
+        })
+
+    })
   }
 
   /** Submission button rendered by default. If submission button's pressed,

@@ -90,11 +90,13 @@ class JobStatus extends Component{
       current_jobid: props.jobid,
 
       totalElapsedTime: 0,
-      pdb2pqrElapsedTime: this.elapsedIntervalPDB2PQR,
-      apbsElapsedTime: 0,
       elapsedTime: {
         apbs: this.elapsedIntervalAPBS,
         pdb2pqr: this.elapsedIntervalPDB2PQR,
+      },
+      stop_computing_time:{
+        apbs: false,
+        pdb2pqr: false,
       },
       // full_request: getStatusJSON(this.props.jobid),
       // job_status_response: null
@@ -161,6 +163,8 @@ class JobStatus extends Component{
   componentWillUnmount(){
     clearInterval(this.fetchIntervalPDB2PQR);
     clearInterval(this.fetchIntervalAPBS);
+    clearInterval(this.elapsedIntervalPDB2PQR)
+    clearInterval(this.elapsedIntervalAPBS)
   }
 
   /** Stops polling the job status if fetched status isn't 'running' */
@@ -233,6 +237,12 @@ class JobStatus extends Component{
           // TODO: 2021/03/02, Elvis - Try using the backoff method
           if( self.fetchIntervalErrorCount[jobtype] > self.fetchIntervalErrorLimit ){
             clearInterval( interval )
+
+            // Tell elasped time interval to stop by assigned stop flag to True
+            let timer_flags = {}
+            Object.assign(timer_flags, self.state.stop_computing_time)
+            timer_flags[jobtype] = true
+            self.setState({ stop_computing_time: timer_flags })
           } else { 
             self.fetchIntervalErrorCount[jobtype]++ 
           }
@@ -308,6 +318,7 @@ class JobStatus extends Component{
     let self = this;
     let start = null;
     let statuses = ["complete", "error", null];
+    let accept_jobtypes = ['apbs', 'pdb2pqr']
     let interval = setInterval(function(){
       let end = new Date().getTime() / 1000;
       
@@ -324,15 +335,12 @@ class JobStatus extends Component{
       }
       console.log("start: "+start)
       console.log("end: "+end)
-      // console.log("start state: "+self.state.pdb2pqr.startTime)
 
-
-      let elapsed = null;
       let elapsedDate = null;
       let elapsedHours = null;
       let elapsedMin = null;
       let elapsedSec = null;
-      if(start != null){
+      if(start !== null){
         let elapsed = (end - start)*1000;
         console.log("elapsed: "+elapsed)
         
@@ -350,27 +358,21 @@ class JobStatus extends Component{
       }
 
       // Applies the computed elapsed time value to the appropriate jobtype
-      if(jobtype == 'pdb2pqr'){
-        self.setState({pdb2pqrElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
+      if( accept_jobtypes.includes(jobtype) ){
+        let current_elapsed_times = {}
+        Object.assign(current_elapsed_times, self.state.elapsedTime)
+        current_elapsed_times[jobtype] = elapsedHours+':'+elapsedMin+':'+elapsedSec
         self.setState({
-          elapsedTime: {
-            apbs: self.state.elapsedTime.apbs,
-            pdb2pqr: elapsedHours+':'+elapsedMin+':'+elapsedSec
-          } 
-        });
-        if(statuses.includes(self.state.pdb2pqr.status)) clearInterval(interval);
+          elapsedTime: current_elapsed_times
+        })
+        if(statuses.includes(self.state[jobtype].status)) clearInterval(interval);
+
       }
-      else if(jobtype == 'apbs'){
-        self.setState({apbsElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
-        self.setState({
-          elapsedTime: {
-            apbs: elapsedHours+':'+elapsedMin+':'+elapsedSec,
-            pdb2pqr: self.state.elapsedTime.pdb2pqr,
-          } 
-        });
-        if(statuses.includes(self.state.apbs.status)) clearInterval(interval);
-      }
-      // self.setState({totalElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
+
+      // Stop interval if flag is raised (job not found after X attempts)
+      if( self.state.stop_computing_time[jobtype] ){
+        clearInterval( interval )
+      } 
     }, 1000);
 
     return interval;
