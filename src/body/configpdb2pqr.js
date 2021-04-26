@@ -202,8 +202,12 @@ class ConfigPDB2PQR extends ConfigForm{
     
     // Append ligand options
     let ligand_args
-    if( form_items.LIGANDFILE !== '' && form_items.OPTIONS.includes('assignfrommol2')){
-      ligand_args = `${this.cli_options.ligand.name}=${form_items.LIGANDFILE}`
+    if( form_items.OPTIONS.includes('assignfrommol2')){
+      if( form_items.LIGANDFILE !== '' ){
+        ligand_args = `${this.cli_options.ligand.name}=${form_items.LIGANDFILE}`
+      }else{
+        ligand_args = `${this.cli_options.ligand.name}=${this.cli_options.ligand.placeholder_text}`
+      }
       command = `${command} ${ligand_args}`
     }
 
@@ -215,7 +219,7 @@ class ConfigPDB2PQR extends ConfigForm{
       if( form_items.OPTIONS.includes(option) && ['atomsnotclose', 'optimizeHnetwork'].includes(option) ){
         if( option === 'atomsnotclose' ) to_debump = false
         else if( option === 'optimizeHnetwork' ) to_opt = false
-      }else if( form_items.OPTIONS.includes(option) ){
+      }else if( form_items.OPTIONS.includes(option) && option !== 'assignfrommol2' ){
         let cli_arg = this.cli_options[ this.options_mapping[option] ].name
         additional_args = `${additional_args} ${cli_arg}`
       }
@@ -441,7 +445,11 @@ class ConfigPDB2PQR extends ConfigForm{
 
       let payload = {
         form : form_and_options,
-        metadata: { }
+        metadata: {
+          cli: {
+            command: this.state.cli_command
+          }
+        }
       }
       
       /**
