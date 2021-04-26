@@ -90,8 +90,6 @@ class JobStatus extends Component{
       current_jobid: props.jobid,
 
       totalElapsedTime: 0,
-      // pdb2pqrElapsedTime: this.elapsedIntervalPDB2PQR,
-      // apbsElapsedTime: 0,
       elapsedTime: {
         apbs: this.elapsedIntervalAPBS,
         pdb2pqr: this.elapsedIntervalPDB2PQR,
@@ -337,10 +335,7 @@ class JobStatus extends Component{
       }
       console.log("start: "+start)
       console.log("end: "+end)
-      // console.log("start state: "+self.state.pdb2pqr.startTime)
 
-
-      let elapsed = null;
       let elapsedDate = null;
       let elapsedHours = null;
       let elapsedMin = null;
@@ -363,35 +358,7 @@ class JobStatus extends Component{
       }
 
       // Applies the computed elapsed time value to the appropriate jobtype
-      // if(jobtype == 'pdb2pqr'){
-      //   self.setState({pdb2pqrElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
-      //   self.setState({
-      //     elapsedTime: {
-      //       apbs: self.state.elapsedTime.apbs,
-      //       pdb2pqr: elapsedHours+':'+elapsedMin+':'+elapsedSec
-      //     } 
-      //   });
-      //   if(statuses.includes(self.state.pdb2pqr.status)) clearInterval(interval);
-      // }
-      // else if(jobtype == 'apbs'){
-      //   self.setState({apbsElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
-      //   self.setState({
-      //     elapsedTime: {
-      //       apbs: elapsedHours+':'+elapsedMin+':'+elapsedSec,
-      //       pdb2pqr: self.state.elapsedTime.pdb2pqr,
-      //     } 
-      //   });
-      //   if(statuses.includes(self.state.apbs.status)) clearInterval(interval);
-      // }
-
       if( accept_jobtypes.includes(jobtype) ){
-        // if( jobtype === 'pdb2pqr' ){
-        //   self.setState({pdb2pqrElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
-        // }
-        // else if( jobtype === 'apbs' ){
-        //   self.setState({apbsElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
-        // }
-
         let current_elapsed_times = {}
         Object.assign(current_elapsed_times, self.state.elapsedTime)
         current_elapsed_times[jobtype] = elapsedHours+':'+elapsedMin+':'+elapsedSec
@@ -402,12 +369,10 @@ class JobStatus extends Component{
 
       }
 
-      // if( self.fetchIntervalErrorCount[jobtype] > self.fetchIntervalErrorLimit && ['apbs', 'pdb2pqr'].includes(jobtype) ){
+      // Stop interval if flag is raised (job not found after X attempts)
       if( self.state.stop_computing_time[jobtype] ){
         clearInterval( interval )
       } 
-
-      // self.setState({totalElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
     }, 1000);
 
     return interval;
