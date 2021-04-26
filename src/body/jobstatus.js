@@ -96,6 +96,10 @@ class JobStatus extends Component{
         apbs: this.elapsedIntervalAPBS,
         pdb2pqr: this.elapsedIntervalPDB2PQR,
       },
+      stop_computing_time:{
+        apbs: false,
+        pdb2pqr: false,
+      },
       // full_request: getStatusJSON(this.props.jobid),
       // job_status_response: null
       // job_status_response: "hello world",
@@ -161,6 +165,8 @@ class JobStatus extends Component{
   componentWillUnmount(){
     clearInterval(this.fetchIntervalPDB2PQR);
     clearInterval(this.fetchIntervalAPBS);
+    clearInterval(this.elapsedIntervalPDB2PQR)
+    clearInterval(this.elapsedIntervalAPBS)
   }
 
   /** Stops polling the job status if fetched status isn't 'running' */
@@ -233,6 +239,12 @@ class JobStatus extends Component{
           // TODO: 2021/03/02, Elvis - Try using the backoff method
           if( self.fetchIntervalErrorCount[jobtype] > self.fetchIntervalErrorLimit ){
             clearInterval( interval )
+
+            // Tell elasped time interval to stop by assigned stop flag to True
+            let timer_flags = {}
+            Object.assign(timer_flags, self.state.stop_computing_time)
+            timer_flags[jobtype] = true
+            self.setState({ stop_computing_time: timer_flags })
           } else { 
             self.fetchIntervalErrorCount[jobtype]++ 
           }
@@ -367,9 +379,12 @@ class JobStatus extends Component{
             apbs: elapsedHours+':'+elapsedMin+':'+elapsedSec,
             pdb2pqr: self.state.elapsedTime.pdb2pqr,
           } 
-        });
-        if(statuses.includes(self.state.apbs.status)) clearInterval(interval);
-      }
+
+      // if( self.fetchIntervalErrorCount[jobtype] > self.fetchIntervalErrorLimit && ['apbs', 'pdb2pqr'].includes(jobtype) ){
+      if( self.state.stop_computing_time[jobtype] ){
+        clearInterval( interval )
+      } 
+
       // self.setState({totalElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
     }, 1000);
 
