@@ -90,8 +90,8 @@ class JobStatus extends Component{
       current_jobid: props.jobid,
 
       totalElapsedTime: 0,
-      pdb2pqrElapsedTime: this.elapsedIntervalPDB2PQR,
-      apbsElapsedTime: 0,
+      // pdb2pqrElapsedTime: this.elapsedIntervalPDB2PQR,
+      // apbsElapsedTime: 0,
       elapsedTime: {
         apbs: this.elapsedIntervalAPBS,
         pdb2pqr: this.elapsedIntervalPDB2PQR,
@@ -320,6 +320,7 @@ class JobStatus extends Component{
     let self = this;
     let start = null;
     let statuses = ["complete", "error", null];
+    let accept_jobtypes = ['apbs', 'pdb2pqr']
     let interval = setInterval(function(){
       let end = new Date().getTime() / 1000;
       
@@ -344,7 +345,7 @@ class JobStatus extends Component{
       let elapsedHours = null;
       let elapsedMin = null;
       let elapsedSec = null;
-      if(start != null){
+      if(start !== null){
         let elapsed = (end - start)*1000;
         console.log("elapsed: "+elapsed)
         
@@ -362,23 +363,44 @@ class JobStatus extends Component{
       }
 
       // Applies the computed elapsed time value to the appropriate jobtype
-      if(jobtype == 'pdb2pqr'){
-        self.setState({pdb2pqrElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
+      // if(jobtype == 'pdb2pqr'){
+      //   self.setState({pdb2pqrElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
+      //   self.setState({
+      //     elapsedTime: {
+      //       apbs: self.state.elapsedTime.apbs,
+      //       pdb2pqr: elapsedHours+':'+elapsedMin+':'+elapsedSec
+      //     } 
+      //   });
+      //   if(statuses.includes(self.state.pdb2pqr.status)) clearInterval(interval);
+      // }
+      // else if(jobtype == 'apbs'){
+      //   self.setState({apbsElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
+      //   self.setState({
+      //     elapsedTime: {
+      //       apbs: elapsedHours+':'+elapsedMin+':'+elapsedSec,
+      //       pdb2pqr: self.state.elapsedTime.pdb2pqr,
+      //     } 
+      //   });
+      //   if(statuses.includes(self.state.apbs.status)) clearInterval(interval);
+      // }
+
+      if( accept_jobtypes.includes(jobtype) ){
+        // if( jobtype === 'pdb2pqr' ){
+        //   self.setState({pdb2pqrElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
+        // }
+        // else if( jobtype === 'apbs' ){
+        //   self.setState({apbsElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
+        // }
+
+        let current_elapsed_times = {}
+        Object.assign(current_elapsed_times, self.state.elapsedTime)
+        current_elapsed_times[jobtype] = elapsedHours+':'+elapsedMin+':'+elapsedSec
         self.setState({
-          elapsedTime: {
-            apbs: self.state.elapsedTime.apbs,
-            pdb2pqr: elapsedHours+':'+elapsedMin+':'+elapsedSec
-          } 
-        });
-        if(statuses.includes(self.state.pdb2pqr.status)) clearInterval(interval);
+          elapsedTime: current_elapsed_times
+        })
+        if(statuses.includes(self.state[jobtype].status)) clearInterval(interval);
+
       }
-      else if(jobtype == 'apbs'){
-        self.setState({apbsElapsedTime: elapsedHours+':'+elapsedMin+':'+elapsedSec});
-        self.setState({
-          elapsedTime: {
-            apbs: elapsedHours+':'+elapsedMin+':'+elapsedSec,
-            pdb2pqr: self.state.elapsedTime.pdb2pqr,
-          } 
 
       // if( self.fetchIntervalErrorCount[jobtype] > self.fetchIntervalErrorLimit && ['apbs', 'pdb2pqr'].includes(jobtype) ){
       if( self.state.stop_computing_time[jobtype] ){
