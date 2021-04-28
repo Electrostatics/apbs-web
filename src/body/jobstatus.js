@@ -489,6 +489,9 @@ class JobStatus extends Component{
   }
 
   createFileListItem(item){
+    let item_split = item.split('/')
+    let file_name = item_split[ item_split.length-1 ]
+
     let action_list = [
       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>
     ]
@@ -502,7 +505,7 @@ class JobStatus extends Component{
 
     return (
       <List.Item actions={action_list}>
-        {item.split('/')[1]}
+        {file_name}
       </List.Item>
     )
   }
@@ -754,15 +757,29 @@ class JobStatus extends Component{
                 header={<h3>Input</h3>}
                 dataSource={this.state[jobtype].files_input}
                 // dataSource={(jobtype === "pdb2pqr") ? this.state.pdb2pqr.files : this.state.apbs.files}
-                renderItem={ item => (
+                // renderItem={ item => (
+                //     <List.Item actions={[
+                //       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>,
+                //       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>,
+                //     ]}>
+                //     {/* <List.Item actions={[<a href={window._env_.STORAGE_URL+'/'+item}><Button type="primary" icon="download">Download</Button></a>]}> */}
+                //       {item.split('/')[1]}
+                //     </List.Item>
+                //   )}
+                renderItem={ (item) => {
+                  let item_split = item.split('/')
+                  let file_name = item_split[ item_split.length-1 ]
+                  return(
                     <List.Item actions={[
                       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>,
                       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>,
                     ]}>
                     {/* <List.Item actions={[<a href={window._env_.STORAGE_URL+'/'+item}><Button type="primary" icon="download">Download</Button></a>]}> */}
-                      {item.split('/')[1]}
+                      {/* {item.split('/')[1]} */}
+                      {file_name}
                     </List.Item>
-                  )}
+                  )
+                }}
               />
               <br/>
               <List
