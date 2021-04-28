@@ -203,8 +203,14 @@ class JobStatus extends Component{
       self.elapsedIntervalAPBS = self.computeElapsedTime('apbs')
     
     let status_filename = `${jobtype}-status.json`
+    let status_date_prefix = ''
+    if( self.usingJobDate() ){
+      status_date_prefix = `/${self.props.jobdate}`
+    }
+    
+    let status_url = `${window._env_.OUTPUT_BUCKET_HOST}${status_date_prefix}/${self.props.jobid}/${status_filename}`
     let interval = setInterval(function(){
-      fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${self.props.jobid}/${status_filename}`)
+      fetch(status_url)
         .then(response => response.json())
         .then(data => {
             // Convert any urls in inputFiles to {jobid}/{filename}
@@ -308,6 +314,12 @@ class JobStatus extends Component{
     return (numString > 9) ? numString : '0'+ numString;
   }
 
+  usingJobDate(){
+    if( this.props.jobdate !== null )
+      return true
+    else
+      return false
+  }
 
   /** Compute the elapsed time of a submitted job,
    *  for as long as it is 'running'.

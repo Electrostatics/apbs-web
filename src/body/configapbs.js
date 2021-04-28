@@ -24,7 +24,6 @@ import {
   Tabs,
 } from 'antd';
 // import Radio.Group from 'antd/lib/radio/group';
-import { Redirect } from 'react-router-dom';
 import ConfigForm from './utils/formutils';
 import { MgAuto, MgPara, MgManual, FeManual, MgDummy
        } from './apbs/calculationtypes';
@@ -45,6 +44,7 @@ class ConfigAPBS extends ConfigForm {
 
     this.state = {
       job_submit: false,
+      job_date: null,
       successful_submit: false,
 
       allCollapsed : true,
@@ -1015,7 +1015,7 @@ class ConfigAPBS extends ConfigForm {
   render(){
     let rendered_config = null;
     if ( this.state.successful_submit ){
-      rendered_config = <Redirect to={`/jobstatus?jobtype=apbs&jobid=${this.state.jobid}`}/>
+      rendered_config = this.redirectToStatusPage('apbs')
     }
     else{
       if( this.props.jobid )

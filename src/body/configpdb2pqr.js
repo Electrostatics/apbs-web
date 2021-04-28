@@ -24,7 +24,6 @@ import {
   // Spin,
   message,
 } from 'antd';
-import { Redirect } from 'react-router-dom';
 import ConfigForm from './utils/formutils';
 // import '../styles/configJob.css'
 const { Content, Sider } = Layout;
@@ -95,6 +94,7 @@ class ConfigPDB2PQR extends ConfigForm{
 
       // Submission flags
       job_submit: false,
+      job_date: null,
       successful_submit: false,
 
       // Registration button states
@@ -934,7 +934,7 @@ class ConfigPDB2PQR extends ConfigForm{
     };
 
     if (this.state.successful_submit){
-      return <Redirect to={`/jobstatus?jobtype=pdb2pqr&jobid=${this.state.jobid}`}/>
+      return this.redirectToStatusPage('pdb2pqr')
     }
     else{
       return(
