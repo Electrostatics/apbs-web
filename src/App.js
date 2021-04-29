@@ -144,6 +144,7 @@ class App extends Component {
       let query_args = new URLSearchParams(this.props.query)
       let job_id = query_args.get('jobid')
       let job_type = query_args.get('jobtype')
+      let job_date = query_args.get('date')
 
       document.title = `Job Status - ${job_id}`;
       bcrumb = this.createServiceBreadcrumb(['Tools', 'Job Status', job_id])
@@ -151,6 +152,7 @@ class App extends Component {
         <JobStatus
           jobid={job_id}
           jobtype={job_type}
+          jobdate={job_date}
         />;
     }
 

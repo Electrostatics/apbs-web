@@ -8,6 +8,7 @@ import {
   Button,
   Collapse,
 } from 'antd';
+import { Redirect } from 'react-router-dom';
 import { FormOutlined } from '@ant-design/icons';
 import '../../styles/utils.css'
 import '../../styles/configJob.css';
@@ -18,6 +19,7 @@ class ConfigForm extends Component{
     this.state = {
 
       job_submit: false,
+      job_date: null,
       show_register_button: false,
     }
 
@@ -123,6 +125,7 @@ class ConfigForm extends Component{
     .then( data => {
       let jobid = data['job_id']
       let url_table = data['urls']
+      let job_date = data['date']
 
       // Create payload for job config file (*job.json)
       // For every URL
@@ -175,10 +178,19 @@ class ConfigForm extends Component{
             jobid: jobid,
             successful_submit: successful_submit,
             job_submit: false,
+            job_date: job_date,
           })
         })
 
     })
+  }
+
+  redirectToStatusPage(job_type){
+    let date_query_param = ''
+    if(this.state.job_date !== undefined && this.state.job_date !== null ){
+      date_query_param = `&date=${this.state.job_date}`
+    }
+    return <Redirect to={`/jobstatus?jobtype=${job_type}&jobid=${this.state.jobid}${date_query_param}`}/>
   }
 
   /** Submission button rendered by default. If submission button's pressed,
