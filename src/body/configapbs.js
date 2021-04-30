@@ -221,11 +221,14 @@ class ConfigAPBS extends ConfigForm {
   fetchAutofillData(jobid){
     let self = this
     let server_domain = window._env_.API_URL;
+    let autofill_objectname = ''
+    if( self.usingJobDate() ){
+      autofill_objectname = `${self.props.jobdate}/${jobid}/${jobid}-input.json`
+    }else{
+      autofill_objectname = `${jobid}/${jobid}-input.json`
+    }
 
-    console.log('jobid: '+ jobid)
-    console.log('comp: ')
-    // fetch(`${window._env_.AUTOFILL_URL}/${jobid}/apbs`)
-    fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${jobid}-input.json`)
+    fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${autofill_objectname}`)
       .then(response => response.json())
       .then(data => {
         console.log(data)

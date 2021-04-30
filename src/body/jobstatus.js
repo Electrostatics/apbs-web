@@ -205,10 +205,10 @@ class JobStatus extends Component{
     let status_filename = `${jobtype}-status.json`
     let status_date_prefix = ''
     if( self.usingJobDate() ){
-      status_date_prefix = `/${self.props.jobdate}`
+      status_date_prefix = `${self.props.jobdate}/`
     }
-    
-    let status_url = `${window._env_.OUTPUT_BUCKET_HOST}${status_date_prefix}/${self.props.jobid}/${status_filename}`
+
+    let status_url = `${window._env_.OUTPUT_BUCKET_HOST}/${status_date_prefix}${self.props.jobid}/${status_filename}`
     let interval = setInterval(function(){
       fetch(status_url)
         .then(response => response.json())
@@ -218,7 +218,7 @@ class JobStatus extends Component{
             for( let path of data[jobtype].inputFiles ){
               if( path.startsWith('https://') ){
                 let path_basename = path.split('/').slice(-1)[0]
-                let converted_path = `${data.jobid}/${path_basename}`
+                let converted_path = `${status_date_prefix}${data.jobid}/${path_basename}`
                 inputFiles.push( converted_path )
               }else{
                 inputFiles.push( path )
@@ -654,7 +654,11 @@ class JobStatus extends Component{
       let apbs_button_block = null
       // if ( jobtype !== undefined ){
       if ( jobtype === 'pdb2pqr' ){
-        let apbs_config_url = `/apbs?jobid=${this.props.jobid}`
+        let date_query_param = ''
+        if( this.usingJobDate() ){
+          date_query_param = `&date=${this.props.jobdate}`
+        }
+        let apbs_config_url = `/apbs?jobid=${this.props.jobid}${date_query_param}`
         let is_disabled = true;
         if (this.state[jobtype].status === 'complete'){
           // TODO: Use alternative means to determine if user requested APBS input file
@@ -688,7 +692,11 @@ class JobStatus extends Component{
         }
         // load visualizer button link if on the respective job status page
         // let viz_3dmol_url = `/viz/3dmol?jobid=${this.props.jobid}&pqr=${pqr_prefix}`
-        let viz_3dmol_url = `${window._env_.VIZ_URL}?jobid=${this.props.jobid}&pqr=${pqr_prefix}`
+        let date_query_param_3dmol = ''
+        if( this.usingJobDate() ){
+          date_query_param_3dmol = `&date=${this.props.jobdate}`
+        }
+        let viz_3dmol_url = `${window._env_.VIZ_URL}?jobid=${this.props.jobid}&pqr=${pqr_prefix}${date_query_param_3dmol}`
         let is_disabled = true;
         if (this.state[jobtype].status === 'complete') is_disabled = false;
         viz_button_block = 

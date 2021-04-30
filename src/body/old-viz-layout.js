@@ -36,7 +36,13 @@ class VizLegacyPage extends Component{
         let query_args = new URLSearchParams(this.props.query)
 
         this.jobid = query_args.get('jobid')
+        this.jobdate = query_args.get('date')
         this.pqr_prefix = query_args.get('pqr')
+        this.use_gzip = true ? query_args.get('gz') === 'true' : false
+        
+        this.dx_objectname = null
+        this.decompress_dx_file = null
+
         this.storage_host = window._env_.OUTPUT_BUCKET_HOST
     
         // 3dmol global objects
@@ -116,6 +122,51 @@ class VizLegacyPage extends Component{
     componentDidMount(){
         console.log('loading GL viewer')
         this.glviewer = this.createGlViewer()
+
+        // Find related volume data filename
+        this.findSurfacePotentialFilename()
+        .then(() => {
+            // Load molecule and surface
+            this.getpqr( this.jobid, this.pqr_prefix, this.storage_host )
+            this.get_volume_data( this.jobid, this.pqr_prefix, 'dx' )    
+        })
+    }
+
+    usingJobDate(){
+        if( this.jobdate !== null && this.jobdate !== undefined )
+            return true
+        else
+            return false
+    }
+
+    findSurfacePotentialFilename(){
+        // Download APBS status
+        // Read output file list
+        // Find DX file
+        //      - if .dx.gz is available, return file_name .dx.gz
+        //      - else return file_name w/ .dx
+        let status_objectname
+        if( this.usingJobDate() ){
+            status_objectname = `${this.jobdate}/${this.jobid}/apbs-status.json`
+        }else{
+            status_objectname = `${this.jobid}/apbs-status.json`
+        }
+        let apbs_status_url = `${window._env_.OUTPUT_BUCKET_HOST}/${status_objectname}`
+        return fetch(apbs_status_url)
+        .then(response => response.json())
+        .then(data => {
+            for( let object_name of data['apbs'].outputFiles){
+                if( object_name.endsWith('.gz.dx') ){
+                    this.dx_objectname = object_name
+                    this.decompress_dx_file = true
+                    break
+                }else if( object_name.endsWith('.dx') ){
+                    this.dx_objectname = object_name
+                    this.decompress_dx_file = false
+                }
+            }
+        })
+        .catch(error => { console.error(error) })
     }
 
     createGlViewer(){
@@ -137,7 +188,12 @@ class VizLegacyPage extends Component{
             // let xhr = new XMLHttpRequest();
             // jobid = 14357857643;
             // let url = storage_url+"/"+jobid+"/"+pqr_prefix+".pqr";
-            let pqr_url = `${storage_url}/${jobid}/${pqr_prefix}.pqr`
+            let pqr_url
+            if( this.usingJobDate() ){
+                pqr_url = `${storage_url}/${this.jobdate}/${jobid}/${pqr_prefix}.pqr`
+            }else{
+                pqr_url = `${storage_url}/${jobid}/${pqr_prefix}.pqr`
+            }
 
             fetch(pqr_url)
             .then(response => response.text())
@@ -170,23 +226,36 @@ class VizLegacyPage extends Component{
     get_volume_data(jobid, pqr_prefix, format){
         if( !this.volume_loaded ){
             let self = this
+            let volume_objectname = this.dx_objectname
 
-            let volume_filename
-            if(format === 'dx')
-                volume_filename = `${pqr_prefix}-pot.dx.gz`
+            // let volume_filename
+            // if(format === 'dx')
+            //     volume_filename = `${pqr_prefix}-pot.dx.gz`
 
-            else if(format === 'cube')
-                volume_filename = `${pqr_prefix}.cube.gz`
+            // else if(format === 'cube')
+            //     volume_filename = `${pqr_prefix}.cube.gz`
 
             // Retrieve file from S3
-            let volume_url = `${window._env_.OUTPUT_BUCKET_HOST}/${jobid}/${volume_filename}`
-            fetch(volume_url)
-            .then( response => response.arrayBuffer() )
-            .then( data => {
-                let inflated_response = Pako.inflate(data, {to: 'string'})
-                self.add_volume(inflated_response, format)
-                self.volume_loaded = true
-            })
+            let volume_url = `${window._env_.OUTPUT_BUCKET_HOST}/${volume_objectname}`
+
+            if( this.decompress_dx_file ){
+                // Decompress gzipped file data
+                fetch(volume_url)
+                .then( response => response.arrayBuffer() )
+                .then( data => {
+                    let inflated_response = Pako.inflate(data, {to: 'string'})
+                    self.add_volume(inflated_response, format)
+                    self.volume_loaded = true
+                })
+            }else{
+                // Load raw file data (no gzip)
+                fetch(volume_url)
+                .then( response => response.text() )
+                .then( data => {
+                    self.add_volume(data, format)
+                    self.volume_loaded = true
+                })
+            }
         }
     }
 
@@ -706,7 +775,8 @@ class VizLegacyPage extends Component{
         // Set file/path names
         const structure_name = `${job_id}_APBS`
         const pqr_name = `${job_id}.pqr`
-        const dx_name = `${job_id}-pot.dx`
+        // const dx_name = `${job_id}-pot.dx`
+        const dx_name = this.dx_objectname.split('/').slice(-1)
 
         // Write remainder text
         const remaining_text = 
@@ -734,7 +804,7 @@ class VizLegacyPage extends Component{
         const all_data = heading_text + remaining_text
 
         // Download PyMol file
-        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, `${dx_name}.gz`])
+        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, dx_name])
     }
 
     // Create and download UnityMol script
@@ -756,7 +826,7 @@ class VizLegacyPage extends Component{
         // Set file/path names
         const structure_name = `${job_id}_APBS`
         const pqr_name = `${job_id}.pqr`
-        const dx_name = `${job_id}-pot.dx`
+        const dx_name = this.dx_objectname.split('/').slice(-1)
 
         // Write remainder text
         const remaining_text = 
@@ -777,7 +847,7 @@ class VizLegacyPage extends Component{
         const all_data = heading_text + remaining_text
 
         // Download UnityMol file
-        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, `${dx_name}.gz`])
+        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, dx_name])
     }
 
     // Download files and bundle via JSZip
@@ -796,9 +866,15 @@ class VizLegacyPage extends Component{
         
         // For every file in list, download and add to zip archive
         let promise_list = []
+        let file_url_start
+        if( this.usingJobDate() ){
+            file_url_start = `${window._env_.OUTPUT_BUCKET_HOST}/${this.jobdate}/${job_id}`
+        }else{
+            file_url_start = `${window._env_.OUTPUT_BUCKET_HOST}/${job_id}`
+        }
         console.log(window._env_.OUTPUT_BUCKET_HOST)
         for( let input_name of inputfile_list){
-            let file_url = `${window._env_.OUTPUT_BUCKET_HOST}/${job_id}/${input_name}`
+            let file_url = `${file_url_start}/${input_name}`
             console.log(`Fetching file '${input_name}'`)
             console.log(`${file_url}`)
             promise_list.push( fetch( file_url ) )
@@ -1165,10 +1241,10 @@ class VizLegacyPage extends Component{
         return(
             <div>
                     {this.build_page()}
-                    {this.getpqr( this.jobid, this.pqr_prefix, this.storage_host )}
+                    {/* {this.getpqr( this.jobid, this.pqr_prefix, this.storage_host )} */}
                     {/* {this.getcube( this.jobid, this.pqr_prefix, this.storage_host )} */}
                     {/* {this.get_dx( this.jobid, this.pqr_prefix, this.storage_host )} */}
-                    {this.get_volume_data( this.jobid, this.pqr_prefix, 'dx' )}
+                    {/* {this.get_volume_data( this.jobid, this.pqr_prefix, 'dx' )} */}
             </div>
         )
     }
