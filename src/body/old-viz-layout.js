@@ -775,7 +775,8 @@ class VizLegacyPage extends Component{
         // Set file/path names
         const structure_name = `${job_id}_APBS`
         const pqr_name = `${job_id}.pqr`
-        const dx_name = `${job_id}-pot.dx`
+        // const dx_name = `${job_id}-pot.dx`
+        const dx_name = this.dx_objectname.split('/').slice(-1)
 
         // Write remainder text
         const remaining_text = 
@@ -803,7 +804,7 @@ class VizLegacyPage extends Component{
         const all_data = heading_text + remaining_text
 
         // Download PyMol file
-        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, `${dx_name}.gz`])
+        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, dx_name])
     }
 
     // Create and download UnityMol script
@@ -825,7 +826,7 @@ class VizLegacyPage extends Component{
         // Set file/path names
         const structure_name = `${job_id}_APBS`
         const pqr_name = `${job_id}.pqr`
-        const dx_name = `${job_id}-pot.dx`
+        const dx_name = this.dx_objectname.split('/').slice(-1)
 
         // Write remainder text
         const remaining_text = 
@@ -846,7 +847,7 @@ class VizLegacyPage extends Component{
         const all_data = heading_text + remaining_text
 
         // Download UnityMol file
-        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, `${dx_name}.gz`])
+        this.bundleScriptFiles(job_id, zip_export_filename, script_filename, all_data, [pqr_name, dx_name])
     }
 
     // Download files and bundle via JSZip
@@ -865,9 +866,15 @@ class VizLegacyPage extends Component{
         
         // For every file in list, download and add to zip archive
         let promise_list = []
+        let file_url_start
+        if( this.usingJobDate() ){
+            file_url_start = `${window._env_.OUTPUT_BUCKET_HOST}/${this.jobdate}/${job_id}`
+        }else{
+            file_url_start = `${window._env_.OUTPUT_BUCKET_HOST}/${job_id}`
+        }
         console.log(window._env_.OUTPUT_BUCKET_HOST)
         for( let input_name of inputfile_list){
-            let file_url = `${window._env_.OUTPUT_BUCKET_HOST}/${job_id}/${input_name}`
+            let file_url = `${file_url_start}/${input_name}`
             console.log(`Fetching file '${input_name}'`)
             console.log(`${file_url}`)
             promise_list.push( fetch( file_url ) )
