@@ -193,6 +193,13 @@ class ConfigForm extends Component{
     return <Redirect to={`/jobstatus?jobtype=${job_type}&jobid=${this.state.jobid}${date_query_param}`}/>
   }
 
+  usingJobDate(){
+    if( this.props.jobdate !== null && this.props.jobdate !== undefined )
+      return true
+    else
+      return false
+  }
+
   /** Submission button rendered by default. If submission button's pressed,
    *  button text changes with spinning icon to indicate data has been sent
    */

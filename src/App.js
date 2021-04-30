@@ -132,10 +132,11 @@ class App extends Component {
     else if (this.state.cur_page === PAGES.apbs){
       let query_args = new URLSearchParams(this.props.query)
       let job_id = query_args.get('jobid')
+      let job_date = query_args.get('date')
 
       document.title = "Tools | Configure a APBS job";
       bcrumb = this.createServiceBreadcrumb(['Tools', 'APBS Job Configuration'])
-      content = <ConfigAPBS jobid={job_id}/>;
+      content = <ConfigAPBS jobid={job_id} jobdate={job_date}/>;
     }
 
     // JOB STATUS page
