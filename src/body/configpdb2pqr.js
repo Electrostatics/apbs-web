@@ -461,19 +461,19 @@ class ConfigPDB2PQR extends ConfigForm{
       let upload_file_data = {}
       if( this.state.form_values['PDBFILE'] !== "" ){
         upload_file_names.push( this.state.form_values['PDBFILE'] )
-        upload_file_data[this.state.form_values['PDBFILE'] ] = this.state.pdbFileList[0].originFileObj
+        upload_file_data[this.state.form_values['PDBFILE'] ] = this.state.pdbFileList[0]
       }
       if( this.state.form_values['USERFFFILE'] !== "" ) {
         upload_file_names.push( this.state.form_values['USERFFFILE'] )
-        upload_file_data[this.state.form_values['USERFFFILE'] ] = this.state.userffFileList[0].originFileObj
+        upload_file_data[this.state.form_values['USERFFFILE'] ] = this.state.userffFileList[0]
       }
       if( this.state.form_values['NAMESFILE'] !== "" )  {
         upload_file_names.push( this.state.form_values['NAMESFILE'] )
-        upload_file_data[this.state.form_values['NAMESFILE'] ] = this.state.namesFileList[0].originFileObj
+        upload_file_data[this.state.form_values['NAMESFILE'] ] = this.state.namesFileList[0]
       }
       if( this.state.form_values['LIGANDFILE'] !== "" ) {
         upload_file_names.push( this.state.form_values['LIGANDFILE'] )
-        upload_file_data[this.state.form_values['LIGANDFILE'] ] = this.state.ligandFileList[0].originFileObj
+        upload_file_data[this.state.form_values['LIGANDFILE'] ] = this.state.ligandFileList[0]
       }
 
       // Add job config file/data to upload lists
