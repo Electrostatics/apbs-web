@@ -302,7 +302,7 @@ class ConfigPDB2PQR extends ConfigForm{
     // pKa Options
     let pka_text
     if( this.state.form_values['PKACALCMETHOD'] === 'none' ){
-      pka_text = <div> {this.cli_options.ph_calc_method.name}=<b>{this.state.form_values['PKACALCMETHOD']}</b> <s>{this.cli_options.with_ph.name}=<b>{this.state.form_values['PH']}</b></s> </div>
+      pka_text = <div> <s>{this.cli_options.ph_calc_method.name}=<b>{this.state.form_values['PKACALCMETHOD']}</b> {this.cli_options.with_ph.name}=<b>{this.state.form_values['PH']}</b></s> </div>
     }else{
       pka_text = <div> {this.cli_options.ph_calc_method.name}=<b>{this.state.form_values['PKACALCMETHOD']}</b> {this.cli_options.with_ph.name}=<b>{this.state.form_values['PH']}</b> </div>
     }
@@ -990,7 +990,7 @@ class ConfigPDB2PQR extends ConfigForm{
                   <Radio style={radioVertStyle} id="pka_none" value="none">    No pKa calculation </Radio>
                   <Radio style={radioVertStyle} id="pka_propka" value="propka">  Use PROPKA to assign protonation states at provided pH </Radio>
                   {/* <Tooltip placement="right" title="requires PARSE forcefield"> */}
-                    <Radio style={radioVertStyle} id="pka_pdb2pka" value="pdb2pka"> Use PDB2PKA to parametrize ligands and assign pKa values <b>(requires PARSE forcefield)</b> at provided pH </Radio>
+                    {/* <Radio style={radioVertStyle} id="pka_pdb2pka" value="pdb2pka"> Use PDB2PKA to parametrize ligands and assign pKa values <b>(requires PARSE forcefield)</b> at provided pH </Radio> */}
                   {/* </Tooltip> */}
                 </Radio.Group>
               </Form.Item>
