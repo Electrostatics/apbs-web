@@ -11,4 +11,4 @@ import ServerRouter from './router.js'
 ReactDOM.render(<ServerRouter />, document.getElementById('root'));
 
 registerServiceWorker();
-// unregister(); // TODO 2021/1/21, Elvis - Incorporate visualizer into React site
+unregister();
