@@ -124,6 +124,14 @@ class JobStatus extends Component{
         files_input: [],
         files_output: [],
       },
+      
+      // File sizes for input/output data
+      show_download_button: false,
+      file_sizes_retrieved: false,
+      filesizes:{
+        apbs: {},
+        pdb2pqr: {},
+      }
 
     }
   }
@@ -211,7 +219,17 @@ class JobStatus extends Component{
     let status_url = `${window._env_.OUTPUT_BUCKET_HOST}/${status_date_prefix}${self.props.jobid}/${status_filename}`
     let interval = setInterval(function(){
       fetch(status_url)
-        .then(response => response.json())
+        .then(response => {
+          if( !response.ok ){
+            let err = Error(`HTTP code while fetching '${status_filename}': ${response.status}`)
+            err.response = response
+            err.status = response.status
+            throw err
+          }
+
+          // Parse response into JSON
+          return response.json()
+        })
         .then(data => {
             // Convert any urls in inputFiles to {jobid}/{filename}
             let inputFiles = []
@@ -225,8 +243,21 @@ class JobStatus extends Component{
               }
             }
 
+            // If in terminal state (e.g. "complete", "error"), set flag to check sizes
+            let show_download_button = self.state.show_download_button
+            if( statusStates.includes(data[jobtype].status) 
+                && !self.state.file_sizes_retrieved
+                && jobtype === self.props.jobtype
+            ){
+              // let all_filenames = data[jobtype].inputFiles.concat(data[jobtype].outputFiles)
+              show_download_button = true
+              let all_filenames = inputFiles.concat(data[jobtype].outputFiles)
+              self.getAllFileSizes(window._env_.OUTPUT_BUCKET_HOST, all_filenames, self.props.jobid, self.props.jobdate, jobtype)
+            }
+
             // Update job-respective component states
             self.setState({
+              show_download_button: show_download_button,
               [jobtype]: {
                 status: data[jobtype].status,
                 startTime: data[jobtype].startTime,
@@ -321,6 +352,46 @@ class JobStatus extends Component{
       return false
   }
 
+  getAllFileSizes(bucket_url, objectname_list, job_id, job_date, job_type){
+    let promise_list = []
+    for( let object_name of objectname_list ){
+      if( object_name.startsWith("https://") ){
+        object_name = `${job_date}/${job_id}/${object_name.split("/").slice(-1)}`
+      }
+      promise_list.push( this.fetchObjectHead(bucket_url, object_name) )
+    }
+
+    Promise.all( promise_list )
+    .then((all_responses) =>{
+      let filesize_dict = {}
+
+      for( let i = 0; i < objectname_list.length; i++ ){
+        let object_name = objectname_list[i]
+        let response = all_responses[i]
+        
+        if(response.ok){
+          let num_bytes = response.headers.get('Content-Length')
+          filesize_dict[object_name] = parseInt(num_bytes)
+        }
+      }
+
+      let jobfile_sizes = this.state.filesizes
+      jobfile_sizes[job_type] = filesize_dict
+      this.setState({
+        file_sizes_retrieved: true,
+        filesizes: jobfile_sizes
+      })
+
+    })
+  }
+
+  fetchObjectHead(bucket_url, object_name){
+    let object_url = `${bucket_url}/${object_name}`
+    return fetch(object_url, {
+      method: 'HEAD',
+    })
+  }
+
   /** Compute the elapsed time of a submitted job,
    *  for as long as it is 'running'.
    * 
@@ -332,59 +403,59 @@ class JobStatus extends Component{
     let statuses = ["complete", "error", null];
     let accept_jobtypes = ['apbs', 'pdb2pqr']
     let interval = setInterval(function(){
-      let end = new Date().getTime() / 1000;
-      
-      console.log("\njobtype: "+jobtype)
-      if(jobtype == 'pdb2pqr'){
-        start = self.state.pdb2pqr.startTime;
-        if(self.state.pdb2pqr.endTime) end = self.state.pdb2pqr.endTime;
-        console.log("status: "+self.state.pdb2pqr.status)
-      }
-      else if(jobtype == 'apbs'){
-        start = self.state.apbs.startTime;
-        if(self.state.apbs.endTime) end = self.state.apbs.endTime;
-        console.log("status: "+self.state.apbs.status)
-      }
-      console.log("start: "+start)
-      console.log("end: "+end)
+      if(self.state[jobtype].status !== 'no_job'){
 
-      let elapsedDate = null;
-      let elapsedHours = null;
-      let elapsedMin = null;
-      let elapsedSec = null;
-      if(start !== null){
-        let elapsed = (end - start)*1000;
-        console.log("elapsed: "+elapsed)
+        let end = new Date().getTime() / 1000;
         
-        elapsedDate = new Date(elapsed);
-        console.log("elapsedDate: "+elapsedDate)
-        
-        elapsedHours = self.prependZeroIfSingleDigit( elapsedDate.getUTCHours().toString() );
-        elapsedMin = self.prependZeroIfSingleDigit( elapsedDate.getUTCMinutes().toString() );
-        elapsedSec = self.prependZeroIfSingleDigit( elapsedDate.getUTCSeconds().toString() );
+        console.log("\njobtype: "+jobtype)
+        if( accept_jobtypes.includes(jobtype) ){
+          start = self.state[jobtype].startTime
+          if(self.state[jobtype].endTime){
+            end = self.state[jobtype].endTime
+          }
+          console.log("status: "+self.state[jobtype].status)
+        }
+        console.log("start: "+start)
+        console.log("end: "+end)
+  
+        let elapsedDate = null;
+        let elapsedHours = null;
+        let elapsedMin = null;
+        let elapsedSec = null;
+        if(start !== null){
+          let elapsed = (end - start)*1000;
+          console.log("elapsed: "+elapsed)
+          
+          elapsedDate = new Date(elapsed);
+          console.log("elapsedDate: "+elapsedDate)
+          
+          elapsedHours = self.prependZeroIfSingleDigit( elapsedDate.getUTCHours().toString() );
+          elapsedMin = self.prependZeroIfSingleDigit( elapsedDate.getUTCMinutes().toString() );
+          elapsedSec = self.prependZeroIfSingleDigit( elapsedDate.getUTCSeconds().toString() );
+        }
+        else{
+          elapsedHours = '00';
+          elapsedMin = '00';
+          elapsedSec = '00';
+        }
+  
+        // Applies the computed elapsed time value to the appropriate jobtype
+        if( accept_jobtypes.includes(jobtype) ){
+          let current_elapsed_times = {}
+          Object.assign(current_elapsed_times, self.state.elapsedTime)
+          current_elapsed_times[jobtype] = elapsedHours+':'+elapsedMin+':'+elapsedSec
+          self.setState({
+            elapsedTime: current_elapsed_times
+          })
+          if(statuses.includes(self.state[jobtype].status)) clearInterval(interval);
+  
+        }
+  
+        // Stop interval if flag is raised (job not found after X attempts)
+        if( self.state.stop_computing_time[jobtype] ){
+          clearInterval( interval )
+        } 
       }
-      else{
-        elapsedHours = '00';
-        elapsedMin = '00';
-        elapsedSec = '00';
-      }
-
-      // Applies the computed elapsed time value to the appropriate jobtype
-      if( accept_jobtypes.includes(jobtype) ){
-        let current_elapsed_times = {}
-        Object.assign(current_elapsed_times, self.state.elapsedTime)
-        current_elapsed_times[jobtype] = elapsedHours+':'+elapsedMin+':'+elapsedSec
-        self.setState({
-          elapsedTime: current_elapsed_times
-        })
-        if(statuses.includes(self.state[jobtype].status)) clearInterval(interval);
-
-      }
-
-      // Stop interval if flag is raised (job not found after X attempts)
-      if( self.state.stop_computing_time[jobtype] ){
-        clearInterval( interval )
-      } 
     }, 1000);
 
     return interval;
@@ -500,20 +571,36 @@ class JobStatus extends Component{
     }
   }
 
+  // Converts byte integer to size-appropriate string
+  //    from user l2aelba via StackOverflow (https://stackoverflow.com/questions/15900485/correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript)
+  formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
   createFileListItem(item){
     let item_split = item.split('/')
     let file_name = item_split[ item_split.length-1 ]
 
     let action_list = [
+      this.formatBytes(this.state.filesizes[this.props.jobtype][item]),
       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>
     ]
 
-    // Add view option if extension is .txt, .json, or .mc
-    if( item.endsWith('.txt') || item.endsWith('.json') || item.endsWith('.mc')){
-      action_list.unshift(
-        <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>
-      )
-    }
+
+    // // Add view option if extension is .txt, .json, or .mc
+    // if( item.endsWith('.txt') || item.endsWith('.json') || item.endsWith('.mc')){
+    //   action_list.unshift(
+    //     <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>
+    //   )
+    // }
 
     return (
       <List.Item actions={action_list}>
@@ -776,26 +863,18 @@ class JobStatus extends Component{
                 bordered
                 header={<h3>Input</h3>}
                 dataSource={this.state[jobtype].files_input}
-                // dataSource={(jobtype === "pdb2pqr") ? this.state.pdb2pqr.files : this.state.apbs.files}
-                // renderItem={ item => (
-                //     <List.Item actions={[
-                //       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>,
-                //       <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>,
-                //     ]}>
-                //     {/* <List.Item actions={[<a href={window._env_.STORAGE_URL+'/'+item}><Button type="primary" icon="download">Download</Button></a>]}> */}
-                //       {item.split('/')[1]}
-                //     </List.Item>
-                //   )}
                 renderItem={ (item) => {
-                  let item_split = item.split('/')
-                  let file_name = item_split[ item_split.length-1 ]
+                  const item_split = item.split('/')
+                  const file_name = item_split[ item_split.length-1 ]
+                  let action_list = []
+                  if(this.state.show_download_button){
+                    action_list.push(
+                      this.formatBytes(this.state.filesizes[this.props.jobtype][item]),
+                      <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>, 
+                    )
+                  }
                   return(
-                    <List.Item actions={[
-                      <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item+'?view=true'} target='_BLANK' rel="noopener noreferrer"><EyeOutlined /> View </a>,
-                      <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>,
-                    ]}>
-                    {/* <List.Item actions={[<a href={window._env_.STORAGE_URL+'/'+item}><Button type="primary" icon="download">Download</Button></a>]}> */}
-                      {/* {item.split('/')[1]} */}
+                    <List.Item actions={action_list}>
                       {file_name}
                     </List.Item>
                   )
@@ -874,6 +953,7 @@ class JobStatus extends Component{
   }
 
   render(){
+    console.log('rendering')
     return(
       <Layout id="pdb2pqr">
           <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
