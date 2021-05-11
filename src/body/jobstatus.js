@@ -75,6 +75,7 @@ class JobStatus extends Component{
     this.colorCompleteStatus  = "#52C41A";
     this.colorRunningStatus   = "#1890FF";
     this.colorErrorStatus     = "#F5222D";
+    this.terminalStatuses = ["complete", "failed", "error", null]
     this.possibleJobStates = {
       submitted:   'Submitted',
       pending:     'Pending Job Start',
@@ -276,10 +277,7 @@ class JobStatus extends Component{
             clearInterval( interval )
 
             // Tell elasped time interval to stop by assigned stop flag to True
-            let timer_flags = {}
-            Object.assign(timer_flags, self.state.stop_computing_time)
-            timer_flags[jobtype] = true
-            self.setState({ stop_computing_time: timer_flags })
+            self.endStopwatch(jobtype)
           } else { 
             self.fetchIntervalErrorCount[jobtype]++ 
           }
@@ -345,6 +343,14 @@ class JobStatus extends Component{
     return (numString > 9) ? numString : '0'+ numString;
   }
 
+  endStopwatch(jobtype){
+    // Tell elasped time interval to stop by assigned stop flag to True
+    let timer_flags = {}
+    Object.assign(timer_flags, this.state.stop_computing_time)
+    timer_flags[jobtype] = true
+    this.setState({ stop_computing_time: timer_flags })
+  }
+
   usingJobDate(){
     if( this.props.jobdate !== null )
       return true
@@ -400,7 +406,6 @@ class JobStatus extends Component{
   computeElapsedTime(jobtype){
     let self = this;
     let start = null;
-    let statuses = ["complete", "error", null];
     let accept_jobtypes = ['apbs', 'pdb2pqr']
     let interval = setInterval(function(){
       if(self.state[jobtype].status !== 'no_job'){
@@ -447,7 +452,7 @@ class JobStatus extends Component{
           self.setState({
             elapsedTime: current_elapsed_times
           })
-          if(statuses.includes(self.state[jobtype].status)) clearInterval(interval);
+          if(self.terminalStatuses.includes(self.state[jobtype].status)) clearInterval(interval);
   
         }
   

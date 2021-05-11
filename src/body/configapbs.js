@@ -59,10 +59,11 @@ class ConfigAPBS extends ConfigForm {
       use_input_file: true,
       infileList: [],
       readfileList: [],
-      expected_input_files: [],
+      // expected_input_files: [],
       show_apbs_misc_upload: false,
 
       v2_form_values: {
+        support_files: [],
         filename: null
       },
       
@@ -292,7 +293,6 @@ class ConfigAPBS extends ConfigForm {
     this.setState({ child_form_values })
   }
 
-  // updateFormValues = 
 
   renderInfileUpload(){
     return (
@@ -301,7 +301,7 @@ class ConfigAPBS extends ConfigForm {
             <Upload
               name='file_data'
               accept='.in'
-              action={`${window._env_.STORAGE_URL}/${this.state.jobid}`}
+              // action={`${window._env_.STORAGE_URL}/${this.state.jobid}`}
               fileList={this.state.infileList}
               beforeUpload={ (e) => this.inspectReadfile(e, this, 'infile') }
               onChange={ (e) => this.handleInfileUpload(e, this) }
@@ -323,14 +323,15 @@ class ConfigAPBS extends ConfigForm {
             <Upload
               name='file_data'
               // accept='.pqr'
-              action={`${window._env_.STORAGE_URL}/${this.state.jobid}`}
+              // action={`${window._env_.STORAGE_URL}/${this.state.jobid}`}
               fileList={this.state.readfileList}
               beforeUpload={ (e) => this.inspectReadfile(e, this) }
               onChange={ (e) => this.handleReadfileUpload(e, this) }
               rules={[
                 {
                   required: true,
-                  message: `Please upload supporting files ${this.state.expected_input_files}`,
+                  // message: `Please upload supporting files ${this.state.expected_input_files}`,
+                  message: `Please upload one or more supporting files for APBS input`,
                 }
               ]}
             >
@@ -361,7 +362,18 @@ class ConfigAPBS extends ConfigForm {
     // fileList: info.fileList.slice(-1),
     // Only keep the last uploaded infile on display
     console.log(self.state.infileList)
-    self.setState({ infileList: info.fileList.slice(-1) })
+    if( info.fileList.length > 0 ){
+      self.setState({ infileList: info.fileList.slice(-1) })
+    }else{
+      // Reset expected files if selected file is removed
+      let updated_v2_form_values = this.state.v2_form_values
+      updated_v2_form_values.filename = null
+      self.setState({ 
+        infileList: info.fileList,
+        v2_form_values: updated_v2_form_values,
+        // expected_input_files: [],
+      })
+    }
     console.log(self.state.infileList)    
   }
   
@@ -435,18 +447,19 @@ class ConfigAPBS extends ConfigForm {
         file.text()
           .then(readfile_text => {
             // Get list of expected supporting files (e.g. *.pqr, etc.)
-            let expected_input_files = self.extractAdditionalInputFiles( readfile_text )
+            // let expected_input_files = self.extractAdditionalInputFiles( readfile_text )
             // TODO: If no READ section is found, return false (don't upload)
 
             // Reset file list if supporting files are already selected
             let readfileList = self.state.readfileList
             if( self.state.readfileList.length > 0 ){
               readfileList = []
+              v2_form_values.support_files = []
             }
 
             // Update state
             self.setState({ 
-              expected_input_files: expected_input_files,
+              // expected_input_files: expected_input_files,
               show_apbs_misc_upload: true,
               readfileList,
             })
@@ -481,14 +494,19 @@ class ConfigAPBS extends ConfigForm {
     
     self.toggleRegisterButton(true)
     
-    // Show message error if file not in expected support files
-    if( !self.state.expected_input_files.includes(info.file.name) ){
-      message.error(`Cannot upload ${info.file.name}. Please upload file(s) defined in ${self.state.v2_form_values['filename']}: ${self.state.expected_input_files}.`);
-      return
-    }
+    // // Show message error if file not in expected support files
+    // if( !self.state.expected_input_files.includes(info.file.name) ){
+    //   message.error(`Cannot upload ${info.file.name}. Please upload file(s) defined in ${self.state.v2_form_values['filename']}: ${self.state.expected_input_files}.`);
+    //   return
+    // }
 
     // have file list show most recent upload
-    self.setState({ readfileList: info.fileList })
+    let v2_form_values = this.state.v2_form_values
+    v2_form_values.support_files = info.fileList.map(file => file.name)
+    self.setState({ 
+      readfileList: info.fileList,
+      v2_form_values: v2_form_values
+    })
   }
 
   renderReadfileUpload(){
@@ -974,6 +992,10 @@ class ConfigAPBS extends ConfigForm {
       
   renderConfigFormInfile(){
     // console.log(this.state.parent_form_values.mol)
+    let clickable_button = false
+    if( this.state.v2_form_values.filename !== null && this.state.v2_form_values.support_files.length > 0 ){
+      clickable_button = true
+    }
     return (
       <Form onSubmit={ (e) => this.handleNewJobSubmit(e)} layout="vertical">
       {/* <Form action={window._env_.API_URL + "/submit/apbs"} method="POST" onSubmit={this.handleJobSubmit} name="thisform" encType="multipart/form-data"> */}
@@ -1006,7 +1028,7 @@ class ConfigAPBS extends ConfigForm {
         <Form.Item>
           <Col offset={20}>
           <Affix offsetBottom={100}>
-            {this.renderSubmitButton()}
+            {this.renderSubmitButton(clickable_button)}
           </Affix>
           </Col>
         </Form.Item>

@@ -203,7 +203,7 @@ class ConfigForm extends Component{
   /** Submission button rendered by default. If submission button's pressed,
    *  button text changes with spinning icon to indicate data has been sent
    */
-  renderSubmitButton(){
+  renderSubmitButton(button_is_clickable=true){
     let submission_text = '';
     let loading = false;
 
@@ -216,7 +216,7 @@ class ConfigForm extends Component{
 
     // TODO: return a submission bar affixed to the bottom of the window
     return (
-      <Button className='config-submit' type="primary" htmlType="submit" size='large' shape='round' loading={loading}>
+      <Button className='config-submit' type="primary" htmlType="submit" size='large' shape='round' disabled={!button_is_clickable} loading={loading}>
         {submission_text}
       </Button>
     )
