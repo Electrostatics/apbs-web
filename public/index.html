@@ -26,6 +26,21 @@
     <!-- <title>APBS-PDB2PQR Home</title> -->
     <script src="%PUBLIC_URL%/env-config.js"></script>
     <!-- <script src="%PUBLIC_URL%/ga-tagging.js"></script> -->
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async id="ga_source">
+      if(window._env_.GA_MEASUREMENT_ID !== ""){
+        document.getElementById("ga_source").src = `https://www.googletagmanager.com/gtag/js?id=${window._env_.GA_MEASUREMENT_ID}`
+      }
+    </script>
+    <script>
+      if(window._env_.GA_MEASUREMENT_ID !== ""){
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+  
+        gtag('config', window._env_.GA_MEASUREMENT_ID);
+      }
+    </script>        
   </head>
   <body>
     <noscript>
