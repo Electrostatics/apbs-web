@@ -30,6 +30,14 @@ function sendRegisterClickEvent(pageType){
       label: pageType,
     })
   }
+
+  if(hasMeasurementId()){
+    gtag('event', 'registration_click', {
+      'event_category': 'Registration',
+      'event_label': pageType,
+      // 'value': ''
+    })
+  }
 }
 
 

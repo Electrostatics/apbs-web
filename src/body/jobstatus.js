@@ -812,7 +812,7 @@ class JobStatus extends Component{
       let registration_button = 
         <div >
           Please remember to <b>register your use</b>:
-          <a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
+          <a name="registration_link" href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
           <Button
             className='registration-button' 
             type="primary"  

@@ -637,7 +637,7 @@ class ConfigPDB2PQR extends ConfigForm{
               // size='large' 
               // shape='round'
               icon={<FormOutlined />}
-              onClick={() => this.sendRegisterClickEvent('pdb2pqr')}
+              onClick={() => sendRegisterClickEvent('pdb2pqr')}
             >
               Register Here
             </Button>

@@ -47,7 +47,7 @@ class HomePage extends Component{
                                 {/* <p> </p> */}
 
                                 <br/>
-                                <p>Please <b><a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer" onClick={() => this.sendRegisterClickEvent('home')}>register</a></b> to ensure continued support for this software.</p>
+                                <p>Please <b><a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer" onClick={() => sendRegisterClickEvent('home')}>register</a></b> to ensure continued support for this software.</p>
 
                                 <br/>
                                 <p> Getting Started: </p>

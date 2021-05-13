@@ -122,7 +122,7 @@ class ConfigAPBS extends ConfigForm {
               className='registration-button' 
               type="default"  
               icon={<FormOutlined />}
-              onClick={() => this.sendRegisterClickEvent('apbs')}
+              onClick={() => sendRegisterClickEvent('apbs')}
             >
               Register Here
             </Button>
