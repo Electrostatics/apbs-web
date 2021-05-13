@@ -41,6 +41,7 @@ import { Link } from 'react-router-dom';
 
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
+import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 import { strict } from 'assert';
 
 const { Content, Sider } = Layout;
@@ -53,7 +54,7 @@ const { Content, Sider } = Layout;
 class JobStatus extends Component{
   constructor(props){
     super(props);
-    if( window._env_.GA_TRACKING_ID !== "" ) {
+    if( hasAnalyticsId() ) {
       ReactGA.set({dimension1: props.jobid})
       ReactGA.ga('_setCustomVar',1,'jobid',props.jobid,3)
       ReactGA.pageview(window.location.pathname + window.location.search)
@@ -75,6 +76,7 @@ class JobStatus extends Component{
     this.colorCompleteStatus  = "#52C41A";
     this.colorRunningStatus   = "#1890FF";
     this.colorErrorStatus     = "#F5222D";
+    this.terminalStatuses = ["complete", "failed", "error", null]
     this.possibleJobStates = {
       submitted:   'Submitted',
       pending:     'Pending Job Start',
@@ -276,10 +278,7 @@ class JobStatus extends Component{
             clearInterval( interval )
 
             // Tell elasped time interval to stop by assigned stop flag to True
-            let timer_flags = {}
-            Object.assign(timer_flags, self.state.stop_computing_time)
-            timer_flags[jobtype] = true
-            self.setState({ stop_computing_time: timer_flags })
+            self.endStopwatch(jobtype)
           } else { 
             self.fetchIntervalErrorCount[jobtype]++ 
           }
@@ -331,18 +330,26 @@ class JobStatus extends Component{
     })
   }
 
-  sendRegisterClickEvent(pageType){
-    if( window._env_.GA_TRACKING_ID !== "" ){
-      ReactGA.event({
-        category: 'Registration',
-        action: 'linkClick',
-        label: pageType,
-      })
-    }
-  }
+  // sendRegisterClickEvent(pageType){
+  //   if( window._env_.GA_TRACKING_ID !== "" ){
+  //     ReactGA.event({
+  //       category: 'Registration',
+  //       action: 'linkClick',
+  //       label: pageType,
+  //     })
+  //   }
+  // }
 
   prependZeroIfSingleDigit(numString){ 
     return (numString > 9) ? numString : '0'+ numString;
+  }
+
+  endStopwatch(jobtype){
+    // Tell elasped time interval to stop by assigned stop flag to True
+    let timer_flags = {}
+    Object.assign(timer_flags, this.state.stop_computing_time)
+    timer_flags[jobtype] = true
+    this.setState({ stop_computing_time: timer_flags })
   }
 
   usingJobDate(){
@@ -400,7 +407,6 @@ class JobStatus extends Component{
   computeElapsedTime(jobtype){
     let self = this;
     let start = null;
-    let statuses = ["complete", "error", null];
     let accept_jobtypes = ['apbs', 'pdb2pqr']
     let interval = setInterval(function(){
       if(self.state[jobtype].status !== 'no_job'){
@@ -447,7 +453,7 @@ class JobStatus extends Component{
           self.setState({
             elapsedTime: current_elapsed_times
           })
-          if(statuses.includes(self.state[jobtype].status)) clearInterval(interval);
+          if(self.terminalStatuses.includes(self.state[jobtype].status)) clearInterval(interval);
   
         }
   
@@ -806,12 +812,12 @@ class JobStatus extends Component{
       let registration_button = 
         <div >
           Please remember to <b>register your use</b>:
-          <a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
+          <a name="registration_link" href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
           <Button
             className='registration-button' 
             type="primary"  
             icon={<FormOutlined />}
-            onClick={() => this.sendRegisterClickEvent('jobStatus')}
+            onClick={() => sendRegisterClickEvent('jobStatus')}
           >
             Register Here
           </Button>

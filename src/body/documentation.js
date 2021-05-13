@@ -5,6 +5,7 @@ import { Layout, Col, Row } from 'antd';
 import { Typography } from 'antd';
 import { Divider } from 'antd';
 // import { ExportOutlined } from '@ant-design/icons'
+import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 
 const { Content } = Layout;
 const { Title, Text, Link } = Typography;
@@ -12,7 +13,7 @@ const { Title, Text, Link } = Typography;
 class DocumentationPage extends Component{
     constructor(props){
         super(props)
-        if( window._env_.GA_TRACKING_ID !== "" ) 
+        if( hasAnalyticsId() )
             ReactGA.pageview(window.location.pathname + window.location.search)
     }
     
