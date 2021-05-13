@@ -41,6 +41,7 @@ import { Link } from 'react-router-dom';
 
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
+import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 import { strict } from 'assert';
 
 const { Content, Sider } = Layout;
@@ -53,7 +54,7 @@ const { Content, Sider } = Layout;
 class JobStatus extends Component{
   constructor(props){
     super(props);
-    if( window._env_.GA_TRACKING_ID !== "" ) {
+    if( hasAnalyticsId() ) {
       ReactGA.set({dimension1: props.jobid})
       ReactGA.ga('_setCustomVar',1,'jobid',props.jobid,3)
       ReactGA.pageview(window.location.pathname + window.location.search)
@@ -329,15 +330,15 @@ class JobStatus extends Component{
     })
   }
 
-  sendRegisterClickEvent(pageType){
-    if( window._env_.GA_TRACKING_ID !== "" ){
-      ReactGA.event({
-        category: 'Registration',
-        action: 'linkClick',
-        label: pageType,
-      })
-    }
-  }
+  // sendRegisterClickEvent(pageType){
+  //   if( window._env_.GA_TRACKING_ID !== "" ){
+  //     ReactGA.event({
+  //       category: 'Registration',
+  //       action: 'linkClick',
+  //       label: pageType,
+  //     })
+  //   }
+  // }
 
   prependZeroIfSingleDigit(numString){ 
     return (numString > 9) ? numString : '0'+ numString;
@@ -816,7 +817,7 @@ class JobStatus extends Component{
             className='registration-button' 
             type="primary"  
             icon={<FormOutlined />}
-            onClick={() => this.sendRegisterClickEvent('jobStatus')}
+            onClick={() => sendRegisterClickEvent('jobStatus')}
           >
             Register Here
           </Button>
