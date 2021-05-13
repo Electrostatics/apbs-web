@@ -25,7 +25,16 @@
 
     <!-- <title>APBS-PDB2PQR Home</title> -->
     <script src="%PUBLIC_URL%/env-config.js"></script>
-    <!-- <script src="%PUBLIC_URL%/ga-tagging.js"></script> -->
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=%REACT_APP_GA_MEASUREMENT_ID%"></script>
+    <script src="/ga-config.js"></script>
+    <!-- <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '%REACT_APP_GA_MEASUREMENT_ID%', {'send_page_view': false});
+    </script>     -->
   </head>
   <body>
     <noscript>

@@ -10,6 +10,7 @@ import VizLegacyPage from './body/old-viz-layout'
 import './App.css';
 import 'antd/dist/antd.css';
 import PAGES from './common/pagenames.js';
+import { hasMeasurementId, hasAnalyticsId, sendPageView } from './body/utils/ga-utils'
 
   
 class ServerRouter extends Component{
@@ -23,11 +24,16 @@ class ServerRouter extends Component{
         this.submenuOnClick = this.submenuOnClick.bind(this);
         this.onSiderCollapse = this.onSiderCollapse.bind(this);
 
-        if( window._env_.GA_TRACKING_ID !== "" ) 
+        if( hasAnalyticsId() ) 
             ReactGA.initialize(window._env_.GA_TRACKING_ID);
         else
-            console.error('no Google Analytics ID was set')
-        
+            console.warn('no Google Analytics ID was set')
+            
+        if( hasMeasurementId() ){
+            // this.createAnalytics4Element()
+        }else{
+            console.warn('no Google Measurement ID was set')
+        }
     }
 
     /**

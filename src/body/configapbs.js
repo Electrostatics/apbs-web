@@ -24,6 +24,7 @@ import {
   Tabs,
 } from 'antd';
 // import Radio.Group from 'antd/lib/radio/group';
+import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 import ConfigForm from './utils/formutils';
 import { MgAuto, MgPara, MgManual, FeManual, MgDummy
        } from './apbs/calculationtypes';
@@ -39,8 +40,9 @@ class ConfigAPBS extends ConfigForm {
 
   constructor(props){
     super(props);
-    if( window._env_.GA_TRACKING_ID !== "" )
+    if( hasAnalyticsId() ){
       ReactGA.pageview(window.location.pathname + window.location.search)
+    }
 
     this.state = {
       job_submit: false,
@@ -120,7 +122,7 @@ class ConfigAPBS extends ConfigForm {
               className='registration-button' 
               type="default"  
               icon={<FormOutlined />}
-              onClick={() => this.sendRegisterClickEvent('apbs')}
+              onClick={() => sendRegisterClickEvent('apbs')}
             >
               Register Here
             </Button>

@@ -25,6 +25,7 @@ import {
   message,
 } from 'antd';
 import ConfigForm from './utils/formutils';
+import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 // import '../styles/configJob.css'
 const { Content, Sider } = Layout;
 const { Text, Title, Paragraph } = Typography;
@@ -49,8 +50,7 @@ class ConfigPDB2PQR extends ConfigForm{
 
   constructor(props){
     super(props);
-    // if( window._env_.GA_TRACKING_ID !== "" ) {
-    if( this.hasAnalyticsId() ){
+    if( hasAnalyticsId() ){
       ReactGA.pageview(window.location.pathname + window.location.search)
     }
 
@@ -637,7 +637,7 @@ class ConfigPDB2PQR extends ConfigForm{
               // size='large' 
               // shape='round'
               icon={<FormOutlined />}
-              onClick={() => this.sendRegisterClickEvent('pdb2pqr')}
+              onClick={() => sendRegisterClickEvent('pdb2pqr')}
             >
               Register Here
             </Button>

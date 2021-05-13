@@ -14,6 +14,7 @@ import 'antd/dist/antd.css';
 
 import { Layout, Breadcrumb, Col, Row } from 'antd';
 import DownloadPage from './body/cli-download.js';
+import { hasMeasurementId, hasAnalyticsId, sendPageView } from './body/utils/ga-utils'
 // import { Layout, Col, Menu, Icon, Tooltip, Alert } from 'antd';
 // const { Header, Content, Sider, Footer } = Layout;
 const { Header } = Layout;
@@ -33,7 +34,11 @@ class App extends Component {
         cur_page: this.props.page,  // Current page
         job_submit: false,          // Maintains if user tries clicking the Start Job button again
         // openSubmenus: {},           // Currently open submenus
-    };
+      };
+      
+      if( hasMeasurementId() ){
+        sendPageView()
+      }
   }
 
   /** 

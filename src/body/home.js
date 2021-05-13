@@ -7,13 +7,14 @@ import { Icon as LegacyIcon } from '@ant-design/compatible';
 
 import { Layout, Col, Menu, Carousel, Row, Card, Button } from 'antd';
 import { Link } from 'react-router-dom';
+import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 
 const { Content } = Layout;
 
 class HomePage extends Component{
     constructor(props){
         super(props);
-        if( window._env_.GA_TRACKING_ID !== "" ) 
+        if( hasAnalyticsId() ) 
             ReactGA.pageview(window.location.pathname + window.location.search)
     }
 
@@ -46,7 +47,7 @@ class HomePage extends Component{
                                 {/* <p> </p> */}
 
                                 <br/>
-                                <p>Please <b><a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer" onClick={() => this.sendRegisterClickEvent('home')}>register</a></b> to ensure continued support for this software.</p>
+                                <p>Please <b><a href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer" onClick={() => sendRegisterClickEvent('home')}>register</a></b> to ensure continued support for this software.</p>
 
                                 <br/>
                                 <p> Getting Started: </p>
