@@ -158,7 +158,7 @@ class ConfigPDB2PQR extends ConfigForm{
       debump:     { name: '--nodebump',   type: 'bool', placeholder_text: null },
       opt:        { name: '--noopt',      type: 'bool', placeholder_text: null },
       apbsinput:  { name: '--apbs-input', type: 'bool', placeholder_text: null },
-      chain:      { name: '--chain',      type: 'bool', placeholder_text: null },
+      chain:      { name: '--keep-chain', type: 'bool', placeholder_text: null },
       whitespace: { name: '--whitespace', type: 'bool', placeholder_text: null },
       typemap:    { name: '--typemap',    type: 'bool', placeholder_text: null },
       neutraln:   { name: '--neutraln',   type: 'bool', placeholder_text: null },
