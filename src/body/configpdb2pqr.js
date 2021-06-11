@@ -120,6 +120,17 @@ class ConfigPDB2PQR extends ConfigForm{
     // }
   }
 
+  getPdbName(){
+    let pdb_name
+    if( this.state.form_values.PDBSOURCE === "ID"){
+      pdb_name = this.state.form_values.PDBID
+    }
+    else{
+      pdb_name = this.state.form_values.PDBFILE.slice(0, -4)
+    }
+    return pdb_name
+  }
+
   getOptionsCliMapping(){
     return({
       'atomsnotclose'   : 'debump',
@@ -154,10 +165,12 @@ class ConfigPDB2PQR extends ConfigForm{
       // Ligand option
       ligand:     { name: '--ligand', type: 'string', placeholder_text: 'LIGAND_FILE' },
       
+      // APBS input option
+      apbsinput:  { name: '--apbs-input', type: 'string', placeholder_text: 'APBS_INPUT_FILENAME' },
+
       // Additional options
       debump:     { name: '--nodebump',   type: 'bool', placeholder_text: null },
       opt:        { name: '--noopt',      type: 'bool', placeholder_text: null },
-      apbsinput:  { name: '--apbs-input', type: 'bool', placeholder_text: null },
       chain:      { name: '--keep-chain', type: 'bool', placeholder_text: null },
       whitespace: { name: '--whitespace', type: 'bool', placeholder_text: null },
       typemap:    { name: '--typemap',    type: 'bool', placeholder_text: null },
@@ -172,6 +185,7 @@ class ConfigPDB2PQR extends ConfigForm{
 
   getCommandLine(form_items){
     let command = 'python pdb2pqr.py'
+    let pdb_name = this.getPdbName()
     
     // Append pKa options
     if( form_items.PKACALCMETHOD !== 'none' ){
@@ -211,6 +225,17 @@ class ConfigPDB2PQR extends ConfigForm{
       command = `${command} ${ligand_args}`
     }
 
+    // Append APBS input option
+    let apbsinput_arg
+    if( form_items.OPTIONS.includes('makeapbsin')){
+      if( pdb_name === '' ){
+        apbsinput_arg = `${this.cli_options.apbsinput.name}=${this.cli_options.apbsinput.placeholder_text}`
+      }else{
+        apbsinput_arg = `${this.cli_options.apbsinput.name}=${pdb_name}.in`
+      }
+      command = `${command} ${apbsinput_arg}`
+    }
+
     // Append other options
     let additional_args = ''
     let to_debump = true
@@ -219,7 +244,7 @@ class ConfigPDB2PQR extends ConfigForm{
       if( form_items.OPTIONS.includes(option) && ['atomsnotclose', 'optimizeHnetwork'].includes(option) ){
         if( option === 'atomsnotclose' ) to_debump = false
         else if( option === 'optimizeHnetwork' ) to_opt = false
-      }else if( form_items.OPTIONS.includes(option) && option !== 'assignfrommol2' ){
+      }else if( form_items.OPTIONS.includes(option) && !['assignfrommol2', 'makeapbsin'].includes(option) ){
         let cli_arg = this.cli_options[ this.options_mapping[option] ].name
         additional_args = `${additional_args} ${cli_arg}`
       }
@@ -231,13 +256,6 @@ class ConfigPDB2PQR extends ConfigForm{
     // Append PDB/PQR positional arguments
     let pdb_arg = this.cli_options.pdb_path.placeholder_text
     let pqr_arg = this.cli_options.pqr_path.placeholder_text
-    let pdb_name
-    if( form_items.PDBSOURCE === "ID"){
-      pdb_name = form_items.PDBID
-    }
-    else{
-      pdb_name = form_items.PDBFILE.slice(0, -4)
-    }
     if( pdb_name !== "" ){
       pdb_arg = `${pdb_name}.pdb`
       pqr_arg = `${pdb_name}.pqr`
@@ -262,6 +280,7 @@ class ConfigPDB2PQR extends ConfigForm{
     let popover_contents = {}
 
     // PDB file
+    let pdb_name = this.getPdbName()
     // popover_contents['pdb'] = 
 
     // Forcefield used
@@ -324,6 +343,17 @@ class ConfigPDB2PQR extends ConfigForm{
         </code>
       </div>
     
+    // APBS input file creation
+    let apbsinput_filename = `${pdb_name}.in`
+    if( pdb_name === '' ) apbsinput_filename = this.cli_options.apbsinput.placeholder_text
+
+    popover_contents['apbsinput'] =
+      <div>
+        <code>
+          {this.cli_options.apbsinput.name}=<b>{apbsinput_filename}</b>
+        </code>
+      </div>
+
     // Additional boolean options
     for( let option of additional_options ){
       if( !(option.cli in popover_contents) ){
@@ -872,7 +902,7 @@ class ConfigPDB2PQR extends ConfigForm{
       {name: 'INPUT',       value: 'makeapbsin',       cli: 'apbsinput',  label: 'Create an APBS input file',                                          disabled: false},
       {name: 'CHAIN',       value: 'keepchainids',     cli: 'chain',      label: 'Add/keep chain IDs in the PQR file',                                 disabled: false},
       {name: 'WHITESPACE',  value: 'insertwhitespace', cli: 'whitespace', label: 'Insert whitespaces between atom name and residue name, between x and y, and between y and z', disabled: false},
-      {name: 'TYPEMAP',     value: 'maketypemap',      cli: 'typemap',    label: 'Create Typemap output',                                              disabled: false},
+      // {name: 'TYPEMAP',     value: 'maketypemap',      cli: 'typemap',    label: 'Create Typemap output',                                              disabled: false},
       {name: 'NEUTRALN',    value: 'neutralnterminus', cli: 'neutraln',   label: 'Make the protein\'s N-terminus neutral (requires PARSE forcefield)', disabled: this.state.no_NC_terminus, },
       {name: 'NEUTRALC',    value: 'neutralcterminus', cli: 'neutralc',   label: 'Make the protein\'s C-terminus neutral (requires PARSE forcefield)', disabled: this.state.no_NC_terminus, },
       {name: 'DROPWATER',   value: 'removewater',      cli: 'dropwater',  label: 'Remove the waters from the output file',                             disabled: false},
