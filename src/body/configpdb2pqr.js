@@ -203,14 +203,14 @@ class ConfigPDB2PQR extends ConfigForm{
 
       ff_args = `${this.cli_options.ff.name}=${userff_filename} ${this.cli_options.usernames.name}=${names_filename}`
     }else{
-      ff_args = `${this.cli_options.ff.name}=${form_items.FF}`
+      ff_args = `${this.cli_options.ff.name}=${form_items.FF.toUpperCase()}`
     }
     command = `${command} ${ff_args}`
 
     // Append output forcefield options
     let ffout_args = ''
     if( form_items.FFOUT !== 'internal' ){
-      ffout_args = `${this.cli_options.ffout.name}=${form_items.FFOUT}`
+      ffout_args = `${this.cli_options.ffout.name}=${form_items.FFOUT.toUpperCase()}`
       command = `${command} ${ffout_args}`
     }
     
@@ -286,7 +286,7 @@ class ConfigPDB2PQR extends ConfigForm{
     // Forcefield used
     let ff_text
     if( this.state.form_values['FF'] !== 'user' ){
-      ff_text = <div> {this.cli_options.ff.name}=<b>{this.state.form_values['FF']}</b> </div>
+      ff_text = <div> {this.cli_options.ff.name}=<b>{this.state.form_values['FF'].toUpperCase()}</b> </div>
     }else{
       let userff_filename = this.state.form_values['USERFFFILE']
       let names_filename = this.state.form_values['NAMESFILE']
@@ -311,7 +311,7 @@ class ConfigPDB2PQR extends ConfigForm{
       // ffout_text = <div> {this.cli_options.ffout.name}=<b>{this.state.form_values['FFOUT']}</b> </div>
       ffout_text = <s> {this.cli_options.ffout.name}=<b>{this.cli_options.ffout.placeholder_text}</b> </s>
     }else{
-      ffout_text = <div> {this.cli_options.ffout.name}=<b>{this.state.form_values['FFOUT']}</b> </div>
+      ffout_text = <div> {this.cli_options.ffout.name}=<b>{this.state.form_values['FFOUT'].toUpperCase()}</b> </div>
     }
     popover_contents['ffout'] =
       <div>
