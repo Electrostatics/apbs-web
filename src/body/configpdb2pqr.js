@@ -153,8 +153,8 @@ class ConfigPDB2PQR extends ConfigForm{
       pqr_path:    { name: null, type: 'string', placeholder_text: 'PQR_OUTPUT_PATH' },
 
       // pKa options
-      ph_calc_method: { name: '--ph-calc-method', type: 'string', placeholder_text: 'PH_METHOD' },
-      with_ph:        { name: '--with-ph',        type: 'float',  placeholder_text: 'PH' },
+      ph_calc_method: { name: '--titration-state-method', type: 'string', placeholder_text: 'PH_METHOD' },
+      with_ph:        { name: '--with-ph',                type: 'float',  placeholder_text: 'PH' },
 
       // Forcefield options
       ff:         { name: '--ff',        type: 'string', placeholder_text: 'FIELD_NAME' },
