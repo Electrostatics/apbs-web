@@ -251,6 +251,14 @@ class ConfigAPBS extends ConfigForm {
     self.handleParentFormChange({}, 'pdb2pqrid', jobid)
   }
 
+  isTypeMultigrid(){
+    return this.state.parent_form_values.type.startsWith('mg-')
+  }
+  
+  isTypeFiniteElement(){
+    return this.state.parent_form_values.type === 'fe-manual'
+  }
+
   /** Updates current state of form values when changed */
   handleFormChange = (e, nameString) => {
     let itemName  = (nameString === undefined) ? e.target.name : nameString;
@@ -785,12 +793,31 @@ class ConfigAPBS extends ConfigForm {
       };
 
     for (let optVal in outputOptions){
+      let disable_write_option = false
+      let parent_form_values = this.state.parent_form_values
+      if( optVal === 'uhbd' && !this.isTypeMultigrid() ){
+        disable_write_option = true
+        if( parent_form_values.writeformat === 'uhbd' ){
+          // If current selection is uhbd, reset to dx
+          parent_form_values.writeformat = 'dx'
+          this.setState({ parent_form_values })
+        }
+      }
+      if( optVal === 'avs' && !this.isTypeFiniteElement() ){
+        disable_write_option = true
+        if( parent_form_values.writeformat === 'avs' ){
+          // If current selection is avs, reset to dx
+          parent_form_values.writeformat = 'dx'
+          this.setState({ parent_form_values })
+        }
+      }
+
       radioOptions.push(
-        <Radio value={optVal}> {outputOptions[optVal]} </Radio>
+        <Radio disabled={disable_write_option} value={optVal}> {outputOptions[optVal]} </Radio>
       )
     }
     let outputGroup = 
-      <Radio.Group name={outputNameField} defaultValue={this.state.parent_form_values.writeformat} onChange={this.handleParentFormChange}> {radioOptions} </Radio.Group>
+      <Radio.Group name={outputNameField} value={this.state.parent_form_values.writeformat} onChange={this.handleParentFormChange}> {radioOptions} </Radio.Group>
     ;
 
     return this.renderCollapsePanel(header, outputGroup);
