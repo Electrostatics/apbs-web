@@ -313,7 +313,7 @@ class MgDummy extends CalctypeBase{
 
     return(
       <div>
-        <Form.Item label='mg-auto Configuration'>
+        <Form.Item label={`${this.props.form_label} Configuration`}>
         {/* <Col offset={6} span={12}> */}
         {this.renderExpandAllButton()}
         <Col>

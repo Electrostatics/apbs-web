@@ -668,31 +668,36 @@ class ConfigAPBS extends ConfigForm {
     console.log("Calculation Method Type: " + this.state.parent_form_values.type)
     switch(this.state.parent_form_values.type){
       case "mg-auto":
-        return <MgAuto   
+        return <MgAuto
+                  form_label={this.state.parent_form_values.type}
                   autofill={this.state.autofill_data} 
                   form_values={this.state.child_form_values} 
                   onFormChange={this.handleChildFormChange} />
 
       case "mg-para":
-        return <MgPara   
+        return <MgPara
+                  form_label={this.state.parent_form_values.type}
                   autofill={this.state.autofill_data} 
                   form_values={this.state.child_form_values} 
                   onFormChange={this.handleChildFormChange} />
 
       case "mg-manual":
-        return <MgManual 
+        return <MgManual
+                  form_label={this.state.parent_form_values.type}
                   autofill={this.state.autofill_data} 
                   form_values={this.state.child_form_values} 
                   onFormChange={this.handleChildFormChange} />
 
       case "fe-manual":
-        return <FeManual 
+        return <FeManual
+                  form_label={this.state.parent_form_values.type}
                   autofill={this.state.autofill_data} 
                   form_values={this.state.child_form_values} 
                   onFormChange={this.handleChildFormChange} />
 
       case "mg-dummy":
-        return <MgDummy  
+        return <MgDummy
+                  form_label={this.state.parent_form_values.type}
                   autofill={this.state.autofill_data} 
                   form_values={this.state.child_form_values} 
                   onFormChange={this.handleChildFormChange} />
