@@ -213,7 +213,8 @@ class ConfigAPBS extends ConfigForm {
 
   componentDidMount(){
     if(this.props.jobid){
-      this.fetchAutofillData(this.state.jobid)
+      // this.fetchAutofillData(this.state.jobid)
+      this.fetchAutofillDataInfile(this.state.jobid)
       this.toggleRegisterButton(true)
     }
     else{
@@ -249,6 +250,151 @@ class ConfigAPBS extends ConfigForm {
       })
       .catch(error => console.error(error));
     self.handleParentFormChange({}, 'pdb2pqrid', jobid)
+  }
+
+  fetchAutofillDataInfile(jobid){
+    let self = this
+    let autofill_objectname = ''
+    if( self.usingJobDate() ){
+      autofill_objectname = `${self.props.jobdate}/${jobid}/${jobid}.in`
+    }else{
+      autofill_objectname = `${jobid}/${jobid}.in`
+    }
+
+    fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${autofill_objectname}`)
+      .then(response => response.text())
+      .then(file_text => {
+        let data = this.convertInfileToJson(file_text)
+        data['response_id'] = jobid
+
+        self.setState({
+          autofill_data: data,
+          did_fetch: true,
+        })
+      })
+      .catch(error => console.error(error));
+    self.handleParentFormChange({}, 'pdb2pqrid', jobid)
+  }
+
+  convertInfileToJson(infile_data){
+    let infile_json = {
+      solventRadius: null,
+      gridCenterMoleculeID: 1,
+      surfaceConstructionResolution: null,
+      pdbID: this.state.jobid,
+      // writeMobileChargeDensity: false,
+      // dielectricIonAccessibilityModel: "smol",
+      // writeIonAccessibilityKappaMap: false,
+      glen: null,
+      // writeDielectricMapShift: null,
+      // writeElectrostaticPotential: null,
+      temperature: null,
+      writePotentialLaplacian: null,
+      // mobileIonSpecies: null,
+      format: 'dx',
+      surfaceDefSupportSize: null,
+      processorMeshOverlap: 0.1,
+      calculationForce: 'no',
+      fineGridLength: null,
+      pdime: [1.0, 1.0, 1.0],
+      // writeMobileIonNumberDensity: null,
+      // writeVanDerWaalsSolventAccessibility: null,
+      // boundaryConditions: null,
+      calculationType: 'mg-auto',
+      dielectricSolventConstant: null,
+      dime: null,
+      // molecule: null,
+      // writeSplineBasedSolventAccessibility: null,
+      pqrname: `${this.state.jobid}.pqr`,
+      coarseGridLength: null,
+      // coarseGridCenterMethod: "molecule",
+      biomolecularDielectricConstant: null,
+      biomolecularPointChargeMapMethod: 'spl2',
+      fineGridCenterMoleculeID: 1,
+      coarseGridCenterMoleculeID: 1,
+      // calculationEnergy: "total",
+      asyncflag: 0,
+      gridCenterMethod: 'molecule',
+      // fineGridCenterMethod: "molecule",
+      // writeMolecularSurfaceSolventAccessibility: null,
+      // solveType: 'linearized', // lpbe
+      // writeBiomolecularChargeDistribution: null,
+      nlev: 4,
+      async: 0,
+      // writeInflatedVanDerWaalsIonAccessibility: null,
+      // writeEnergyDensity: null,
+    }
+
+    // Carve off READ section and everything following end of ELEC section
+    let read_section = infile_data.split('end')[1].trim()
+    
+    // Extract read section text (everything after 'ELEC' declaration)
+    read_section = read_section.split('elec')[1].trim()
+
+    // Split remainder by lines
+    let read_section_lines = read_section.split('\n')
+    for( let line_num in read_section_lines ){
+      // Trim whitespace from line
+      read_section_lines[line_num] = read_section_lines[line_num].trim()
+
+      // Assign contents to respective item to autofill component
+      let line_contents = read_section_lines[line_num].trim().split(' ')
+      let keyword = line_contents.shift()
+      switch(keyword){
+        case 'dime':
+          infile_json.dime = line_contents.map(Number)
+          break;
+        case 'cglen':
+          infile_json.coarseGridLength = line_contents.map(Number)
+          break;
+        case 'fglen':
+          infile_json.fineGridLength = line_contents.map(Number)
+          break;
+        // case 'cgcent':
+        //   break;
+        // case 'fgcent':
+        //   break;
+        // case 'mol':
+        //   break;
+        // case 'lpbe':
+        //   break;
+        // case 'bcfl':
+        //   break;
+        case 'pdie':
+          infile_json.biomolecularDielectricConstant = parseFloat(line_contents[0])
+          break;
+        case 'sdie':
+          infile_json.dielectricSolventConstant = parseFloat(line_contents[0])
+          break;
+        // case 'srfm':
+        //   break;
+        // case 'chgm':
+        //   break;
+        case 'sdens':
+          infile_json.surfaceConstructionResolution = parseFloat(line_contents[0])
+          break;
+        case 'srad':
+          infile_json.solventRadius = parseFloat(line_contents[0])
+          break;
+        case 'swin':
+          infile_json.surfaceDefSupportSize = parseFloat(line_contents[0])
+          break;
+        case 'temp':
+          infile_json.temperature = parseFloat(line_contents[0])
+          break;
+        // case 'calcenergy':
+        //   break;
+        // case 'calcforce':
+        //   break;
+        // case 'write':
+        //   break;
+      }
+    }
+
+    // Assign keys not found in infile
+    infile_json.glen = infile_json.coarseGridLength
+
+    return infile_json
   }
 
   isTypeMultigrid(){
