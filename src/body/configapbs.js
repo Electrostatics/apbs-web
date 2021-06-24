@@ -213,8 +213,7 @@ class ConfigAPBS extends ConfigForm {
 
   componentDidMount(){
     if(this.props.jobid){
-      // this.fetchAutofillData(this.state.jobid)
-      this.fetchAutofillDataInfile(this.state.jobid)
+      this.fetchAutofillData(this.state.jobid)
       this.toggleRegisterButton(true)
     }
     else{
@@ -223,36 +222,6 @@ class ConfigAPBS extends ConfigForm {
   }
 
   fetchAutofillData(jobid){
-    let self = this
-    let server_domain = window._env_.API_URL;
-    let autofill_objectname = ''
-    if( self.usingJobDate() ){
-      autofill_objectname = `${self.props.jobdate}/${jobid}/${jobid}-input.json`
-    }else{
-      autofill_objectname = `${jobid}/${jobid}-input.json`
-    }
-
-    fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${autofill_objectname}`)
-      .then(response => response.json())
-      .then(data => {
-        console.log(data)
-        data['response_id'] = jobid
-
-        self.setState({
-          autofill_data: data,
-          did_fetch: true,
-        })
-        // for(let key in data){
-        //   console.log(key.concat(':\n    ', data[key],'\n'))
-        // }
-        
-        console.log(data)
-      })
-      .catch(error => console.error(error));
-    self.handleParentFormChange({}, 'pdb2pqrid', jobid)
-  }
-
-  fetchAutofillDataInfile(jobid){
     let self = this
     let autofill_objectname = ''
     if( self.usingJobDate() ){
@@ -282,47 +251,28 @@ class ConfigAPBS extends ConfigForm {
       gridCenterMoleculeID: 1,
       surfaceConstructionResolution: null,
       pdbID: this.state.jobid,
-      // writeMobileChargeDensity: false,
-      // dielectricIonAccessibilityModel: "smol",
-      // writeIonAccessibilityKappaMap: false,
       glen: null,
-      // writeDielectricMapShift: null,
-      // writeElectrostaticPotential: null,
       temperature: null,
       writePotentialLaplacian: null,
-      // mobileIonSpecies: null,
       format: 'dx',
       surfaceDefSupportSize: null,
       processorMeshOverlap: 0.1,
       calculationForce: 'no',
       fineGridLength: null,
       pdime: [1.0, 1.0, 1.0],
-      // writeMobileIonNumberDensity: null,
-      // writeVanDerWaalsSolventAccessibility: null,
-      // boundaryConditions: null,
       calculationType: 'mg-auto',
       dielectricSolventConstant: null,
       dime: null,
-      // molecule: null,
-      // writeSplineBasedSolventAccessibility: null,
       pqrname: `${this.state.jobid}.pqr`,
       coarseGridLength: null,
-      // coarseGridCenterMethod: "molecule",
       biomolecularDielectricConstant: null,
       biomolecularPointChargeMapMethod: 'spl2',
       fineGridCenterMoleculeID: 1,
       coarseGridCenterMoleculeID: 1,
-      // calculationEnergy: "total",
       asyncflag: 0,
       gridCenterMethod: 'molecule',
-      // fineGridCenterMethod: "molecule",
-      // writeMolecularSurfaceSolventAccessibility: null,
-      // solveType: 'linearized', // lpbe
-      // writeBiomolecularChargeDistribution: null,
       nlev: 4,
       async: 0,
-      // writeInflatedVanDerWaalsIonAccessibility: null,
-      // writeEnergyDensity: null,
     }
 
     // Carve off READ section and everything following end of ELEC section
@@ -350,26 +300,12 @@ class ConfigAPBS extends ConfigForm {
         case 'fglen':
           infile_json.fineGridLength = line_contents.map(Number)
           break;
-        // case 'cgcent':
-        //   break;
-        // case 'fgcent':
-        //   break;
-        // case 'mol':
-        //   break;
-        // case 'lpbe':
-        //   break;
-        // case 'bcfl':
-        //   break;
         case 'pdie':
           infile_json.biomolecularDielectricConstant = parseFloat(line_contents[0])
           break;
         case 'sdie':
           infile_json.dielectricSolventConstant = parseFloat(line_contents[0])
           break;
-        // case 'srfm':
-        //   break;
-        // case 'chgm':
-        //   break;
         case 'sdens':
           infile_json.surfaceConstructionResolution = parseFloat(line_contents[0])
           break;
@@ -382,16 +318,10 @@ class ConfigAPBS extends ConfigForm {
         case 'temp':
           infile_json.temperature = parseFloat(line_contents[0])
           break;
-        // case 'calcenergy':
-        //   break;
-        // case 'calcforce':
-        //   break;
-        // case 'write':
-        //   break;
       }
     }
 
-    // Assign keys not found in infile
+    // Assign keys not found in infile but assigned in PDB2PQR source code
     infile_json.glen = infile_json.coarseGridLength
 
     return infile_json
