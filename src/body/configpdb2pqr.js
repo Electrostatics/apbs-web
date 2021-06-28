@@ -184,7 +184,7 @@ class ConfigPDB2PQR extends ConfigForm{
   }
 
   getCommandLine(form_items){
-    let command = 'python pdb2pqr.py'
+    let command = 'pdb2pqr30'
     let pdb_name = this.getPdbName()
     
     // Append pKa options
