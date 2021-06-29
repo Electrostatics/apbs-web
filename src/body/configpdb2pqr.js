@@ -984,33 +984,31 @@ class ConfigPDB2PQR extends ConfigForm{
 
             {/** Form item for PDB Source (id | upload) */}
             <Title level={title_level}>PDB Selection</Title>
-            <Popover placement="right" title={cli_popovers.title} content={cli_popovers.contents.pdb}>
-              <Form.Item
-                // id="pdbid"
-                label="PDB Source"
-                required={true}
-              >
-                <Radio.Group name="PDBSOURCE" defaultValue={this.state.form_values.PDBSOURCE} buttonStyle='solid' onChange={this.handleFormChange}>
-                  <Radio.Button  value="ID"> PDB ID
-                  {/* <Radio.Button  value="ID"> PDB ID:&nbsp;&nbsp; */}
-                    {/* <Input name="PDBID" autoFocus="True" placeholder="PDB ID" maxLength={4}/> */}
-                  </Radio.Button>
-                  <Radio.Button  value="UPLOAD"> Upload a PDB file
-                  {/* <Radio.Button  value="UPLOAD"> Upload a PDB file:&nbsp;&nbsp; */}
-                    {/* {this.renderPdbSourceInput()} */}
-                    {/* <input type="file" name="PDB" accept=".pdb" hidden={this.state.pdb_upload_hidden}/> */}
-                    {/* <Row><Upload name="PDB" accept=".pdb" customRequest={dummyRequest} >
-                      <Button>
-                        <Icon type="upload" >
-                        </Icon> Click to upload
-                      </Button>
-                    </Upload></Row> */}
-                  </Radio.Button>
-                </Radio.Group>
-              </Form.Item>
-            
-              {this.renderPdbSourceInput()}
-            </Popover>
+            <Form.Item
+              // id="pdbid"
+              label="PDB Source"
+              required={true}
+            >
+              <Radio.Group name="PDBSOURCE" defaultValue={this.state.form_values.PDBSOURCE} buttonStyle='solid' onChange={this.handleFormChange}>
+                <Radio.Button  value="ID"> PDB ID
+                {/* <Radio.Button  value="ID"> PDB ID:&nbsp;&nbsp; */}
+                  {/* <Input name="PDBID" autoFocus="True" placeholder="PDB ID" maxLength={4}/> */}
+                </Radio.Button>
+                <Radio.Button  value="UPLOAD"> Upload a PDB file
+                {/* <Radio.Button  value="UPLOAD"> Upload a PDB file:&nbsp;&nbsp; */}
+                  {/* {this.renderPdbSourceInput()} */}
+                  {/* <input type="file" name="PDB" accept=".pdb" hidden={this.state.pdb_upload_hidden}/> */}
+                  {/* <Row><Upload name="PDB" accept=".pdb" customRequest={dummyRequest} >
+                    <Button>
+                      <Icon type="upload" >
+                      </Icon> Click to upload
+                    </Button>
+                  </Upload></Row> */}
+                </Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+          
+            {this.renderPdbSourceInput()}
 
             {/* <Form.Item> */}
               {/* {this.renderPdbSourceInput()} */}
