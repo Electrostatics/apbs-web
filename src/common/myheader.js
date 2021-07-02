@@ -88,20 +88,17 @@ class MyHeader extends Component{
             style={{ lineHeight: '64px' }}
           >
             
-            <Menu.Item  name={PAGES.home} onClick={() => this.props.onClick(PAGES.home)} key={PAGES.home}>
+            <Menu.Item  name={PAGES.home} onClick={() => this.props.onClick(PAGES.home)} key={PAGES.home} icon={<HomeOutlined/>}>
               <NavLink to="/">
-                <HomeOutlined />
                 <span>Home</span>
               </NavLink>
             </Menu.Item>
             <SubMenu 
               name={PAGES.tools}
               key={PAGES.tools}
+              icon={<ToolOutlined/>}
               title={
-                <span>
-                  <ToolOutlined />
-                  <span>Tools</span>
-                </span>
+                <span>Tools</span>
               }
               onTitleClick={() => this.props.submenuOnClick(PAGES.tools)}
             >
@@ -114,9 +111,8 @@ class MyHeader extends Component{
                 <span>About</span>
               </NavLink> 
             </Menu.Item> */}
-            <Menu.Item  name={PAGES.documentation} onClick={() => this.props.onClick(PAGES.documentation)} key={PAGES.documentation}> 
+            <Menu.Item  name={PAGES.documentation} onClick={() => this.props.onClick(PAGES.documentation)} key={PAGES.documentation} icon={<BookOutlined/>}>
               <NavLink to="/documentation">
-                <BookOutlined />
                 <span>Documentation</span>
               </NavLink> 
             </Menu.Item>
