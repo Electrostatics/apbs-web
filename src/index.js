@@ -11,5 +11,5 @@ import ServerRouter from './router.js'
 // ReactDOM.render(<App />, document.getElementById('root'));
 ReactDOM.render(<ServerRouter />, document.getElementById('root'));
 
-// Unregister service worker if existing on user's broswer (contributed to unintentional caching)
+// Unregister service worker if exists on user's browser (should resolve unintended caching)
 unregister();
