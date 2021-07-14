@@ -12,6 +12,9 @@ import { BookOutlined, DownOutlined, HomeOutlined, ToolOutlined } from '@ant-des
 import { Layout, Col, Row, Menu, Affix, Input } from 'antd';
 import { stat } from 'fs';
 
+import { BellFilled } from '@ant-design/icons';
+// import Announcement from './announcement';
+
 const { Header, Sider } = Layout;
 const { SubMenu } = Menu;
 const Search = Input.Search;
@@ -84,7 +87,8 @@ class MyHeader extends Component{
             mode="inline"
             // defaultOpenKeys={[PAGES.tools]}
             defaultOpenKeys={this.props.openSubmenus}
-            defaultSelectedKeys={[this.props.activeItem]}
+            // defaultSelectedKeys={[this.props.activeItem]}
+            selectedKeys={[this.props.activeItem]}
             style={{ lineHeight: '64px' }}
           >
             
@@ -138,6 +142,10 @@ class MyHeader extends Component{
               {/* {previous_jobs}
             </SubMenu> */}
   
+            <Menu.Item icon={<BellFilled/>} onClick={()=>this.props.onAnnounmentClick()}> 
+                Announcements
+            </Menu.Item>
+
           </Menu>
         </Sider>
       </Affix>  
