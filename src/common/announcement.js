@@ -62,13 +62,12 @@ class Announcement extends Component {
   }  
 
   loadMessages(){
-    // TODO: Fetch messages.json from S3
-
+    fetch('/announcements.json')
+    .then(response => response.json())
+    .then(data => {
     // Sort by ascending start_date
-    // Sort by descending start_date (swapped params), priotitizing first item encountered if equal
-    // TODO: Swap parameters so it looks like (a, b)
-    let notification_list = [...this.messages]
-    notification_list.sort((b, a) => {
+      let notification_list = [...data]
+      notification_list.sort((a, b) => {
       if( a.start_date < b.start_date ) return -1
       if( a.start_date > b.start_date ) return 1
       return 0
@@ -78,13 +77,17 @@ class Announcement extends Component {
     notification_list.reverse()
 
     const latest_message_index = this.getLatestMessageIndex(notification_list)
-    console.log(latest_message_index)
+      // console.log(latest_message_index)
 
     this.setState({
       // notification_data: this.messages
       notification_data: notification_list,
       latest_message: notification_list[latest_message_index],
       remaining_messages: this.getRemainingMessages(notification_list, latest_message_index),
+      })
+    })
+    .catch(err => {
+      console.error(err)
     })
   }
 
