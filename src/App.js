@@ -15,6 +15,7 @@ import 'antd/dist/antd.css';
 import { Layout, Breadcrumb, Col, Row } from 'antd';
 import DownloadPage from './body/cli-download.js';
 import { hasMeasurementId, hasAnalyticsId, sendPageView } from './body/utils/ga-utils'
+import Announcement from './common/announcement.js';
 // import { Layout, Col, Menu, Icon, Tooltip, Alert } from 'antd';
 // const { Header, Content, Sider, Footer } = Layout;
 const { Header } = Layout;
@@ -34,11 +35,16 @@ class App extends Component {
         cur_page: this.props.page,  // Current page
         job_submit: false,          // Maintains if user tries clicking the Start Job button again
         // openSubmenus: {},           // Currently open submenus
+        announcement_drawer_open: false,
       };
       
       if( hasMeasurementId() ){
         sendPageView()
       }
+  }
+
+  toggleAnnouncementDrawer(open){
+    this.setState({announcement_drawer_open: open})
   }
 
   /** 
@@ -86,10 +92,11 @@ class App extends Component {
     navbar_options.set("navbar_apbs",    "APBS");
     navbar_options.set("navbar_about",   "About");
 
+    const current_page = this.props.page
 
     // HOME page
     // Renders landing page, with choice to do PDB2PQR or APBS
-    if (this.state.cur_page === PAGES.home || this.state.cur_page === null){
+    if (current_page === PAGES.home || current_page === null){
       document.title = "APBS | Home";
       bcrumb = this.createServiceBreadcrumb(['Home'])
       content = <HomePage />;
@@ -97,7 +104,7 @@ class App extends Component {
     
     // ABOUT page
     // Renders the about page
-    else if (this.state.cur_page === PAGES.about){
+    else if (current_page === PAGES.about){
       document.title = "APBS | About";
       bcrumb = this.createServiceBreadcrumb(['About'])
       content = <AboutPage />;
@@ -106,7 +113,7 @@ class App extends Component {
     // DOCUMENTATION page
     // Renders the documentation page
     // Directs user to the APBS-PDB2PQR documentation
-    else if (this.state.cur_page === PAGES.documentation){
+    else if (current_page === PAGES.documentation){
       document.title = "APBS | Documentation";
       bcrumb = this.createServiceBreadcrumb(['Documentation'])
       content = <DocumentationPage />;
@@ -115,7 +122,7 @@ class App extends Component {
     // DOWNLOAD page
     // Renders the CLI download page
     // Directs user to the APBS-PDB2PQR download page
-    else if (this.state.cur_page === PAGES.download){
+    else if (current_page === PAGES.download){
       document.title = "APBS | Downloads";
       bcrumb = this.createServiceBreadcrumb(['Downloads'])
       content = <DownloadPage />;
@@ -123,7 +130,7 @@ class App extends Component {
 
     // PDB2PQR page
     // Renders configuration elements to set up an PDB2PQR job
-    else if (this.state.cur_page === PAGES.pdb2pqr){
+    else if (current_page === PAGES.pdb2pqr){
       let query_args = new URLSearchParams(this.props.query)
       let show_cli_args = query_args.get('show_cli')
 
@@ -134,7 +141,7 @@ class App extends Component {
     
     // APBS page
     // Renders configuration elements to set up an APBS job
-    else if (this.state.cur_page === PAGES.apbs){
+    else if (current_page === PAGES.apbs){
       let query_args = new URLSearchParams(this.props.query)
       let job_id = query_args.get('jobid')
       let job_date = query_args.get('date')
@@ -146,7 +153,7 @@ class App extends Component {
 
     // JOB STATUS page
     // Renders job status page
-    else if (this.state.cur_page === PAGES.status){
+    else if (current_page === PAGES.status){
       let query_args = new URLSearchParams(this.props.query)
       let job_id = query_args.get('jobid')
       let job_type = query_args.get('jobtype')
@@ -165,8 +172,9 @@ class App extends Component {
 
     return(
       <Layout style={{ height: '100%' }}>
+        <Announcement open={this.state.announcement_drawer_open} toggleDrawer={open => this.toggleAnnouncementDrawer(open)}/>
         <MyHeader
-          activeItem={this.state.cur_page}
+          activeItem={current_page}
           navbar_items={navbar_options}
           all_header_items={new Array()}
           onClick={j => this.onClickSelectPage(j)}
@@ -176,6 +184,7 @@ class App extends Component {
           openSubmenus={Object.values(this.props.openSubmenus)}
           submenuOnClick={k => this.props.submenuOnClick(k)}
           onSiderCollapse={(isCollapsed, type) => this.props.onSiderCollapse(isCollapsed, type)}
+          onAnnounmentClick={() => this.toggleAnnouncementDrawer(true)}
         />
         {/* <Header style={{ background: '#fff', paddingDown: 16 }} /> */}
         <Layout style={{ padding: '0px 50px' }}>
