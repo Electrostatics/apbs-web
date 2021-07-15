@@ -62,28 +62,28 @@ class Announcement extends Component {
   }  
 
   loadMessages(){
-    fetch('/announcements.json')
+    fetch(window._env_.ANNOUNCEMENTS_URL) // default URL is '/announcements.json'
     .then(response => response.json())
     .then(data => {
-    // Sort by ascending start_date
+      // Sort by ascending start_date
       let notification_list = [...data]
       notification_list.sort((a, b) => {
-      if( a.start_date < b.start_date ) return -1
-      if( a.start_date > b.start_date ) return 1
-      return 0
-    })
-
-    // Reverse so most recent start_date is first
-    notification_list.reverse()
-
-    const latest_message_index = this.getLatestMessageIndex(notification_list)
+        if( a.start_date < b.start_date ) return -1
+        if( a.start_date > b.start_date ) return 1
+        return 0
+      })
+  
+      // Reverse so most recent start_date is first
+      notification_list.reverse()
+  
+      const latest_message_index = this.getLatestMessageIndex(notification_list)
       // console.log(latest_message_index)
-
-    this.setState({
-      // notification_data: this.messages
-      notification_data: notification_list,
-      latest_message: notification_list[latest_message_index],
-      remaining_messages: this.getRemainingMessages(notification_list, latest_message_index),
+  
+      this.setState({
+        // notification_data: this.messages
+        notification_data: notification_list,
+        latest_message: notification_list[latest_message_index],
+        remaining_messages: this.getRemainingMessages(notification_list, latest_message_index),
       })
     })
     .catch(err => {
