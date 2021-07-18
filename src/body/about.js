@@ -13,13 +13,39 @@ class AboutPage extends Component{
         super(props)
         if( window._env_.GA_TRACKING_ID !== "" ) 
             ReactGA.pageview(window.location.pathname + window.location.search)
+
+        this.state = {
+            apbs_version: null,
+            pdb2pqr_version: null,
+            website_version: null,
+            backend_version: null,
+        }
+    }
+
+    componentDidMount(){
+        this.loadVersionInfo()
+    }    
+
+    loadVersionInfo(){
+        // TODO: Elvis, 2021/07/18 - Download necessary version information from elsewhere
+        this.setState({
+            apbs_version: window._env_.APBS_VERSION,
+            pdb2pqr_version: window._env_.PDB2PQR_VERSION,
+            website_version: window._env_.CODEBUILD_RESOLVED_SOURCE_VERSION,
+            backend_version: null,
+        })
     }
 
     render(){
         const title_level = 1
         const subtitle_level = 3
         const version_title_level = 5
-        const website_build_url = `${window._env_.REPO_URL_WEB}/tree/${window._env_.CODEBUILD_RESOLVED_SOURCE_VERSION}`
+        const APBS_VERSION = this.state.apbs_version
+        const PDB2PQR_VERSION = this.state.pdb2pqr_version
+        const WEBSITE_VERSION = typeof this.state.website_version === 'string' ? this.state.website_version.slice(0,7) : this.state.website_version
+        const BACKEND_VERSION = typeof this.state.backend_version === 'string' ? this.state.backend_version.slice(0,7) : this.state.backend_version
+        const website_build_url = `${window._env_.REPO_URL_WEB}/tree/${this.state.website_version}`
+        const backend_build_url = `${window._env_.REPO_URL_WEB}/tree/${this.state.backend_version}`
         return(
             <Layout id="about" style={{ padding: '16px 0', marginBottom: 5, background: '#fff', boxShadow: "2px 4px 3px #00000033" }}>
                 <Content style={{ background: '#fff', padding: 16, margin: 0, minHeight: 280 }}>
@@ -57,7 +83,7 @@ class AboutPage extends Component{
                                     <Paragraph>
                                         <ul>
                                             <li>
-                                                {window._env_.APBS_VERSION} (<Link href={window._env_.RELEASE_HISTORY_APBS} target="_blank">see Changelog</Link>)
+                                                {APBS_VERSION} (<Link href={window._env_.RELEASE_HISTORY_APBS} target="_blank">see Changelog</Link>)
                                             </li>
                                             <li>
                                                 <Link href={window._env_.REPO_URL_APBS} target="_blank">GitHub</Link>
@@ -68,7 +94,7 @@ class AboutPage extends Component{
                                     <Paragraph>
                                         <ul>
                                             <li>
-                                                {window._env_.PDB2PQR_VERSION} (<Link href={window._env_.RELEASE_HISTORY_PDB2PQR} target="_blank">see Changelog</Link>)
+                                                {PDB2PQR_VERSION} (<Link href={window._env_.RELEASE_HISTORY_PDB2PQR} target="_blank">see Changelog</Link>)
                                             </li>
                                             <li>
                                                 <Link href={window._env_.REPO_URL_PDB2PQR} target="_blank">GitHub</Link>
@@ -83,7 +109,8 @@ class AboutPage extends Component{
                                         <ul>
                                             <li>
                                                 {/* (backend services build version goes here) */}
-                                                Build commit hash: <Link href={website_build_url} target="_blank">{window._env_.CODEBUILD_RESOLVED_SOURCE_VERSION.slice(0, 7)}</Link>
+                                                {/* Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION.slice(0, 7)}</Link> */}
+                                                Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION}</Link>
                                             </li>
                                             <li>
                                                 <Link href={window._env_.REPO_URL_AWS} target="_blank">GitHub</Link>
@@ -95,7 +122,8 @@ class AboutPage extends Component{
                                     <Paragraph>
                                         <ul>
                                             <li>
-                                                (site build version goes here)
+                                                {/* (site build version goes here) */}
+                                                Build commit hash: <Link href={backend_build_url} target="_blank">{BACKEND_VERSION}</Link>
                                             </li>
                                             <li>
                                                 <Link href={window._env_.REPO_URL_WEB} target="_blank">GitHub</Link>
