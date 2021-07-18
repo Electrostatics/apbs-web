@@ -7,7 +7,7 @@ import PAGES from './pagenames.js';
 
 import { NavLink, } from 'react-router-dom';
 
-import { BookOutlined, DownOutlined, HomeOutlined, ToolOutlined } from '@ant-design/icons';
+import { BookOutlined, DownOutlined, HomeOutlined, ToolOutlined, TeamOutlined } from '@ant-design/icons';
 
 import { Layout, Col, Row, Menu, Affix, Input } from 'antd';
 import { stat } from 'fs';
@@ -109,12 +109,11 @@ class MyHeader extends Component{
               <Menu.Item  name={PAGES.pdb2pqr} key={PAGES.pdb2pqr} onClick={() => this.props.onClick(PAGES.pdb2pqr)}> <NavLink to="/pdb2pqr">PDB2PQR</NavLink> </Menu.Item>
               <Menu.Item  name={PAGES.apbs}    key={PAGES.apbs}    onClick={() => this.props.onClick(PAGES.apbs)}> <NavLink to="/apbs">APBS</NavLink> </Menu.Item>
             </SubMenu>
-            {/* <Menu.Item  name={PAGES.about}         onClick={() => this.props.onClick(PAGES.about)}         key={PAGES.about}>         
+            <Menu.Item  name={PAGES.about} onClick={() => this.props.onClick(PAGES.about)} key={PAGES.about} icon={<TeamOutlined />}>
               <NavLink to="/about">
-                <Icon type="team"/>
                 <span>About</span>
               </NavLink> 
-            </Menu.Item> */}
+            </Menu.Item>
             <Menu.Item  name={PAGES.documentation} onClick={() => this.props.onClick(PAGES.documentation)} key={PAGES.documentation} icon={<BookOutlined/>}>
               <NavLink to="/documentation">
                 <span>Documentation</span>
