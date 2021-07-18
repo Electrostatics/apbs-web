@@ -135,7 +135,7 @@ class App extends Component {
       let show_cli_args = query_args.get('show_cli')
 
       document.title = "Tools | Configure a PDB2PQR job";
-      bcrumb = this.createServiceBreadcrumb(['Tools', 'PDB2PQR Job Configuration'])
+      bcrumb = this.createServiceBreadcrumb(['Tools', `PDB2PQR (v${window._env_.PDB2PQR_VERSION}) Job Configuration`])
       content = <ConfigPDB2PQR show_cli={show_cli_args}/>;
     }
     
@@ -147,7 +147,7 @@ class App extends Component {
       let job_date = query_args.get('date')
 
       document.title = "Tools | Configure a APBS job";
-      bcrumb = this.createServiceBreadcrumb(['Tools', 'APBS Job Configuration'])
+      bcrumb = this.createServiceBreadcrumb(['Tools', `APBS (v${window._env_.APBS_VERSION}) Job Configuration`])
       content = <ConfigAPBS jobid={job_id} jobdate={job_date}/>;
     }
 
