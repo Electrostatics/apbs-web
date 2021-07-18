@@ -107,8 +107,7 @@ class AboutPage extends Component {
                     <ul>
                       <li>
                         {/* (backend services build version goes here) */}
-                        {/* Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION.slice(0, 7)}</Link> */}
-                        Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION}</Link>
+                        Build commit hash: <Link href={backend_build_url} target="_blank">{BACKEND_VERSION}</Link>
                       </li>
                       <li>
                         <Link href={window._env_.REPO_URL_AWS} target="_blank">GitHub</Link>
@@ -121,7 +120,7 @@ class AboutPage extends Component {
                     <ul>
                       <li>
                         {/* (site build version goes here) */}
-                        Build commit hash: <Link href={backend_build_url} target="_blank">{BACKEND_VERSION}</Link>
+                        Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION}</Link>
                       </li>
                       <li>
                         <Link href={window._env_.REPO_URL_WEB} target="_blank">GitHub</Link>
