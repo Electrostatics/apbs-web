@@ -28,12 +28,7 @@ class AboutPage extends Component {
 
   loadVersionInfo() {
     // Download version information from cloud
-    fetch(window._env_.VERSIONS_URL,{
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      }
-    })
+    fetch(window._env_.VERSIONS_URL)
     .then( response => response.json() )
     .then( version_data => {
       this.setState({
