@@ -53,7 +53,7 @@ class AboutPage extends Component {
     })
   }
 
-  retryDownload(){
+  resetSpinner(){
     // Reset spinners
     const spin_placeholder = <Spin/>
     this.setState({
@@ -61,6 +61,12 @@ class AboutPage extends Component {
       pdb2pqr_version: spin_placeholder,
       website_version: spin_placeholder,
       backend_version: spin_placeholder,
+    })
+  }
+
+  retryDownload(){
+    // Deactivate error alert flag
+    this.setState({
       show_download_error: false
     })
 
@@ -138,6 +144,7 @@ class AboutPage extends Component {
             type="error"
             message="Could not retrieve version information. Please try again later."
             closeText="Reload"
+            onClose={() => this.resetSpinner()}
             afterClose={() => this.retryDownload()}
           />
         </Col></Row>
