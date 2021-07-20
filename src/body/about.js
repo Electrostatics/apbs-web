@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import ReactGA from 'react-ga';
 import 'antd/dist/antd.css';
 
-import { Layout, Typography, Col, Row } from 'antd';
+import { Layout, Typography, Col, Row, Spin } from 'antd';
 const { Content } = Layout;
 const { Title, Paragraph, Text, Link } = Typography
 
@@ -12,11 +12,12 @@ class AboutPage extends Component {
     if (window._env_.GA_TRACKING_ID !== "")
       ReactGA.pageview(window.location.pathname + window.location.search)
 
+    const spin_placeholder = <Spin/>
     this.state = {
-      apbs_version: null,
-      pdb2pqr_version: null,
-      website_version: null,
-      backend_version: null,
+      apbs_version: spin_placeholder,
+      pdb2pqr_version: spin_placeholder,
+      website_version: spin_placeholder,
+      backend_version: spin_placeholder,
     }
   }
 
@@ -25,12 +26,20 @@ class AboutPage extends Component {
   }
 
   loadVersionInfo() {
-    // TODO: Elvis, 2021/07/18 - Download necessary version information from elsewhere
-    this.setState({
-      apbs_version: window._env_.APBS_VERSION,
-      pdb2pqr_version: window._env_.PDB2PQR_VERSION,
-      website_version: window._env_.CODEBUILD_RESOLVED_SOURCE_VERSION,
-      backend_version: null,
+    // Download version information from cloud
+    fetch(window._env_.VERSIONS_URL)
+    .then( response => response.json() )
+    .then( version_data => {
+      this.setState({
+        apbs_version: version_data.apbs,
+        pdb2pqr_version: version_data.pdb2pqr,
+        website_version: window._env_.CODEBUILD_RESOLVED_SOURCE_VERSION,
+        backend_version: version_data.aws,
+      })
+    })
+    .catch( err => {
+      console.error(err)
+      
     })
   }
 
@@ -43,7 +52,7 @@ class AboutPage extends Component {
     const WEBSITE_VERSION = typeof this.state.website_version === 'string' ? this.state.website_version.slice(0, 7) : this.state.website_version
     const BACKEND_VERSION = typeof this.state.backend_version === 'string' ? this.state.backend_version.slice(0, 7) : this.state.backend_version
     const website_build_url = `${window._env_.REPO_URL_WEB}/tree/${this.state.website_version}`
-    const backend_build_url = `${window._env_.REPO_URL_WEB}/tree/${this.state.backend_version}`
+    const backend_build_url = `${window._env_.REPO_URL_AWS}/tree/${this.state.backend_version}`
     return (
       <Layout id="about" style={{ padding: '16px 0', marginBottom: 5, background: '#fff', boxShadow: "2px 4px 3px #00000033" }}>
         <Content style={{ background: '#fff', padding: 16, margin: 0, minHeight: 280 }}>
