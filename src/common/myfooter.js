@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Link as ReactRouterLink } from 'react-router-dom';
 import 'antd/dist/antd.css';
 import '../styles/myfooter.css';
 
@@ -6,7 +7,7 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, GithubOutlined, LinkOutlined } from '@ant-design/icons';
 import { Layout, Tooltip, Popover, Typography, Col, Row } from 'antd';
 
-const { Link } = Typography;
+const { Link, Paragraph } = Typography;
 const { Footer } = Layout;
 
 /**
@@ -51,141 +52,38 @@ class MyFooter extends Component{
         );
     }
 
-    // TODO: 2020/10/15, Elvis - Rebuild footer to provide compact space with links to documentation citations and repositories
     render(){
-        // PDB2PQR citation
-        let pdb2pqrCitationText =
-        `Dolinsky TJ, Nielsen JE, McCammon JA, Baker NA. PDB2PQR: an automated pipeline for the setup, execution,
-        and analysis of Poisson-Boltzmann electrostatics calculations. Nucleic Acids Research 32 W665-W667 (2004).
-        `;
-        let pdb2pqrCitationLink = 'https://academic.oup.com/nar/article/32/suppl_2/W665/1040494';
-        let pdb2pqrCopyTooltip = this.generateCopyTooltip(pdb2pqrCitationText, 'bottom')
-        let pdb2pqrLinkTooltip = this.generateLinkTooltip(pdb2pqrCitationLink, 'bottom')
-        
-        // APBS citation
-        let apbsCitationText = 
-        `
-        Baker NA, Sept D, Joseph S, Holst MJ, McCammon JA. Electrostatics of nanosystems: application to
-        microtubules and the ribosome. Proc. Natl. Acad. Sci. USA 98, 10037-10041 2001.
-        `;
-        let apbsCitationLink = 'https://www.pnas.org/content/98/18/10037';
-        let apbsCopyTooltip = this.generateCopyTooltip(apbsCitationText, 'top')
-        let apbsLinkTooltip = this.generateLinkTooltip(apbsCitationLink, 'top')
-        
-        // New citation
-        let newCitationText = 
-        `
-        Baker NA, Sept D, Joseph S, Holst MJ, McCammon JA. Electrostatics of nanosystems: application to
-        microtubules and the ribosome. Proc. Natl. Acad. Sci. USA 98, 10037-10041 2001.
-        `;
-
-        const footerStyle = {
-            // textAlign: 'center',
-            fontSize: 16,
-        }
-        const tooltipStyle = {
-            fontSize: 26
-        }
-
         // Popover text for GitHub icon in footer
         let github_popover_content =
             <div >
                 <Link target="_blank" href={window._env_.REPO_URL_APBS}> APBS </Link>|
-                <Link target="_blank" href={window._env_.REPO_URL_PDB2PQR}> PDB2PQR </Link>
+                <Link target="_blank" href={window._env_.REPO_URL_PDB2PQR}> PDB2PQR </Link>|
+                <Link target="_blank" href={window._env_.REPO_URL_AWS}> AWS </Link>|
+                <Link target="_blank" href={window._env_.REPO_URL_WEB}> Web </Link>
             </div>
 
         return (
             <Footer className="footer-block">
-                {/* <Row><Col span={20} offset={2}>
-                    <b>If using the PDB2PQR service in a publication, please cite: </b><br/>
-                    <i>{pdb2pqrCitationText}</i><br/><br/>
-                </Col></Row> */}
-                   
-                {/* <Row><Col span={20} offset={2}> */}
-                <Row key='horizontal-rule-footer'>
-                    <Col span={20}>
-                        {/* <hr/> */}
-                        <br/>
-                    </Col>
-                </Row>
-                <Row key='citation-prompt' style={{ fontSize: 16 }}>
-                    <Col span={20} >
-                    <b>If using APBS/PDB2PQR in a publication, please cite the respective software: </b><br/>
-                    {/* <i>{pdb2pqrCitationText}</i><br/><br/> */}
-                    </Col>
+                <Row key='citation-prompt' justify="center">
+                    <Paragraph>
+                        Using this software for a publication? Find the proper citation <ReactRouterLink to="/about#citations">here</ReactRouterLink>.
+                    </Paragraph>
                 </Row>
 
-                {/* PDB2PQR citation text plus its tooltips */}
-
-                <Row key='apbs-citation'>
-                    <Col span={2}>
-                        <b>APBS: </b>
-                    </Col>
-                    <Col span={18}>
-                        <i>{apbsCitationText}</i>
-                    </Col>
-
-                    <Col offset={1}>
-                        {/** Compo`nent specifying the copy-to-clipboard icon */}
-                        {apbsCopyTooltip}
-                        &nbsp;&nbsp;&nbsp;&nbsp;
-                        {/** Component specifying the icon to link to paper from citation */}
-                        {apbsLinkTooltip}
-
-                    </Col>
-
+                <Row key='bug-report-prompt' justify="center">
+                    <Paragraph>
+                        Found a bug? Report any issues to the respective project GitHub.
+                    </Paragraph>
                 </Row>
 
-                {/* PDB2PQR citation text plus its tooltips */}
-                <Row key='pdb2pqr-citation'>
-                    <Col span={2}>
-                        <b>PDB2PQR: </b>
-                    </Col>
-                    <Col span={18}>
-                        <i>{pdb2pqrCitationText}</i>
-                    </Col>
-                    <Col offset={1}>
-                        {/** Component specifying the copy-to-clipboard icon */}
-                        {pdb2pqrCopyTooltip}
-                        &nbsp;&nbsp;&nbsp;&nbsp;
-                        {/** Component specifying the icon to link to paper from citation */}
-                        {pdb2pqrLinkTooltip}
-                    </Col>
-                    
-                </Row>
-                
                 {/* Links to APBS & PDB2PQR GitHub */}
-                <Row key='github-links'>
-                    <br/>
-                    <Col push={10}>
-                        <Popover content={github_popover_content} title="GitHub Repositories" trigger="hover" placement="rightTop">
+                <Row key='github-links' align="middle" justify="center">
+                    <Paragraph>
+                        <Popover content={github_popover_content} title="GitHub Repositories" trigger="hover" placement="right">
                             <GithubOutlined className="footer-icon" />
                         </Popover>
-                    </Col>
+                    </Paragraph>
                 </Row>
-
-
-                {/* <Tooltip title={this.state.copyTooltip} placement="bottom" >
-                    <CopyToClipboard text={pdb2pqrCitationText.trim()} onCopy={() => this.tooltipCopyTextChange()}>
-                        <Icon 
-                            type="copy" 
-                            id="copyCitation" 
-                            value={pdb2pqrCitationText} 
-                            style={{ fontSize: 26, cursor: "pointer" }} 
-                        />
-                    </CopyToClipboard>
-                </Tooltip> */}
-                {/* &nbsp;&nbsp;&nbsp;&nbsp; */}
-                {/* <Tooltip title="Go to publication" placement="bottom">
-                    <a href={pdb2pqrCitationLink} target="BLANK">
-                        <Icon 
-                            type="link" 
-                            style={{ fontSize: 26, color: "#545456" }}
-                        />
-                    </a>
-                </Tooltip> */}
-                
-
             </Footer>
         );
     }
