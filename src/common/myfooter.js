@@ -72,7 +72,7 @@ class MyFooter extends Component{
 
                 <Row key='bug-report-prompt' justify="center">
                     <Paragraph>
-                        Found a bug? Report any issues to the respective project GitHub.
+                        Found a bug? Report any issues to the respective GitHub project.
                     </Paragraph>
                 </Row>
 
