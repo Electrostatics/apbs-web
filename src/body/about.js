@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import ReactGA from 'react-ga';
 import 'antd/dist/antd.css';
 
-import { Layout, Typography, Col, Row, Spin } from 'antd';
+import { Layout, Typography, Col, Row, Spin, Alert } from 'antd';
 const { Content } = Layout;
 const { Title, Paragraph, Text, Link } = Typography
 
@@ -14,6 +14,7 @@ class AboutPage extends Component {
 
     const spin_placeholder = <Spin/>
     this.state = {
+      show_download_error: false,
       apbs_version: spin_placeholder,
       pdb2pqr_version: spin_placeholder,
       website_version: spin_placeholder,
@@ -35,12 +36,36 @@ class AboutPage extends Component {
         pdb2pqr_version: version_data.pdb2pqr,
         website_version: window._env_.CODEBUILD_RESOLVED_SOURCE_VERSION,
         backend_version: version_data.aws,
+        show_download_error: false,
       })
     })
     .catch( err => {
       console.error(err)
+      this.setState({
+        apbs_version: null,
+        pdb2pqr_version: null,
+        website_version: window._env_.CODEBUILD_RESOLVED_SOURCE_VERSION,
+        backend_version: null,
+
+        show_download_error: true,
+      })
       
     })
+  }
+
+  retryDownload(){
+    // Reset spinners
+    const spin_placeholder = <Spin/>
+    this.setState({
+      apbs_version: spin_placeholder,
+      pdb2pqr_version: spin_placeholder,
+      website_version: spin_placeholder,
+      backend_version: spin_placeholder,
+      show_download_error: false
+    })
+
+    // Attempt download again
+    this.loadVersionInfo()
   }
 
   render() {
@@ -53,6 +78,71 @@ class AboutPage extends Component {
     const BACKEND_VERSION = typeof this.state.backend_version === 'string' ? this.state.backend_version.slice(0, 7) : this.state.backend_version
     const website_build_url = `${window._env_.REPO_URL_WEB}/tree/${this.state.website_version}`
     const backend_build_url = `${window._env_.REPO_URL_AWS}/tree/${this.state.backend_version}`
+
+    const refresh_block = <div>
+        <Text type="danger">Version information not found.</Text>
+    </div>
+
+
+    let apbs_version_block
+    let pdb2pqr_version_block
+    let backend_version_block
+    let website_version_block
+
+    // APBS version text building
+    if(this.state.apbs_version){
+      apbs_version_block =
+        <div>{APBS_VERSION} (<Link href={window._env_.RELEASE_HISTORY_APBS} target="_blank">see Changelog</Link>)</div>
+    }else{        
+      apbs_version_block =
+        <div>{refresh_block} (<Link href={window._env_.RELEASE_HISTORY_APBS} target="_blank">see Changelog</Link>)</div>
+    }
+
+    // PDB2PQR version text building
+    if(this.state.pdb2pqr_version){
+      pdb2pqr_version_block =
+        <div>{PDB2PQR_VERSION} (<Link href={window._env_.RELEASE_HISTORY_PDB2PQR} target="_blank">see Changelog</Link>)</div>
+    }else{
+      pdb2pqr_version_block =
+        <div>{refresh_block} (<Link href={window._env_.RELEASE_HISTORY_PDB2PQR} target="_blank">see Changelog</Link>)</div>
+    }
+
+    // Backend version text
+    if(this.state.backend_version){
+      backend_version_block = <div>
+        Build commit hash: <Link href={backend_build_url} target="_blank">{BACKEND_VERSION}</Link>
+      </div>
+
+    }else{
+      backend_version_block = refresh_block
+    }
+
+    // Website version text
+    if(this.state.website_version){
+      website_version_block = <div>
+        Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION}</Link>
+      </div>
+
+    }else{
+      website_version_block = refresh_block
+    }
+
+
+    // Build error alert row if download failed
+    let error_alert = null
+    if(this.state.show_download_error){
+      error_alert =
+        <Row><Col xs={24} md={20} lg={18} xl={14}>
+          <Alert
+            showIcon
+            type="error"
+            message="Could not retrieve version information. Please try again later."
+            closeText="Reload"
+            afterClose={() => this.retryDownload()}
+          />
+        </Col></Row>
+    }
+
     return (
       <Layout id="about" style={{ padding: '16px 0', marginBottom: 5, background: '#fff', boxShadow: "2px 4px 3px #00000033" }}>
         <Content style={{ background: '#fff', padding: 16, margin: 0, minHeight: 280 }}>
@@ -62,6 +152,9 @@ class AboutPage extends Component {
               <Title level={title_level}>
                 About
               </Title>
+
+              {/* Display error alert if version file couldn't be found */}
+              {error_alert}
 
               {/* Description */}
               {/* <Title level={subtitle_level}>
@@ -90,7 +183,8 @@ class AboutPage extends Component {
                   <Paragraph>
                     <ul>
                       <li>
-                        {APBS_VERSION} (<Link href={window._env_.RELEASE_HISTORY_APBS} target="_blank">see Changelog</Link>)
+                        {/* {APBS_VERSION} (<Link href={window._env_.RELEASE_HISTORY_APBS} target="_blank">see Changelog</Link>) */}
+                        {apbs_version_block}
                       </li>
                       <li>
                         <Link href={window._env_.REPO_URL_APBS} target="_blank">GitHub</Link>
@@ -101,7 +195,8 @@ class AboutPage extends Component {
                   <Paragraph>
                     <ul>
                       <li>
-                        {PDB2PQR_VERSION} (<Link href={window._env_.RELEASE_HISTORY_PDB2PQR} target="_blank">see Changelog</Link>)
+                        {/* {PDB2PQR_VERSION} (<Link href={window._env_.RELEASE_HISTORY_PDB2PQR} target="_blank">see Changelog</Link>) */}
+                        {pdb2pqr_version_block}
                       </li>
                       <li>
                         <Link href={window._env_.REPO_URL_PDB2PQR} target="_blank">GitHub</Link>
@@ -116,7 +211,8 @@ class AboutPage extends Component {
                     <ul>
                       <li>
                         {/* (backend services build version goes here) */}
-                        Build commit hash: <Link href={backend_build_url} target="_blank">{BACKEND_VERSION}</Link>
+                        {/* Build commit hash: <Link href={backend_build_url} target="_blank">{BACKEND_VERSION}</Link> */}
+                        {backend_version_block}
                       </li>
                       <li>
                         <Link href={window._env_.REPO_URL_AWS} target="_blank">GitHub</Link>
@@ -129,7 +225,8 @@ class AboutPage extends Component {
                     <ul>
                       <li>
                         {/* (site build version goes here) */}
-                        Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION}</Link>
+                        {/* Build commit hash: <Link href={website_build_url} target="_blank">{WEBSITE_VERSION}</Link> */}
+                        {website_version_block}
                       </li>
                       <li>
                         <Link href={window._env_.REPO_URL_WEB} target="_blank">GitHub</Link>
