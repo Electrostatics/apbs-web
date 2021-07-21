@@ -30,7 +30,12 @@ class Announcement extends Component {
   }  
 
   loadMessages(){
-    fetch(window._env_.ANNOUNCEMENTS_URL) // default URL is '/announcements.json'
+    fetch(window._env_.ANNOUNCEMENTS_URL,{
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      }
+    }) // default URL is '/info/announcements.json'
     .then(response => response.json())
     .then(data => {
       // Sort by ascending start_date

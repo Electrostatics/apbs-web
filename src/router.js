@@ -3,7 +3,7 @@ import ReactGA from 'react-ga';
 import {
   BrowserRouter as Router,
   Route,
-//   Switch,
+  Switch,
 } from 'react-router-dom'
 import App from './App';
 import VizLegacyPage from './body/old-viz-layout'
@@ -70,93 +70,104 @@ class ServerRouter extends Component{
         return(
             <Router>
                 <div>
-                    {/* <Switch> */}
-                    <Route exact path="/"
-                        render={ props => (
-                            <App
-                                page={PAGES.home}
-                                isMenuCollapsed={this.state.isMenuCollapsed}
-                                openSubmenus={this.state.openSubmenus}
-                                submenuOnClick={j => this.submenuOnClick(j)}
-                                onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
-                            />
-                        )}                
-                    />
-                    <Route path="/about"
-                        render={ props => (
-                            <App
-                                page={PAGES.about}
-                                isMenuCollapsed={this.state.isMenuCollapsed}
-                                openSubmenus={this.state.openSubmenus}
-                                submenuOnClick={j => this.submenuOnClick(j)}
-                                onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
-                            />
-                        )}
-                    />
-                    <Route path="/documentation"
-                        render={ props => (
-                            <App
-                                page={PAGES.documentation}
-                                isMenuCollapsed={this.state.isMenuCollapsed}
-                                openSubmenus={this.state.openSubmenus}
-                                submenuOnClick={j => this.submenuOnClick(j)}
-                                onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
-                            />
-                        )}
-                    />
-                    <Route path="/download"
-                        render={ props => (
-                            <App
-                                page={PAGES.download}
-                                isMenuCollapsed={this.state.isMenuCollapsed}
-                                openSubmenus={this.state.openSubmenus}
-                                submenuOnClick={j => this.submenuOnClick(j)}
-                                onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
-                            />
-                        )}
-                    />
-                    <Route path="/pdb2pqr"
-                        render={ props => (
-                            <App
-                                page={PAGES.pdb2pqr}
-                                isMenuCollapsed={this.state.isMenuCollapsed}
-                                openSubmenus={this.state.openSubmenus}
-                                submenuOnClick={j => this.submenuOnClick(j)}
-                                onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
-                                query={props.location.search}
-                            />
-                        )}
-                    />
-                    <Route path="/apbs"
-                        render={ props => (
-                            <App
-                                page={PAGES.apbs}
-                                isMenuCollapsed={this.state.isMenuCollapsed}
-                                openSubmenus={this.state.openSubmenus}
-                                submenuOnClick={j => this.submenuOnClick(j)}
-                                onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
-                                query={props.location.search}/>
-                        )}
-                    />
-                    <Route path="/jobstatus"
-                        render={ props => (
-                            <App
-                                page={PAGES.status}
-                                isMenuCollapsed={this.state.isMenuCollapsed}
-                                openSubmenus={this.state.openSubmenus}
-                                submenuOnClick={j => this.submenuOnClick(j)}
-                                onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
-                                query={props.location.search}/>
-                        )}
-                    />
-                    <Route path="/viz/3dmol"
-                        render={ props => (
-                            <VizLegacyPage
-                                query={props.location.search}
-                            />
-                        )}
-                    />
-                    {/* </Switch> */}
+                    <Switch>
+                        <Route exact path="/"
+                            render={ props => (
+                                <App
+                                    page={PAGES.home}
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                />
+                            )}                
+                        />
+                        <Route path="/about"
+                            render={ props => (
+                                <App
+                                    page={PAGES.about}
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                />
+                            )}
+                        />
+                        <Route path="/documentation"
+                            render={ props => (
+                                <App
+                                    page={PAGES.documentation}
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                />
+                            )}
+                        />
+                        <Route path="/download"
+                            render={ props => (
+                                <App
+                                    page={PAGES.download}
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                />
+                            )}
+                        />
+                        <Route path="/pdb2pqr"
+                            render={ props => (
+                                <App
+                                    page={PAGES.pdb2pqr}
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                    query={props.location.search}
+                                />
+                            )}
+                        />
+                        <Route path="/apbs"
+                            render={ props => (
+                                <App
+                                    page={PAGES.apbs}
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                    query={props.location.search}/>
+                            )}
+                        />
+                        <Route path="/jobstatus"
+                            render={ props => (
+                                <App
+                                    page={PAGES.status}
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                    query={props.location.search}/>
+                            )}
+                        />
+                        <Route path="/viz/3dmol"
+                            render={ props => (
+                                <VizLegacyPage
+                                    query={props.location.search}
+                                />
+                            )}
+                        />
+                        <Route
+                            // 404 page
+                            render={ () => (
+                                <App
+                                    isMenuCollapsed={this.state.isMenuCollapsed}
+                                    openSubmenus={this.state.openSubmenus}
+                                    submenuOnClick={j => this.submenuOnClick(j)}
+                                    onSiderCollapse={(isCollapsed, type) => this.onSiderCollapse(isCollapsed, type)}
+                                />
+                            )}
+                        />
+                    </Switch>
                 </div>
             </Router>
         )
