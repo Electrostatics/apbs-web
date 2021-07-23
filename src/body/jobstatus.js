@@ -13,25 +13,14 @@ import {
   FormOutlined,
 } from '@ant-design/icons';
 
-import { Form } from '@ant-design/compatible';
 import '@ant-design/compatible/assets/index.css';
 
 import {
-  Affix,
   Layout,
-  Menu,
   Button,
-  Switch,
-  Input,
-  Radio,
-  Checkbox,
   Row,
   Col,
-  InputNumber,
-  Tooltip,
-  Upload,
   List,
-  message,
   Timeline,
   notification,
 } from 'antd';
@@ -40,9 +29,8 @@ import { Link } from 'react-router-dom';
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
-import { strict } from 'assert';
 
-const { Content, Sider } = Layout;
+const { Content } = Layout;
 
 // message.config({
 //   maxCount: 2,
