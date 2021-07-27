@@ -714,6 +714,7 @@ class JobStatus extends Component{
               onClose={() => this.resetSpinner(jobtype)}
               afterClose={() => this.retryDownload(jobtype)}
             />
+            <br/>
           </Col></Row>
       }
 
