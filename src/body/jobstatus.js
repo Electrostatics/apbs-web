@@ -17,12 +17,14 @@ import '@ant-design/compatible/assets/index.css';
 
 import {
   Layout,
+  Alert,
   Button,
   Row,
   Col,
   List,
   Timeline,
   notification,
+  Spin,
   Typography
 } from 'antd';
 import { Link } from 'react-router-dom';
@@ -79,10 +81,11 @@ class JobStatus extends Component{
     this.state = {
       current_jobid: props.jobid,
 
+      showRetry: false,
       totalElapsedTime: 0,
       elapsedTime: {
-        apbs: this.elapsedIntervalAPBS,
-        pdb2pqr: this.elapsedIntervalPDB2PQR,
+        apbs: <Spin/>,
+        pdb2pqr: <Spin/>,
       },
       stop_computing_time:{
         apbs: false,
@@ -94,8 +97,7 @@ class JobStatus extends Component{
       pdb2pqrColor: null,
       apbsColor: null,
       pdb2pqr: {
-        // status: "pdb2pqrStatus",
-        // status: 'no_job',
+        status: 'no_job',
         // status: null,
         startTime: null, // in seconds
         endTime: null, // in seconds
@@ -126,12 +128,21 @@ class JobStatus extends Component{
     }
   }
 
+  isUsingJobtype(job_type){
+    return this.props.jobtype.toLowerCase() === job_type
+  }
+
   /** Begins fetching status as soon this component loads
    *  TODO: remove socketIO from npm package dependencies
    */
   componentDidMount(){
+    // if( this.props.jobtype.toLowerCase() === 'pdb2pqr' ){
+    if( this.isUsingJobtype('pdb2pqr') ){
     this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
+    }
+    else if( this.isUsingJobtype('apbs') ){
     this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
+    }
 
     // TODO: add ON_CLOUD environement variable then change conditional
     // if( window._env_.ON_CLOUD == true ){}
@@ -191,11 +202,11 @@ class JobStatus extends Component{
   fetchJobStatus(jobtype){
     let self = this;
     let statusStates = ["complete", "error", null];
-    
+
     // Initialize interval to continually compute elapsed time
-    if(self.elapsedIntervalPDB2PQR === null)
+    if(this.isUsingJobtype('pdb2pqr'))
       self.elapsedIntervalPDB2PQR = self.computeElapsedTime('pdb2pqr');
-    if(self.elapsedIntervalAPBS === null)
+    if(this.isUsingJobtype('apbs'))
       self.elapsedIntervalAPBS = self.computeElapsedTime('apbs')
     
     let status_filename = `${jobtype}-status.json`
@@ -265,6 +276,8 @@ class JobStatus extends Component{
 
             // Tell elasped time interval to stop by assigned stop flag to True
             self.endStopwatch(jobtype)
+            self.setElapsedTime(jobtype, 'N/A')
+            self.showRetryAlert(true)
           } else { 
             self.fetchIntervalErrorCount[jobtype]++ 
           }
@@ -285,6 +298,31 @@ class JobStatus extends Component{
     Object.assign(timer_flags, this.state.stop_computing_time)
     timer_flags[jobtype] = true
     this.setState({ stop_computing_time: timer_flags })
+  }
+
+  showRetryAlert(show_retry){
+    this.setState({showRetry: show_retry})
+  }
+
+  resetSpinner(){
+    this.setState({
+      elapsedTime: {
+        apbs: <Spin/>,
+        pdb2pqr: <Spin/>
+      }
+    })
+  }
+
+  retryDownload(jobtype){
+
+    // Deactivate error alert flag
+    this.fetchIntervalErrorCount[jobtype] = 0
+    this.setState({
+      showRetry: false
+    })
+
+    // Attempt download again
+    this.fetchJobStatus(jobtype)
   }
 
   usingJobDate(){
@@ -331,6 +369,18 @@ class JobStatus extends Component{
     let object_url = `${bucket_url}/${object_name}`
     return fetch(object_url, {
       method: 'HEAD',
+    })
+  }
+
+  setElapsedTime(jobtype, value_str){
+    // Get and copy current time values
+    let current_elapsed_times = {}
+    Object.assign(current_elapsed_times, this.state.elapsedTime)
+    
+    // Assign and set new time value
+    current_elapsed_times[jobtype] = value_str
+    this.setState({
+      elapsedTime: current_elapsed_times
     })
   }
 
@@ -381,15 +431,15 @@ class JobStatus extends Component{
         }
   
         // Applies the computed elapsed time value to the appropriate jobtype
+        let time_str = 'N/A'
         if( accept_jobtypes.includes(jobtype) ){
-          let current_elapsed_times = {}
-          Object.assign(current_elapsed_times, self.state.elapsedTime)
-          current_elapsed_times[jobtype] = elapsedHours+':'+elapsedMin+':'+elapsedSec
-          self.setState({
-            elapsedTime: current_elapsed_times
-          })
-          if(self.terminalStatuses.includes(self.state[jobtype].status)) clearInterval(interval);
-  
+          time_str = `${elapsedHours}:${elapsedMin}:${elapsedSec}`
+        }
+        self.setElapsedTime(jobtype, time_str)
+
+        // Stop interval if a terminal status is seen
+        if(self.terminalStatuses.includes(self.state[jobtype].status)){
+          clearInterval(interval);
         }
   
         // Stop interval if flag is raised (job not found after X attempts)
@@ -649,11 +699,29 @@ class JobStatus extends Component{
         </a>
         </div>
 
+      
+      let error_alert = null
+      if(this.state.showRetry){
+        error_alert =
+          // <Row justify="center"><Col xs={24} md={20} lg={18} xl={14}>
+          <Row justify="center"><Col xs={20}>
+            <Alert
+              showIcon
+              type="error"
+              message="Could not find status information for job. This may be caused by an server-side error/delay. Otherwise your Job ID doesn't exist. Please try again later."
+              closeText="Retry"
+              onClose={() => this.resetSpinner(jobtype)}
+              afterClose={() => this.retryDownload(jobtype)}
+            />
+          </Col></Row>
+      }
+
       let job_status_block =
         <div>
           <Row justify="center" >
             {bookmark_notice_block}
           </Row>
+          {error_alert}
           <Row gutter={16}>
             {/* General job information */}
             <Col span={6}>
@@ -777,7 +845,7 @@ class JobStatus extends Component{
         <Layout>
           <Typography>
             {/* <h2>Missing jobid field</h2>
-          <p>Your request URL is missing the jobid field</p>
+            <p>Your request URL is missing the jobid field</p>
             <p>Usage: /jobstatus?<b>jobid=JOBID</b> </p> */}
 
             <Title level={3}>Missing query fields</Title>
