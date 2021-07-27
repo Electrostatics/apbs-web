@@ -13,36 +13,28 @@ import {
   FormOutlined,
 } from '@ant-design/icons';
 
-import { Form } from '@ant-design/compatible';
 import '@ant-design/compatible/assets/index.css';
 
 import {
-  Affix,
   Layout,
-  Menu,
+  Alert,
   Button,
-  Switch,
-  Input,
-  Radio,
-  Checkbox,
   Row,
   Col,
-  InputNumber,
-  Tooltip,
-  Upload,
   List,
-  message,
   Timeline,
   notification,
+  Spin,
+  Typography
 } from 'antd';
 import { Link } from 'react-router-dom';
 
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
-import { strict } from 'assert';
 
-const { Content, Sider } = Layout;
+const { Content } = Layout;
+const { Title, Paragraph, Text } = Typography
 
 // message.config({
 //   maxCount: 2,
@@ -89,10 +81,11 @@ class JobStatus extends Component{
     this.state = {
       current_jobid: props.jobid,
 
+      showRetry: false,
       totalElapsedTime: 0,
       elapsedTime: {
-        apbs: this.elapsedIntervalAPBS,
-        pdb2pqr: this.elapsedIntervalPDB2PQR,
+        apbs: <Spin/>,
+        pdb2pqr: <Spin/>,
       },
       stop_computing_time:{
         apbs: false,
@@ -104,8 +97,7 @@ class JobStatus extends Component{
       pdb2pqrColor: null,
       apbsColor: null,
       pdb2pqr: {
-        // status: "pdb2pqrStatus",
-        // status: 'no_job',
+        status: 'no_job',
         // status: null,
         startTime: null, // in seconds
         endTime: null, // in seconds
@@ -136,12 +128,21 @@ class JobStatus extends Component{
     }
   }
 
+  isUsingJobtype(job_type){
+    return this.props.jobtype.toLowerCase() === job_type
+  }
+
   /** Begins fetching status as soon this component loads
    *  TODO: remove socketIO from npm package dependencies
    */
   componentDidMount(){
-    this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
-    this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
+    // if( this.props.jobtype.toLowerCase() === 'pdb2pqr' ){
+    if( this.isUsingJobtype('pdb2pqr') ){
+      this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
+    }
+    else if( this.isUsingJobtype('apbs') ){
+      this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
+    }
 
     // TODO: add ON_CLOUD environement variable then change conditional
     // if( window._env_.ON_CLOUD == true ){}
@@ -201,11 +202,11 @@ class JobStatus extends Component{
   fetchJobStatus(jobtype){
     let self = this;
     let statusStates = ["complete", "error", null];
-    
+
     // Initialize interval to continually compute elapsed time
-    if(self.elapsedIntervalPDB2PQR === null)
+    if(this.isUsingJobtype('pdb2pqr'))
       self.elapsedIntervalPDB2PQR = self.computeElapsedTime('pdb2pqr');
-    if(self.elapsedIntervalAPBS === null)
+    if(this.isUsingJobtype('apbs'))
       self.elapsedIntervalAPBS = self.computeElapsedTime('apbs')
     
     let status_filename = `${jobtype}-status.json`
@@ -275,6 +276,8 @@ class JobStatus extends Component{
 
             // Tell elasped time interval to stop by assigned stop flag to True
             self.endStopwatch(jobtype)
+            self.setElapsedTime(jobtype, 'N/A')
+            self.showRetryAlert(true)
           } else { 
             self.fetchIntervalErrorCount[jobtype]++ 
           }
@@ -295,6 +298,31 @@ class JobStatus extends Component{
     Object.assign(timer_flags, this.state.stop_computing_time)
     timer_flags[jobtype] = true
     this.setState({ stop_computing_time: timer_flags })
+  }
+
+  showRetryAlert(show_retry){
+    this.setState({showRetry: show_retry})
+  }
+
+  resetSpinner(){
+    this.setState({
+      elapsedTime: {
+        apbs: <Spin/>,
+        pdb2pqr: <Spin/>
+      }
+    })
+  }
+
+  retryDownload(jobtype){
+
+    // Deactivate error alert flag
+    this.fetchIntervalErrorCount[jobtype] = 0
+    this.setState({
+      showRetry: false
+    })
+
+    // Attempt download again
+    this.fetchJobStatus(jobtype)
   }
 
   usingJobDate(){
@@ -344,6 +372,18 @@ class JobStatus extends Component{
     })
   }
 
+  setElapsedTime(jobtype, value_str){
+    // Get and copy current time values
+    let current_elapsed_times = {}
+    Object.assign(current_elapsed_times, this.state.elapsedTime)
+    
+    // Assign and set new time value
+    current_elapsed_times[jobtype] = value_str
+    this.setState({
+      elapsedTime: current_elapsed_times
+    })
+  }
+
   /** Compute the elapsed time of a submitted job,
    *  for as long as it is 'running'.
    * 
@@ -380,6 +420,7 @@ class JobStatus extends Component{
           elapsedDate = new Date(elapsed);
           console.log("elapsedDate: "+elapsedDate)
           
+          // TODO: 2021/07/27 (Elvis), computed hours fails if actual runtime is greater than 24 hours because computed value is relative to start of day
           elapsedHours = self.prependZeroIfSingleDigit( elapsedDate.getUTCHours().toString() );
           elapsedMin = self.prependZeroIfSingleDigit( elapsedDate.getUTCMinutes().toString() );
           elapsedSec = self.prependZeroIfSingleDigit( elapsedDate.getUTCSeconds().toString() );
@@ -391,15 +432,15 @@ class JobStatus extends Component{
         }
   
         // Applies the computed elapsed time value to the appropriate jobtype
+        let time_str = 'N/A'
         if( accept_jobtypes.includes(jobtype) ){
-          let current_elapsed_times = {}
-          Object.assign(current_elapsed_times, self.state.elapsedTime)
-          current_elapsed_times[jobtype] = elapsedHours+':'+elapsedMin+':'+elapsedSec
-          self.setState({
-            elapsedTime: current_elapsed_times
-          })
-          if(self.terminalStatuses.includes(self.state[jobtype].status)) clearInterval(interval);
-  
+          time_str = `${elapsedHours}:${elapsedMin}:${elapsedSec}`
+        }
+        self.setElapsedTime(jobtype, time_str)
+
+        // Stop interval if a terminal status is seen
+        if(self.terminalStatuses.includes(self.state[jobtype].status)){
+          clearInterval(interval);
         }
   
         // Stop interval if flag is raised (job not found after X attempts)
@@ -410,116 +451,6 @@ class JobStatus extends Component{
     }, 1000);
 
     return interval;
-  }
-
-  /** Creates the component for the file list and 
-   *  elapsed time of the particular jobtype */
-  createOutputList(jobtype){
-    // let status = (jobtype === "pdb2pqr") ? this.state.pdb2pqr.status : this.state.apbs.status;
-    let completion_status = this.state[jobtype].status;
-    let outputList = null;
-    
-    // console.log(new Date(this.state[jobtype].startTime*1000))
-    
-    let displayed_job_state = '';
-    let running_icon = null;
-    if(completion_status !== null){
-      displayed_job_state = completion_status.charAt(0).toUpperCase() + completion_status.substr(1)
-      if(completion_status == 'running')
-        running_icon = <LoadingOutlined />
-      // else if(completion_status == 'complete')
-      //   message.success(jobtype.toUpperCase()+' job completed')
-    }
-
-    let start_time = this.state[jobtype].startTime
-    let end_time   = this.state[jobtype].endTime
-    start_time = (this.state[jobtype].startTime !== null) ? new Date(start_time*1000).toLocaleString() : null
-    end_time   = (this.state[jobtype].endTime !== null) ? new Date(end_time*1000).toLocaleString() : null
-
-    outputList =  <div>
-                    <h2 style={{ margin: '10px 0' }}>{jobtype.toUpperCase()}:</h2>
-
-                    <Row>
-                      <Col span={12}>
-                        <h3 style={{color: this.statusColor}}>
-                          {displayed_job_state} &nbsp;&nbsp; {running_icon}
-                        </h3>
-                        {/* Start time: {this.state[jobtype].startTime}<br/>
-                        End time: {this.state[jobtype].endTime}<br/> */}
-                        Start time: {start_time}<br/>
-                        End time: {end_time}<br/>
-                        <h3>{this.state.elapsedTime[jobtype]}</h3>
-                        {/* Elapsed time ({jobtype.toUpperCase()}): <strong>{this.state.elapsedTime[jobtype]}</strong> */}
-                      </Col>
-                    </Row>
-
-                    <List
-                      size="small"
-                      bordered
-                      dataSource={this.state[jobtype].files}
-                      // dataSource={(jobtype === "pdb2pqr") ? this.state.pdb2pqr.files : this.state.apbs.files}
-                      renderItem={ item => (
-                          <List.Item actions={[<a href={window._env_.STORAGE_URL+'/'+item}><Button type="primary" icon={<DownloadOutlined />}>Download</Button></a>]}>
-                            {/* {window._env_.API_URL+'/download/'+item} */}
-                            {item.split('/')[1]}
-                          </List.Item>
-                        )}
-                    />
-                  </div>
-    return (
-      <Col span={12}>
-        {outputList}
-      </Col>
-    );
-  }
-
-  createJobStatus(){
-    // let full_status = getStatusJSON(this.props.jobid);
-    if(this.props.jobid){
-      // console.log(this.state['full_request']);
-      // console.log(full_status);
-      let displayed_status = "";
-      if (this.state.pdb2pqr.status !== null){//} && this.state.pdb2pqr.status != 'complete'){
-        displayed_status = this.state.pdb2pqr.status.charAt(0).toUpperCase() + this.state.pdb2pqr.status.substr(1) // Uppercase first letter
-      }
-      else if(this.state.apbs.status !== null){//} && this.state.apbs.status != 'complete'){
-        displayed_status = this.state.apbs.status.charAt(0).toUpperCase() + this.state.apbs.status.substr(1)       // Uppercase first letter
-      }
-      return(
-        <Layout style={{background: '#ffffff'}}>
-          <Row>
-            <h1>ID: {this.props.jobid}</h1>
-            {/* <h1>Status</h1> */}
-            {/* <h2 style={{color: this.statusColor}}> {
-              displayed_status
-              // (this.state.pdb2pqr.status !== null && this.state.pdb2pqr.status != 'complete') 
-              //     ? this.state.pdb2pqr.status.charAt(0).toUpperCase() + this.state.pdb2pqr.status.substr(1) // Uppercase first letter
-              //     : this.state.apbs.status.charAt(0).toUpperCase() + this.state.apbs.status.substr(1)       // Uppercase first letter
-            }</h2>
-            Start time: {this.state.pdb2pqr.startTime}<br/>
-            End time: {this.state.pdb2pqr.endTime}<br/>
-            Elapsed time (PDB2PQR): {this.state.pdb2pqrElapsedTime}  */}
-          </Row>
-          <hr/>
-          {/* Job ID from query string: {this.props.jobid}<br/>
-          JSON Response (PDB2PQR): {this.state.pdb2pqr.files} */}
-
-          <Row gutter={24}>
-            {this.createOutputList('pdb2pqr')}
-            {this.createOutputList('apbs')}
-          </Row>
-        </Layout>
-      )
-    }
-    else{
-      return(
-        <Layout>
-          <h2>Missing jobid field</h2>
-          <p>Your request URL is missing the jobid field</p>
-          <p>Usage: /jobstatus?<b>jobid=JOBID</b> </p>
-        </Layout>
-      )
-    }
   }
 
   // Converts byte integer to size-appropriate string
@@ -601,8 +532,8 @@ class JobStatus extends Component{
     return [null, null]
   }
 
-  newCreateJobStatus(){
-    if( this.props.jobid ){
+  createJobStatus(){
+    if( this.props.jobid && this.props.jobtype ){
 
       let jobtype = undefined;
       if( ['apbs','pdb2pqr'].includes(this.props.jobtype) ){
@@ -769,11 +700,30 @@ class JobStatus extends Component{
         </a>
         </div>
 
+      
+      let error_alert = null
+      if(this.state.showRetry){
+        error_alert =
+          // <Row justify="center"><Col xs={24} md={20} lg={18} xl={14}>
+          <Row justify="center"><Col xs={20}>
+            <Alert
+              showIcon
+              type="error"
+              message="Could not find status information for job. This may be caused by an server-side error/delay. Otherwise your Job ID doesn't exist. Please try again later."
+              closeText="Retry"
+              onClose={() => this.resetSpinner(jobtype)}
+              afterClose={() => this.retryDownload(jobtype)}
+            />
+            <br/>
+          </Col></Row>
+      }
+
       let job_status_block =
         <div>
           <Row justify="center" >
             {bookmark_notice_block}
           </Row>
+          {error_alert}
           <Row gutter={16}>
             {/* General job information */}
             <Col span={6}>
@@ -895,9 +845,19 @@ class JobStatus extends Component{
     else{
       return(
         <Layout>
-          <h2>Missing jobid field</h2>
-          <p>Your request URL is missing the jobid field</p>
-          <p>Usage: /jobstatus?<b>jobid=JOBID</b> </p>
+          <Typography>
+            {/* <h2>Missing jobid field</h2>
+            <p>Your request URL is missing the jobid field</p>
+            <p>Usage: /jobstatus?<b>jobid=JOBID</b> </p> */}
+
+            <Title level={3}>Missing query fields</Title>
+            <Paragraph>Your request URL may be missing the following fields: jobid, jobtype, jobdate</Paragraph>
+            <Paragraph>
+              Usage: /jobstatus?jobid=<b>JOBID</b>&amp;jobtype=<b>JOBTYPE</b>&amp;jobdate=<b>JOBDATE</b>
+            </Paragraph>
+
+            {/* <Paragraph>Usage:</Paragraph> */}
+          </Typography>
         </Layout>
       )
     }   
@@ -910,8 +870,7 @@ class JobStatus extends Component{
           <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
           {/* <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}> */}
             {/* Content goes here */}
-            {/* {this.createJobStatus()} */}
-            {this.newCreateJobStatus()}
+            {this.createJobStatus()}
         </Content>
       </Layout>
     );
