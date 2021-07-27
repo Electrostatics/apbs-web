@@ -35,8 +35,6 @@ import {
   Timeline,
   notification,
 } from 'antd';
-import { stat } from 'fs';
-import io from 'socket.io-client';
 import { Link } from 'react-router-dom';
 
 import '../styles/jobstatus.css'
@@ -144,8 +142,6 @@ class JobStatus extends Component{
   componentDidMount(){
     this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
     this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
-    // this.fetchJobStatusSocketIO('apbs')
-    // this.fetchJobStatusSocketIO('pdb2pqr')
 
     // TODO: add ON_CLOUD environement variable then change conditional
     // if( window._env_.ON_CLOUD == true ){}
@@ -288,57 +284,6 @@ class JobStatus extends Component{
     }, 1000);
     return interval;
   }
-
-  /**
-   * Inquires job status from server via WebSocket, using 
-   * response data to update states.
-   */
-  fetchJobStatusSocketIO(jobtype){
-    let self = this;
-
-    // Initialize interval to continually compute elapsed time
-    if(self.elapsedIntervalPDB2PQR == null && jobtype === 'pdb2pqr')
-      self.elapsedIntervalPDB2PQR = self.computeElapsedTime('pdb2pqr');
-    if(self.elapsedIntervalAPBS == null && jobtype === 'apbs')
-      self.elapsedIntervalAPBS = self.computeElapsedTime('apbs')
-
-    // Connect to job status service; send job status request to server 
-    let socket = io.connect(self.jobStatusDomain);
-    socket.emit('status', {'jobid': self.props.jobid, 'jobtype': jobtype})
-
-    // When server responds, set the appropriate status values
-    socket.on(`${jobtype}_status`, function(data){
-      console.log(data);
-      self.setState({
-        [jobtype]: {
-          status: data[jobtype].status,
-          startTime: data[jobtype].startTime,
-          endTime: data[jobtype].endTime,
-          files: data[jobtype].files,         
-        },
-      });
-    })
-
-    // Disconnects socket; log to console
-    socket.on('disconnect', (reason) =>{ 
-      if(reason === 'termination'){
-        console.log(reason)
-        socket.disconnect()
-      }
-      else
-        console.log(`other reason: ${reason}`)
-    })
-  }
-
-  // sendRegisterClickEvent(pageType){
-  //   if( window._env_.GA_TRACKING_ID !== "" ){
-  //     ReactGA.event({
-  //       category: 'Registration',
-  //       action: 'linkClick',
-  //       label: pageType,
-  //     })
-  //   }
-  // }
 
   prependZeroIfSingleDigit(numString){ 
     return (numString > 9) ? numString : '0'+ numString;

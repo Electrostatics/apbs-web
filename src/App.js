@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 // import logo from './logo.svg';
 import PAGES from './common/pagenames.js';
 import MyHeader from './common/myheader.js';
@@ -12,9 +13,9 @@ import JobStatus from './body/jobstatus.js';
 import './App.css';
 import 'antd/dist/antd.css';
 
-import { Layout, Breadcrumb, Col, Row } from 'antd';
+import { Layout, Breadcrumb, Result, Button } from 'antd';
 import DownloadPage from './body/cli-download.js';
-import { hasMeasurementId, hasAnalyticsId, sendPageView } from './body/utils/ga-utils'
+import { hasMeasurementId, sendPageView } from './body/utils/ga-utils'
 import Announcement from './common/announcement.js';
 // import { Layout, Col, Menu, Icon, Tooltip, Alert } from 'antd';
 // const { Header, Content, Sider, Footer } = Layout;
@@ -135,7 +136,7 @@ class App extends Component {
       let show_cli_args = query_args.get('show_cli')
 
       document.title = "Tools | Configure a PDB2PQR job";
-      bcrumb = this.createServiceBreadcrumb(['Tools', 'PDB2PQR Job Configuration'])
+      bcrumb = this.createServiceBreadcrumb(['Tools', `PDB2PQR (v${window._env_.PDB2PQR_VERSION}) Job Configuration`])
       content = <ConfigPDB2PQR show_cli={show_cli_args}/>;
     }
     
@@ -147,7 +148,7 @@ class App extends Component {
       let job_date = query_args.get('date')
 
       document.title = "Tools | Configure a APBS job";
-      bcrumb = this.createServiceBreadcrumb(['Tools', 'APBS Job Configuration'])
+      bcrumb = this.createServiceBreadcrumb(['Tools', `APBS (v${window._env_.APBS_VERSION}) Job Configuration`])
       content = <ConfigAPBS jobid={job_id} jobdate={job_date}/>;
     }
 
@@ -169,6 +170,18 @@ class App extends Component {
         />;
     }
 
+    // Render 404 page
+    else{
+      document.title = "404 | Page Not Found";
+      bcrumb = this.createServiceBreadcrumb(['Error', 'Page Not Found'])
+      content = 
+        <Result
+          status="404"
+          title="404"
+          subTitle="Sorry, the page you visited does not exist."
+          extra={<Link to="/" ><Button type="primary">Back Home</Button></Link>}
+        />
+    }
 
     return(
       <Layout style={{ height: '100%' }}>
