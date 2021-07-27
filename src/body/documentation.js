@@ -8,7 +8,7 @@ import { Divider } from 'antd';
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 
 const { Content } = Layout;
-const { Title, Text, Link } = Typography;
+const { Title, Paragraph, Text, Link } = Typography;
 
 class DocumentationPage extends Component{
     constructor(props){
@@ -18,80 +18,60 @@ class DocumentationPage extends Component{
     }
     
     render(){
-        let apbs_block = '$ apbs [options] input-file'
-        let pdb2pqr_block = '$ pdb2pqr [options] --ff={forcefield} {pdb-path} {output-path}'
         return(
             <Layout id="download" style={{ padding: '16px 0', marginBottom: 5, background: '#fff', boxShadow: "2px 4px 3px #00000033" }}>
                 <Content style={{ background: '#fff', padding: 16, margin: 0, minHeight: 280 }}>
                     <Col offset={2} span={20}>
-                        <Title>
-                            Documentation
-                        </Title>
-                        <Title level={4}>
-                            Project homepage:
-                            <Link href={window._env_.PROJECT_HOME_URL} target="_blank" rel="noopener noreferrer"> PoissonBoltzmann.org </Link>
-                            {/* <Link href={window._env_.PROJECT_HOME_URL} target="_blank" rel="noopener noreferrer"> 
-                                Project Homepage <ExportOutlined />
-                             </Link> */}
-                        </Title>
-                        <Divider/>
+                        <Typography>
+                            <Title>Documentation</Title>
 
-                        {/* Display links to documentation page */}
-                        <Title level={3}>
-                            Full Documention
-                        </Title>
-                        <Text>
-                            Learn more about APBS and PDB2PQR at their respective documentation sites:
-                        </Text>
-                        <ul>
-                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_URL_APBS}> APBS </a></li>
-                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_URL_PDB2PQR}> PDB2PQR </a></li>
-                        </ul>
-                        <br/>
+                            <Title level={5}>
+                                {/* Project Homepage */}
+                                {/* Project homepage:
+                                <Link href={window._env_.PROJECT_HOME_URL} target="_blank" rel="noopener noreferrer"> PoissonBoltzmann.org </Link> */}
+                                Visit our project home page:
+                                <Link strong href={window._env_.PROJECT_HOME_URL} target="_blank" rel="noopener noreferrer"> PoissonBoltzmann.org </Link>
+                            </Title>
+                            
+                            {/* <Paragraph>
+                                Come visit our project page at
+                                <Link strong href={window._env_.PROJECT_HOME_URL} target="_blank" rel="noopener noreferrer"> PoissonBoltzmann.org </Link>
+                            </Paragraph> */}
+                            
+                            <Divider/>
 
-                        {/* Display basic software usage */}
-                        <Title level={3}>
-                            Basic Usage:
-                        </Title>
-                        <Title level={4}> APBS </Title>
-                        <Row>
-                            <Col offset={1} span={10}>
-                                {/* <pre style={{backgroundColor: '#eee'}}><code> */}
-                                <pre ><code>
-                                    <b>
-                                        {apbs_block}
-                                    </b>
-                                </code></pre>
-                            </Col>
-                        </Row>
-                        
-                        {/* <h3>PDB2PQR</h3> */}
-                        <Title level={4}> PDB2PQR </Title>
-                        <Row>
-                            <Col offset={1} span={13}>
-                                {/* <pre style={{backgroundColor: '#eee'}}><code> */}
-                                <pre ><code>
-                                    <b>
-                                        {pdb2pqr_block}
-                                    </b>
-                                </code></pre>
-                            </Col>
-                        </Row>
-                        <br/>
-                        
-                        {/* Display links to documentation page */}
-                        <Title level={3} >
-                            Examples
-                        </Title>
-                        <Text>
-                            In-depth examples for using either software can be found at the following:
-                        </Text>
-                        <ul>
-                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_EXAMPLES_APBS}> APBS </a></li>
-                            <li><a target="_blank" rel="noopener noreferrer" href={window._env_.DOC_EXAMPLES_PDB2PQR}> PDB2PQR </a></li>
-                        </ul>
-                        <br/>
+                            {/* Display links to documentation page */}
+                            <Title level={3}>Full Documention</Title>
+                            <Paragraph>
+                                Learn more about APBS and PDB2PQR at their respective documentation sites:
+                            </Paragraph>
+                            <Paragraph>
+                                <ul>
+                                    <li><Link target="_blank" rel="noopener noreferrer" href={window._env_.DOC_URL_APBS}> APBS </Link></li>
+                                    <li><Link target="_blank" rel="noopener noreferrer" href={window._env_.DOC_URL_PDB2PQR}> PDB2PQR </Link></li>
+                                </ul>
+                            </Paragraph>
 
+                            
+                            {/* Display links to documentation page */}
+                            <Title level={3}>Examples</Title>
+                            <Paragraph>
+                                <Text>
+                                    In-depth examples for using either software can be found at the following:
+                                </Text>
+                            </Paragraph>
+                            <Paragraph>
+                                <ul>
+                                    <li><Link target="_blank" rel="noopener noreferrer" href={window._env_.DOC_EXAMPLES_APBS}> APBS </Link></li>
+                                    <li><Link target="_blank" rel="noopener noreferrer" href={window._env_.DOC_EXAMPLES_PDB2PQR}> PDB2PQR </Link></li>
+                                </ul>
+                            </Paragraph>
+
+                            <Title level={3}>Who paid for this?</Title>
+                            <Paragraph>
+                                This software is made possible by generous support from the US National Institutes of Health through grant <Link target="_blank" rel="noopener noreferrer" href="https://pubmed.ncbi.nlm.nih.gov/?term=R01+GM069702%2FGM%2FNIGMS+NIH+HHS%2FUnited+States%5BGrant+Number%5D">GM69702</Link>.
+                            </Paragraph>
+                        </Typography>
                     </Col>
                 </Content>
             </Layout>
