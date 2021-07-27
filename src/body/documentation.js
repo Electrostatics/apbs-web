@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
 import 'antd/dist/antd.css';
+import { Link as ReactRouterLink } from 'react-router-dom';
 import { Layout, Col, Row } from 'antd';
 import { Typography } from 'antd';
 import { Divider } from 'antd';
@@ -71,6 +72,10 @@ class DocumentationPage extends Component{
                             <Paragraph>
                                 This software is made possible by generous support from the US National Institutes of Health through grant <Link target="_blank" rel="noopener noreferrer" href="https://pubmed.ncbi.nlm.nih.gov/?term=R01+GM069702%2FGM%2FNIGMS+NIH+HHS%2FUnited+States%5BGrant+Number%5D">GM69702</Link>.
                             </Paragraph>
+                            <Paragraph>
+                                Please support the continued development of APBS by <Link target="_blank" rel="noopener" onClick={() => sendRegisterClickEvent('documentation')} href={window._env_.REGISTRATION_URL}> registering your use </Link> and using the proper <ReactRouterLink to="/about#citations">citation</ReactRouterLink> in your publication.
+                            </Paragraph>
+
                         </Typography>
                     </Col>
                 </Content>
