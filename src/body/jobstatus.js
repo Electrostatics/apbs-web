@@ -138,10 +138,10 @@ class JobStatus extends Component{
   componentDidMount(){
     // if( this.props.jobtype.toLowerCase() === 'pdb2pqr' ){
     if( this.isUsingJobtype('pdb2pqr') ){
-    this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
+      this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
     }
     else if( this.isUsingJobtype('apbs') ){
-    this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
+      this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
     }
 
     // TODO: add ON_CLOUD environement variable then change conditional
@@ -420,6 +420,7 @@ class JobStatus extends Component{
           elapsedDate = new Date(elapsed);
           console.log("elapsedDate: "+elapsedDate)
           
+          // TODO: 2021/07/27 (Elvis), computed hours fails if actual runtime is greater than 24 hours because computed value is relative to start of day
           elapsedHours = self.prependZeroIfSingleDigit( elapsedDate.getUTCHours().toString() );
           elapsedMin = self.prependZeroIfSingleDigit( elapsedDate.getUTCMinutes().toString() );
           elapsedSec = self.prependZeroIfSingleDigit( elapsedDate.getUTCSeconds().toString() );
