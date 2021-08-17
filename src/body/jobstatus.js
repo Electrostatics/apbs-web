@@ -38,7 +38,7 @@ import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
-// import { JOBTYPES } from './utils/constants.ts';
+import { JOBTYPES } from './utils/constants.ts';
 
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography
@@ -659,8 +659,7 @@ class JobStatus extends Component{
 
     if(this.state.file_sizes_retrieved){
       let logfile_view_pdb2pqr_only = null
-      // if(this.props.jobtype === JOBTYPES.PDB2PQR){
-      if(this.props.jobtype === 'pdb2pqr'){
+      if(this.props.jobtype === JOBTYPES.PDB2PQR){
         logfile_view_pdb2pqr_only =
           <Panel header={`Log (${this.props.jobid}.log)`}>
             {this.renderCodeBlock(this.state.logData.log, 'accesslog', `${this.props.jobid}.log`)}
@@ -686,22 +685,23 @@ class JobStatus extends Component{
   }
 
   renderLogView(){
-
-    let log_view = <br/>
-
+    let log_view = null
+    
     if(this.state.file_sizes_retrieved){
       log_view = 
-        <div>
-          <Row justify="center">
-            <Col span={24}>
-              <h2>Log Preview:</h2>
-              {this.renderLogFiles()}
-            </Col>
-          </Row>
-        </div>
+        <Row justify="center">
+          <Col span={24}>
+            <h2>Log Preview:</h2>
+            {this.renderLogFiles()}
+          </Col>
+        </Row>
     }
 
-    return log_view
+    return (
+      <div><br/>
+        {log_view}
+      </div>
+    )
   }
 
   createJobStatus(){
