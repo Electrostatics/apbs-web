@@ -420,6 +420,10 @@ class JobStatus extends Component{
           const which_log = log_file_names[file_name]
           log_data_dict[which_log] = data
         })
+        .catch(err => {
+          console.error(err)
+          // TODO: 2021/08/21 (Elvis) Add state to allow user to reload fetch if file not found
+        })
 
         // url_list.push(`${bucket_url}/${object_name}`)
 
