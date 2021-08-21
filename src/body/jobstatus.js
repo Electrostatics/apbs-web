@@ -19,6 +19,7 @@ import {
   Alert,
   BackTop,
   Button,
+  Checkbox,
   Col,
   Collapse,
   Layout,
@@ -135,10 +136,11 @@ class JobStatus extends Component{
       },
 
       // Contents of log/stdout/stderr data
+      show_log_line_numbers: false,
       logData: {
-        log: "",
-        stdout: "",
-        stderr: "",
+        log: null,
+        stdout: null,
+        stderr: null,
       }
     }
   }
@@ -637,7 +639,11 @@ class JobStatus extends Component{
 
     if(text){
       code_block = 
-        <SyntaxHighlighter language={language} style={atomOneDark}>
+        <SyntaxHighlighter
+          language={language}
+          style={atomOneDark}
+          showLineNumbers={this.state.show_log_line_numbers}
+        >
           {text}
         </SyntaxHighlighter>
     }
@@ -691,7 +697,15 @@ class JobStatus extends Component{
       log_view = 
         <Row justify="center">
           <Col span={24}>
-            <h2>Log Preview:</h2>
+            <h2>
+              Log Preview:<br/>
+              <Checkbox
+                checked={this.state.show_log_line_numbers}
+                onChange={e => this.setState({show_log_line_numbers: e.target.checked})}
+              >
+                Show line numbers
+              </Checkbox>
+              </h2>
             {this.renderLogFiles()}
           </Col>
         </Row>
