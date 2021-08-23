@@ -16,25 +16,35 @@ import {
 import '@ant-design/compatible/assets/index.css';
 
 import {
-  Layout,
   Alert,
+  BackTop,
   Button,
-  Row,
+  Checkbox,
   Col,
+  Collapse,
+  Layout,
   List,
-  Timeline,
   notification,
+  Timeline,
+  Row,
   Spin,
-  Typography
+  Typography,
+  Empty
 } from 'antd';
 import { Link } from 'react-router-dom';
+
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
+import { JOBTYPES } from './utils/constants.ts';
 
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography
+
+const { Panel } = Collapse;
 
 // message.config({
 //   maxCount: 2,
@@ -123,8 +133,15 @@ class JobStatus extends Component{
       filesizes:{
         apbs: {},
         pdb2pqr: {},
-      }
+      },
 
+      // Contents of log/stdout/stderr data
+      show_log_line_numbers: false,
+      logData: {
+        log: null,
+        stdout: null,
+        stderr: null,
+      }
     }
   }
 
@@ -252,6 +269,7 @@ class JobStatus extends Component{
               show_download_button = true
               let all_filenames = inputFiles.concat(data[jobtype].outputFiles)
               self.getAllFileSizes(window._env_.OUTPUT_BUCKET_HOST, all_filenames, self.props.jobid, self.props.jobdate, jobtype)
+              self.getLogFiles(window._env_.OUTPUT_BUCKET_HOST, data[jobtype].outputFiles, self.props.jobid, jobtype)
             }
 
             // Update job-respective component states
@@ -371,6 +389,91 @@ class JobStatus extends Component{
       method: 'HEAD',
     })
   }
+
+  getLogFiles(bucket_url, objectname_list, job_id, job_type){
+    console.log("fetching all log files")
+    let promise_list = []
+    const url_list = []
+    const log_file_names = {
+      [`${job_id}.log`]: 'log',
+      [`${job_type}.stdout.txt`]: 'stdout',
+      [`${job_type}.stderr.txt`]: 'stderr',
+    }
+
+    const log_promises = {
+      [`${job_id}.log`]: null,
+      [`${job_type}.stdout.txt`]: null,
+      [`${job_type}.stderr.txt`]: null,
+    }
+
+
+    for( let object_name of objectname_list ){
+      const file_name = object_name.split("/").slice(-1)
+      
+      if( file_name in log_file_names ){
+        const url = `${bucket_url}/${object_name}`
+        // log_promises[url] = fetch(url)
+        fetch(url)
+        .then(response => response.text())
+        .then(data => {
+          let log_data_dict = this.state.logData
+          const which_log = log_file_names[file_name]
+          log_data_dict[which_log] = data
+        })
+        .catch(err => {
+          console.error(err)
+          // TODO: 2021/08/21 (Elvis) Add state to allow user to reload fetch if file not found
+        })
+
+        // url_list.push(`${bucket_url}/${object_name}`)
+
+        // promise_list.push(
+        //   fetch(`${bucket_url}/${object_name}`)
+        //   .then(resp => {
+        //     if(resp.ok) return [file_name, resp.text().then(data => {return data})]
+        //   })
+        // )
+      }
+    }
+
+
+    // Promise.all(url_list.map(url => fetch(url))).then( responses =>
+    //   Promise.all(responses.map(resp => resp.text()))
+    // ).then(texts => {
+
+    // })
+
+    // Promise.all( promise_list )
+    // .then((all_data) =>{
+    //   // console.log(all_data)
+    //   // add to log_view dict: {"log": "", "stdout": "", "stderr": ""}
+
+    //   let log_data_dict = this.state.logData
+    //   for( let i = 0; i < all_data.length; i++ ){
+    //     // const file_name = promise_list[i].split("/").slice(-1)
+    //     const file_name = all_data[i][0]
+    //     const log_data = all_data[i][1]
+    //     console.log(file_name)
+    //     console.log(log_data)
+    //     if( file_name in log_file_names ){
+    //       // read response body data
+    //       const which_log = log_file_names[file_name]
+    //       console.log(which_log)
+    //       log_data_dict[which_log] = log_data
+    //       console.log(log_data_dict)
+    //     }
+    //   }
+
+    //   // set state with log_view dict
+    //   console.log(log_data_dict)
+    //   this.setState({
+    //     logData: log_data_dict
+    //   })
+    // })
+    
+  }
+
+
 
   setElapsedTime(jobtype, value_str){
     // Get and copy current time values
@@ -530,6 +633,93 @@ class JobStatus extends Component{
     }
 
     return [null, null]
+  }
+
+  renderCodeBlock(text, language, filename){
+    let code_block
+    const code_block_style = {
+      maxHeight: 600
+    }
+
+    if(text){
+      code_block = 
+        <SyntaxHighlighter
+          language={language}
+          style={atomOneDark}
+          showLineNumbers={this.state.show_log_line_numbers}
+        >
+          {text}
+        </SyntaxHighlighter>
+    }
+    else{
+      code_block = <Empty description={`${filename} is empty.`}  />
+    }
+
+    return code_block
+  }
+
+  renderLogFiles(){
+
+    let log_blocks = {}
+
+    // for(filetype in )
+    const panel_style = {
+      maxHeight: 600
+    }
+
+    if(this.state.file_sizes_retrieved){
+      let logfile_view_pdb2pqr_only = null
+      if(this.props.jobtype === JOBTYPES.PDB2PQR){
+        logfile_view_pdb2pqr_only =
+          <Panel header={`Log (${this.props.jobid}.log)`}>
+            {this.renderCodeBlock(this.state.logData.log, 'accesslog', `${this.props.jobid}.log`)}
+          </Panel>
+      }
+
+      return(
+        <div>
+          <Collapse bordered={false}>
+            {logfile_view_pdb2pqr_only}
+            <Panel header={`Stdout (${this.props.jobtype}.stdout.txt)`}>
+              {this.renderCodeBlock(this.state.logData.stdout, 'accesslog', `${this.props.jobid}.stdout`)}
+            </Panel>
+            <Panel header={`Stderr (${this.props.jobtype}.stderr.txt)`}>
+              {this.renderCodeBlock(this.state.logData.stderr, 'accesslog', `${this.props.jobid}.stderr`)}
+            </Panel>
+          </Collapse>
+        </div>
+      )
+    }else{
+      return <Empty description="Nothing to retrieve yet."/>
+    }
+  }
+
+  renderLogView(){
+    let log_view = null
+    
+    if(this.state.file_sizes_retrieved){
+      log_view = 
+        <Row justify="center">
+          <Col span={24}>
+            <h2>
+              Log Preview:<br/>
+              <Checkbox
+                checked={this.state.show_log_line_numbers}
+                onChange={e => this.setState({show_log_line_numbers: e.target.checked})}
+              >
+                Show line numbers
+              </Checkbox>
+              </h2>
+            {this.renderLogFiles()}
+          </Col>
+        </Row>
+    }
+
+    return (
+      <div><br/>
+        {log_view}
+      </div>
+    )
   }
 
   createJobStatus(){
@@ -789,15 +979,6 @@ class JobStatus extends Component{
                 dataSource={this.state[jobtype].files_output}
                 // dataSource={(jobtype === "pdb2pqr") ? this.state.pdb2pqr.files : this.state.apbs.files}
                 renderItem={ (item) => this.createFileListItem(item) }
-                // renderItem={ item => (
-                //     <List.Item actions={[
-                //       <a href={window._env_.STORAGE_URL+'/'+item}><Icon type='download'/> Download </a>,
-                //       <a href={window._env_.STORAGE_URL+'/'+item+'?view=true' target="BLANK"}><Icon type='eye'/> View </a>
-                //     ]}>
-                //     {/* <List.Item actions={[<a href={window._env_.STORAGE_URL+'/'+item}><Button type="primary" icon="download">Download</Button></a>]}> */}
-                //       {item.split('/')[1]}
-                //     </List.Item>
-                //   )}
               />
 
               <br/>
@@ -824,6 +1005,8 @@ class JobStatus extends Component{
             </Col>
 
           </Row>
+
+          {this.renderLogView()}
 
           {/* <Row>
             <Col offset={18}>
@@ -869,7 +1052,7 @@ class JobStatus extends Component{
       <Layout id="pdb2pqr">
           <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
           {/* <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}> */}
-            {/* Content goes here */}
+            <BackTop/>
             {this.createJobStatus()}
         </Content>
       </Layout>
