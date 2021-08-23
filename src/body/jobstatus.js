@@ -1,3 +1,4 @@
+// NPM imports
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
 import 'antd/dist/antd.css'
@@ -36,10 +37,13 @@ import { Link } from 'react-router-dom';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
+// Project imports
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 import { JOBTYPES } from './utils/constants.ts';
+import WorkflowHeader from '../common/WorkflowHeader.tsx';
+import { WORKFLOW_TYPES } from '../common/WorkflowHeader.tsx';
 
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography
@@ -90,6 +94,7 @@ class JobStatus extends Component{
     // this.totalElapsedTime = 0;
     this.state = {
       current_jobid: props.jobid,
+      is_apbs_post_pdb2pqr: null,
 
       showRetry: false,
       totalElapsedTime: 0,
@@ -159,6 +164,7 @@ class JobStatus extends Component{
     }
     else if( this.isUsingJobtype('apbs') ){
       this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
+      this.isPostPDB2PQR()
     }
 
     // TODO: add ON_CLOUD environement variable then change conditional
@@ -1046,13 +1052,50 @@ class JobStatus extends Component{
     }   
   }
 
+  isPostPDB2PQR(){
+    const jobid = this.props.jobid
+    const jobtype = JOBTYPES.PDB2PQR
+    const jobdate = this.props.jobdate
+    const object_name = `${jobdate}/${jobid}/${jobtype}-status.json`
+    return this.fetchObjectHead(window._env_.OUTPUT_BUCKET_HOST, object_name)
+    .then(response => {
+      if(response.ok){
+        console.log("found pdb2pqr-status.json. Job is post-PDB2PQR")
+        // return true
+        this.setState({is_apbs_post_pdb2pqr: true})
+      }else{
+        console.log("couldn't find pdb2pqr-status.json. Job is not post-PDB2PQR")
+        this.setState({is_apbs_post_pdb2pqr: false})
+        // return false
+      }
+    })
+    .catch(error => {
+      console.error(error)
+    })
+  }
+
+  renderWorkflowSteps(){
+    let workflow_header = null
+    if(this.isUsingJobtype(JOBTYPES.PDB2PQR)){
+      workflow_header = <WorkflowHeader currentStep={1} stepList={WORKFLOW_TYPES.PDB2PQR} />
+    }
+    else if(this.isUsingJobtype(JOBTYPES.APBS)){
+      if( this.state.is_apbs_post_pdb2pqr === true ){
+        workflow_header = <WorkflowHeader currentStep={3} stepList={WORKFLOW_TYPES.APBS} />
+      }else if(this.state.is_apbs_post_pdb2pqr === false){
+        workflow_header = <WorkflowHeader currentStep={1} stepList={WORKFLOW_TYPES.APBS_ONLY} />
+      }
+    }
+    return workflow_header
+  }
+
   render(){
-    console.log('rendering')
     return(
       <Layout id="pdb2pqr">
           <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
           {/* <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}> */}
             <BackTop/>
+            {this.renderWorkflowSteps()}<br/>
             {this.createJobStatus()}
         </Content>
       </Layout>

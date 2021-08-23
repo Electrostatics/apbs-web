@@ -1,3 +1,4 @@
+// NPM imports
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
 import 'antd/dist/antd.css'
@@ -24,10 +25,13 @@ import {
   Tabs,
 } from 'antd';
 // import Radio.Group from 'antd/lib/radio/group';
+
+// Project imports
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 import ConfigForm from './utils/formutils';
-import { MgAuto, MgPara, MgManual, FeManual, MgDummy
-       } from './apbs/calculationtypes';
+import { MgAuto, MgPara, MgManual, FeManual, MgDummy } from './apbs/calculationtypes';
+import WorkflowHeader from '../common/WorkflowHeader.tsx';
+import { WORKFLOW_TYPES } from '../common/WorkflowHeader.tsx';
 
 const { Content, Sider } = Layout;
 const Panel = Collapse.Panel;
@@ -1149,14 +1153,19 @@ class ConfigAPBS extends ConfigForm {
       
   render(){
     let rendered_config = null;
+    let rendered_workflow = null;
     if ( this.state.successful_submit ){
       rendered_config = this.redirectToStatusPage('apbs')
     }
     else{
-      if( this.props.jobid )
+      if( this.props.jobid ){
         rendered_config = this.renderConfigFormTabular()
-      else
+        rendered_workflow = <WorkflowHeader currentStep={2} stepList={WORKFLOW_TYPES.APBS}/>
+      }
+      else{
         rendered_config = this.renderConfigFormInfile()
+        rendered_workflow = <WorkflowHeader currentStep={0} stepList={WORKFLOW_TYPES.APBS_ONLY}/>
+      }
     }
 
 
@@ -1165,11 +1174,12 @@ class ConfigAPBS extends ConfigForm {
       <Layout id="apbs" style={{ padding: '16px 0', marginBottom: 5, background: '#fff', boxShadow: "2px 4px 3px #00000033" }}>
           {/* {this.renderSidebar()} */}
           <Layout>
-            <Content style={{ background: '#fff', padding: 16, margin: 0, minHeight: 280 }}>
+            <Content style={{ background: '#fff', padding: 16, paddingTop: 0, margin: 0, minHeight: 280 }}>
               {/* Content goes here */}
               {/* {this.renderConfigForm()} */}
               {/* {this.renderConfigFormTabular()} */}
               {/* {this.renderConfigFormInfile()} */}
+              {rendered_workflow}<br/>
               {rendered_config}
             </Content>
           </Layout>
