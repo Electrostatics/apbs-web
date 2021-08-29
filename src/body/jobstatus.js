@@ -27,12 +27,13 @@ import {
   List,
   notification,
   Timeline,
+  Tooltip,
   Row,
   Spin,
   Typography,
   Empty
 } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
@@ -46,7 +47,7 @@ import WorkflowHeader from '../common/WorkflowHeader.tsx';
 import { WORKFLOW_TYPES } from '../common/WorkflowHeader.tsx';
 
 const { Content } = Layout;
-const { Title, Paragraph, Text } = Typography
+const { Title, Paragraph, Text, Link } = Typography
 
 const { Panel } = Collapse;
 
@@ -214,6 +215,10 @@ class JobStatus extends Component{
       // this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
       // this.fetchIntervalAPBS = this.fetchJobStatus('apbs');     
     }
+  }
+
+  constructFileURL(filename){
+    return `${window._env_.OUTPUT_BUCKET_HOST}/${this.props.jobdate}/${this.props.jobid}/${filename}`
   }
 
   /**
@@ -665,7 +670,6 @@ class JobStatus extends Component{
   }
 
   renderLogFiles(){
-
     let log_blocks = {}
 
     // for(filetype in )
@@ -673,11 +677,31 @@ class JobStatus extends Component{
       maxHeight: 600
     }
 
+    const createLogDownload = (filename) => {
+      const url = this.constructFileURL(filename)
+
+      if(this.state.filesizes[this.props.jobtype][`${this.props.jobdate}/${this.props.jobid}/${filename}`] > 0){
+        return(
+          <Tooltip placement="top" title="Download">
+            <Link href={url} onClick={e => {e.stopPropagation()}}>
+              <DownloadOutlined />
+            </Link>
+          </Tooltip>
+        )
+      }
+
+      return null
+    }
+
     if(this.state.file_sizes_retrieved){
       let logfile_view_pdb2pqr_only = null
+      const log_filename = `${this.props.jobid}.log`
+      const stdout_filename = `${this.props.jobtype}.stdout.txt`
+      const stderr_filename = `${this.props.jobtype}.stderr.txt`
+
       if(this.props.jobtype === JOBTYPES.PDB2PQR){
         logfile_view_pdb2pqr_only =
-          <Panel header={`Log (${this.props.jobid}.log)`}>
+          <Panel header={`Log (${log_filename})`} extra={createLogDownload( log_filename )}>
             {this.renderCodeBlock(this.state.logData.log, 'accesslog', `${this.props.jobid}.log`)}
           </Panel>
       }
@@ -686,10 +710,10 @@ class JobStatus extends Component{
         <div>
           <Collapse bordered={false}>
             {logfile_view_pdb2pqr_only}
-            <Panel header={`Stdout (${this.props.jobtype}.stdout.txt)`}>
+            <Panel header={`Stdout (${stdout_filename})`} extra={createLogDownload( stdout_filename )}>
               {this.renderCodeBlock(this.state.logData.stdout, 'accesslog', `${this.props.jobid}.stdout`)}
             </Panel>
-            <Panel header={`Stderr (${this.props.jobtype}.stderr.txt)`}>
+            <Panel header={`Stderr (${stderr_filename})`} extra={createLogDownload( stderr_filename )}>
               {this.renderCodeBlock(this.state.logData.stderr, 'accesslog', `${this.props.jobid}.stderr`)}
             </Panel>
           </Collapse>
@@ -832,12 +856,12 @@ class JobStatus extends Component{
         }
         apbs_button_block = 
         // <Button type="primary" href={apbs_config_url}>
-        <Link to={apbs_config_url}>
+        <RouterLink to={apbs_config_url}>
           <Button type="primary" size='large' disabled={is_disabled}>
               Use results with APBS
               <RightOutlined />
             </Button>
-        </Link>
+        </RouterLink>
       }
 
       // Setup button to view results in vizualizer
@@ -873,8 +897,16 @@ class JobStatus extends Component{
         </Button>
       }
 
+      let browser = browser
+      if(browser === undefined) browser = chrome
+
       let bookmark_notice_block = 
-        <div>
+        <div 
+          onClick={(e) => {browser.bookmarks.create({
+            title: `APBS/PDBP2QR Job: ${this.props.jobid} (${this.props.jobtype})`,
+            url: window.location
+          })}}
+        >
           <h2> <b>Bookmark</b> <StarTwoTone /> this page to return to your results after leaving</h2>
           {/* <h2> <b>Bookmark</b> this page in order to view your results after leaving this page.</h2> */}
           <br/>
@@ -1012,8 +1044,6 @@ class JobStatus extends Component{
 
           </Row>
 
-          {this.renderLogView()}
-
           {/* <Row>
             <Col offset={18}>
               {apbs_button_block}
@@ -1097,6 +1127,8 @@ class JobStatus extends Component{
             <BackTop/>
             {this.renderWorkflowSteps()}<br/>
             {this.createJobStatus()}
+            {this.renderLogView()}
+
         </Content>
       </Layout>
     );
