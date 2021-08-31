@@ -930,19 +930,19 @@ class JobStatus extends Component{
           {/* Job ID section */}
           <Col span={3} offset={1}>
             <Text>Job ID:</Text><br/>
-            <Text style={{fontSize: 20, fontWeight: 600}}>{jobid}</Text>
+            <Text strong style={{fontSize: 20}}>{jobid}</Text>
           </Col>
 
           {/* Job Type section */}
           <Col span={3}>
             <Text>Job Type:</Text><br/>
-            <Text style={{fontSize: 20, fontWeight: 600}}>{jobtype.toUpperCase()}</Text>
+            <Text strong style={{fontSize: 20}}>{jobtype.toUpperCase()}</Text>
           </Col>
 
           {/* Elapsed time section */}
           <Col span={3}>
             <Text>Time Elapsed:</Text><br/>
-            <Text style={{fontSize: 20, fontWeight: 600}}>{elapsedTime}</Text>
+            <Text strong style={{fontSize: 20}}>{elapsedTime}</Text>
           </Col>
 
           {/* Button for next process (e.g. APBS, 3Dmol) */}
@@ -1034,7 +1034,8 @@ class JobStatus extends Component{
           <List
             size="small"
             bordered
-            header={<Title level={5}>{jobtype.toUpperCase()} Input Files:</Title>}
+            header={<Title level={5}>{jobtype.toUpperCase()} Input Files</Title>}
+            // header={<Text strong>{jobtype.toUpperCase()} Input Files:</Text>}
             // header={<h3>{jobtype.toUpperCase()} Input Files:</h3>}
             dataSource={this.state[jobtype].files_input}
             renderItem={ (item) => {
@@ -1061,7 +1062,8 @@ class JobStatus extends Component{
           <List
             size="small"
             bordered
-            header={<Title level={5}>{jobtype.toUpperCase()} Output Files:</Title>}
+            header={<Title level={5}>{jobtype.toUpperCase()} Output Files</Title>}
+            // header={<Text strong>{jobtype.toUpperCase()} Output Files:</Text>}
             // header={<h3>{jobtype.toUpperCase()} Output Files:</h3>}
             dataSource={this.state[jobtype].files_output}
             renderItem={ (item) => this.createFileListItem(item) }
@@ -1105,14 +1107,15 @@ class JobStatus extends Component{
         <Row justify="center">
           <Col span={24}>
             <h2>
-              Log Preview:<br/>
+              <Text strong>Log Preview</Text>
+              <br/>
               <Checkbox
                 checked={this.state.show_log_line_numbers}
                 onChange={e => this.setState({show_log_line_numbers: e.target.checked})}
               >
                 Show line numbers
               </Checkbox>
-              </h2>
+            </h2>
             {this.renderLogFiles()}
           </Col>
         </Row>
