@@ -1,12 +1,17 @@
+// NPM imports
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
 import 'antd/dist/antd.css'
 
 import {
   CheckCircleOutlined,
+  CheckCircleFilled,
+  CheckCircleTwoTone,
+  ClockCircleOutlined,
   CloseCircleOutlined,
   DownloadOutlined,
   EyeOutlined,
+  LinkOutlined,
   LoadingOutlined,
   RightOutlined,
   StarTwoTone,
@@ -26,23 +31,29 @@ import {
   List,
   notification,
   Timeline,
+  Tooltip,
   Row,
   Spin,
+  Steps,
   Typography,
   Empty
 } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
+// Project imports
 import '../styles/jobstatus.css'
 import '../styles/utils.css'
 import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
 import { JOBTYPES } from './utils/constants.ts';
+import WorkflowHeader from '../common/WorkflowHeader.tsx';
+import { WORKFLOW_TYPES } from '../common/WorkflowHeader.tsx';
 
 const { Content } = Layout;
-const { Title, Paragraph, Text } = Typography
+const { Title, Paragraph, Text, Link } = Typography
+const { Step } = Steps
 
 const { Panel } = Collapse;
 
@@ -90,6 +101,7 @@ class JobStatus extends Component{
     // this.totalElapsedTime = 0;
     this.state = {
       current_jobid: props.jobid,
+      is_apbs_post_pdb2pqr: null,
 
       showRetry: false,
       totalElapsedTime: 0,
@@ -159,6 +171,7 @@ class JobStatus extends Component{
     }
     else if( this.isUsingJobtype('apbs') ){
       this.fetchIntervalAPBS = this.fetchJobStatus('apbs');
+      this.isPostPDB2PQR()
     }
 
     // TODO: add ON_CLOUD environement variable then change conditional
@@ -208,6 +221,30 @@ class JobStatus extends Component{
       // this.fetchIntervalPDB2PQR = this.fetchJobStatus('pdb2pqr');
       // this.fetchIntervalAPBS = this.fetchJobStatus('apbs');     
     }
+  }
+
+  constructFileURL(filename){
+    return `${window._env_.OUTPUT_BUCKET_HOST}/${this.props.jobdate}/${this.props.jobid}/${filename}`
+  }
+
+  isPostPDB2PQR(){
+    const jobid = this.props.jobid
+    const jobtype = JOBTYPES.PDB2PQR
+    const jobdate = this.props.jobdate
+    const object_name = `${jobdate}/${jobid}/${jobtype}-status.json`
+    return this.fetchObjectHead(window._env_.OUTPUT_BUCKET_HOST, object_name)
+    .then(response => {
+      if(response.ok){
+        console.log("found pdb2pqr-status.json. Job is post-PDB2PQR")
+        this.setState({is_apbs_post_pdb2pqr: true})
+      }else{
+        console.log("couldn't find pdb2pqr-status.json. Job is not post-PDB2PQR")
+        this.setState({is_apbs_post_pdb2pqr: false})
+      }
+    })
+    .catch(error => {
+      console.error(error)
+    })
   }
 
   /**
@@ -659,7 +696,6 @@ class JobStatus extends Component{
   }
 
   renderLogFiles(){
-
     let log_blocks = {}
 
     // for(filetype in )
@@ -667,11 +703,31 @@ class JobStatus extends Component{
       maxHeight: 600
     }
 
+    const createLogDownload = (filename) => {
+      const url = this.constructFileURL(filename)
+
+      if(this.state.filesizes[this.props.jobtype][`${this.props.jobdate}/${this.props.jobid}/${filename}`] > 0){
+        return(
+          <Tooltip placement="top" title="Download">
+            <Link href={url} onClick={e => {e.stopPropagation()}}>
+              <DownloadOutlined />
+            </Link>
+          </Tooltip>
+        )
+      }
+
+      return null
+    }
+
     if(this.state.file_sizes_retrieved){
       let logfile_view_pdb2pqr_only = null
+      const log_filename = `${this.props.jobid}.log`
+      const stdout_filename = `${this.props.jobtype}.stdout.txt`
+      const stderr_filename = `${this.props.jobtype}.stderr.txt`
+
       if(this.props.jobtype === JOBTYPES.PDB2PQR){
         logfile_view_pdb2pqr_only =
-          <Panel header={`Log (${this.props.jobid}.log)`}>
+          <Panel header={`Log (${log_filename})`} extra={createLogDownload( log_filename )}>
             {this.renderCodeBlock(this.state.logData.log, 'accesslog', `${this.props.jobid}.log`)}
           </Panel>
       }
@@ -680,10 +736,10 @@ class JobStatus extends Component{
         <div>
           <Collapse bordered={false}>
             {logfile_view_pdb2pqr_only}
-            <Panel header={`Stdout (${this.props.jobtype}.stdout.txt)`}>
+            <Panel header={`Stdout (${stdout_filename})`} extra={createLogDownload( stdout_filename )}>
               {this.renderCodeBlock(this.state.logData.stdout, 'accesslog', `${this.props.jobid}.stdout`)}
             </Panel>
-            <Panel header={`Stderr (${this.props.jobtype}.stderr.txt)`}>
+            <Panel header={`Stderr (${stderr_filename})`} extra={createLogDownload( stderr_filename )}>
               {this.renderCodeBlock(this.state.logData.stderr, 'accesslog', `${this.props.jobid}.stderr`)}
             </Panel>
           </Collapse>
@@ -694,6 +750,355 @@ class JobStatus extends Component{
     }
   }
 
+  renderCurrentStepTimeline(){
+    const timeline_list = []
+    const jobtype = this.props.jobtype
+    let pending_text = ''
+
+    // New Steps variables
+    let current_step = 0
+    let running_icon = null
+    let pending_icon = null
+    let complete_icon = null
+
+    if( this.state[jobtype].status === 'pending' ){
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
+      pending_text = this.possibleJobStates.pending
+
+      current_step = 1
+      pending_icon = <LoadingOutlined/>
+    }
+    else if( this.state[jobtype].status === 'running' ){
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.pending}</Timeline.Item> )
+      pending_text = this.possibleJobStates.running
+
+      current_step = 2
+      running_icon = <LoadingOutlined/>
+      pending_icon = null
+    }
+    else if( this.state[jobtype].status === 'failed' ){
+      let reason_for_failure = this.getReasonForFailure(jobtype)
+      let task_name = null
+      let reason = null
+      let timeline_message = null
+
+      if( reason_for_failure[0] !== null && reason_for_failure[1] !== null ){
+        task_name = reason_for_failure[0]
+        reason = reason_for_failure[1]
+
+        timeline_message = `${this.possibleJobStates.failed} - ${task_name}: ${reason}`
+      }else{
+        timeline_message = this.possibleJobStates.failed
+      }
+
+      current_step = 3
+      running_icon = null
+
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.pending}</Timeline.Item> )
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.running}</Timeline.Item> )
+      timeline_list.push( <Timeline.Item color="red" dot={<CloseCircleOutlined />}>{timeline_message}</Timeline.Item> )
+    }
+    else if( this.state[jobtype].status === 'complete' ){
+      current_step = 3
+      complete_icon = <CheckCircleTwoTone twoToneColor="#52c41a"/>
+      running_icon = null
+
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.pending}</Timeline.Item> )
+      timeline_list.push( <Timeline.Item>{this.possibleJobStates.running}</Timeline.Item> )
+      timeline_list.push( <Timeline.Item color="green" dot={<CheckCircleOutlined />}>{this.possibleJobStates.complete}</Timeline.Item> )
+    }
+
+
+    return (
+      <div>
+        <Row justify="center">
+          <Col span={22}>
+            <Steps
+              size="small"
+              current={current_step}
+              // progressDot
+              // style={{paddingRight: 16, paddingLeft: 16}}
+            >
+              <Step title={this.possibleJobStates.submitted} />
+              <Step icon={pending_icon} title={this.possibleJobStates.pending} />
+              <Step icon={running_icon} title={this.possibleJobStates.running} />
+              <Step icon={complete_icon} title={this.possibleJobStates.complete} />
+              {/* TODO: 2021/08/30 (Elvis) - use "status" property of <Step/> based on exit code (#55) */}
+              {/* <Step title={this.possibleJobStates.failed} /> */}
+            </Steps>
+          </Col>
+        </Row>
+      </div>
+    )
+  }
+
+  renderMissingFieldsPage(){
+    return(
+      <Layout>
+        <Typography>
+          {/* <h2>Missing jobid field</h2>
+          <p>Your request URL is missing the jobid field</p>
+          <p>Usage: /jobstatus?<b>jobid=JOBID</b> </p> */}
+
+          <Title level={3}>Missing query fields</Title>
+          <Paragraph>Your request URL may be missing the following fields: jobid, jobtype, jobdate</Paragraph>
+          <Paragraph>
+            Usage: /jobstatus?jobid=<b>JOBID</b>&amp;jobtype=<b>JOBTYPE</b>&amp;jobdate=<b>JOBDATE</b>
+          </Paragraph>
+
+          {/* <Paragraph>Usage:</Paragraph> */}
+        </Typography>
+      </Layout>
+    )  
+  }
+
+  renderWorkflowSteps(){
+    let workflow_header = null
+    if(this.isUsingJobtype(JOBTYPES.PDB2PQR)){
+      workflow_header = <WorkflowHeader currentStep={1} stepList={WORKFLOW_TYPES.PDB2PQR} />
+    }
+    else if(this.isUsingJobtype(JOBTYPES.APBS)){
+      if( this.state.is_apbs_post_pdb2pqr === true ){
+        workflow_header = <WorkflowHeader currentStep={3} stepList={WORKFLOW_TYPES.APBS} />
+      }else if(this.state.is_apbs_post_pdb2pqr === false){
+        workflow_header = <WorkflowHeader currentStep={1} stepList={WORKFLOW_TYPES.APBS_ONLY} />
+      }
+    }
+    return workflow_header
+  }
+
+  renderBookmarkRow(){
+    return(
+      <div >
+        <Row justify="center">
+          <h2>
+            <Text
+              copyable={{
+                icon: <LinkOutlined/>,
+                text: window.location,
+                tooltips: ["Copy URL", "Copied"]
+              }}
+            >
+              To return to your results after leaving,<b> save this page</b>.
+            </Text>
+          </h2>
+          <br/>
+        </Row>
+      </div>
+    )
+  }
+
+  renderErrorAlert(){
+    let error_alert = null
+    if(this.state.showRetry){
+      error_alert =
+        // <Row justify="center"><Col xs={24} md={20} lg={18} xl={14}>
+        <Row justify="center"><Col xs={20}>
+          <Alert
+            showIcon
+            type="error"
+            message="Could not find status information for job. This may be caused by an server-side error/delay. Otherwise your Job ID doesn't exist. Please try again later."
+            closeText="Retry"
+            onClose={() => this.resetSpinner(jobtype)}
+            afterClose={() => this.retryDownload(jobtype)}
+          />
+          <br/>
+        </Col></Row>
+    }
+
+    return error_alert
+  }
+
+  renderJobStatsRow(){
+    const jobtype = this.props.jobtype
+    const jobid = this.props.jobid
+    const elapsedTime = this.state.elapsedTime[jobtype] !== undefined ? this.state.elapsedTime[jobtype] : 'computing...'
+
+    const continueButton = this.createNextProcessButton()
+    
+    const contentStyle = {
+      fontSize: 20,
+      fontWeight: 600
+    }
+
+    return(
+      <div>
+        <Row align="middle">
+          {/* Job ID section */}
+          <Col span={3} offset={1}>
+            <Text>Job ID:</Text><br/>
+            <Text strong style={{fontSize: 20}}>{jobid}</Text>
+          </Col>
+
+          {/* Job Type section */}
+          <Col span={3}>
+            <Text>Job Type:</Text><br/>
+            <Text strong style={{fontSize: 20}}>{jobtype.toUpperCase()}</Text>
+          </Col>
+
+          {/* Elapsed time section */}
+          <Col span={3}>
+            <Text>Time Elapsed:</Text><br/>
+            <Text strong style={{fontSize: 20}}>{elapsedTime}</Text>
+          </Col>
+
+          {/* Button for next process (e.g. APBS, 3Dmol) */}
+          <Col span={13}>
+            <Row justify="end">
+              <Col>
+                <Text>Next:</Text><br/>
+                {continueButton}
+              </Col>
+            </Row>
+          </Col>
+        </Row>
+      </div>
+    )
+  }
+
+  createNextProcessButton(){
+    const jobtype = this.props.jobtype
+    let next_process_button = null
+
+    /** Setup button to configure APBS post-PDB2PQR */
+    // let apbs_button_block = null
+    // if ( jobtype !== undefined ){
+    if ( jobtype === 'pdb2pqr' ){
+      let date_query_param = ''
+      if( this.usingJobDate() ){
+        date_query_param = `&date=${this.props.jobdate}`
+      }
+      let apbs_config_url = `/apbs?jobid=${this.props.jobid}${date_query_param}`
+      let is_disabled = true;
+      if (this.state[jobtype].status === 'complete'){
+        // TODO: Use alternative means to determine if user requested APBS input file
+        if ( this.state[jobtype].files_output.some( e => e.slice(-3) === '.in' ) ) // check if APBS input file exists in output_files with *.in
+          is_disabled = false;
+      }
+      next_process_button = 
+      // <Button type="primary" href={apbs_config_url}>
+      <RouterLink to={apbs_config_url}>
+        <Button type="primary" size='middle' disabled={is_disabled}>
+            Use results with APBS
+            <RightOutlined />
+          </Button>
+      </RouterLink>
+    }
+    
+    // Setup button to view results in vizualizer
+    // TODO: use dropdown when we add more than just 3Dmol
+    // let viz_button_block = null
+    else if ( jobtype === 'apbs' ){
+      let pqr_prefix = null
+
+      // find pqr name prefix
+      for( let element of this.state[jobtype].files_input ){
+        let file_name = element.split('/').slice(-1)[0]
+        let extension_index = file_name.search(/.pqr$/)
+        if( extension_index !== -1 ){
+          pqr_prefix = file_name.slice(0, extension_index)
+          // console.log(pqr_prefix)
+          break
+        }
+      }
+      // load visualizer button link if on the respective job status page
+      // let viz_3dmol_url = `/viz/3dmol?jobid=${this.props.jobid}&pqr=${pqr_prefix}`
+      let date_query_param_3dmol = ''
+      if( this.usingJobDate() ){
+        date_query_param_3dmol = `&date=${this.props.jobdate}`
+      }
+      let viz_3dmol_url = `${window._env_.VIZ_URL}?jobid=${this.props.jobid}&pqr=${pqr_prefix}${date_query_param_3dmol}`
+      let is_disabled = true;
+      if (this.state[jobtype].status === 'complete') is_disabled = false;
+      next_process_button = 
+      // <Button type="primary" href={apbs_config_url}>
+      <Button type="primary" size='middle' href={viz_3dmol_url} target='_BLANK' disabled={is_disabled}>
+          View in 3Dmol
+          {/* View in Visualizer */}
+          <RightOutlined />
+      </Button>
+    }
+
+    return next_process_button
+  }
+
+  renderInputOutputFiles(){
+    const jobtype = this.props.jobtype
+    return(
+      <Row gutter={16} justify="center">
+        {/* Input files */}
+        <Col span={11}>
+          <List
+            size="small"
+            bordered
+            header={<Title level={5}>{jobtype.toUpperCase()} Input Files</Title>}
+            // header={<Text strong>{jobtype.toUpperCase()} Input Files:</Text>}
+            // header={<h3>{jobtype.toUpperCase()} Input Files:</h3>}
+            dataSource={this.state[jobtype].files_input}
+            renderItem={ (item) => {
+              const item_split = item.split('/')
+              const file_name = item_split[ item_split.length-1 ]
+              let action_list = []
+              if(this.state.show_download_button){
+                action_list.push(
+                  this.formatBytes(this.state.filesizes[this.props.jobtype][item]),
+                  <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>, 
+                )
+              }
+              return(
+                <List.Item actions={action_list}>
+                  {file_name}
+                </List.Item>
+              )
+            }}
+          />
+        </Col>
+
+        {/* Output files */}
+        <Col span={11}>
+          <List
+            size="small"
+            bordered
+            header={<Title level={5}>{jobtype.toUpperCase()} Output Files</Title>}
+            // header={<Text strong>{jobtype.toUpperCase()} Output Files:</Text>}
+            // header={<h3>{jobtype.toUpperCase()} Output Files:</h3>}
+            dataSource={this.state[jobtype].files_output}
+            renderItem={ (item) => this.createFileListItem(item) }
+          />
+        </Col>
+      </Row>
+    )
+  }
+
+  renderRegistrationRow(){
+    return(
+      <div>
+        <Row justify="center">
+          <Text>
+            If you haven't already, please remember to <Text strong>register your use of this software</Text>:
+          </Text>
+        </Row>
+        <Row justify="center" style={{paddingTop: 5}}>
+            <a name="registration_link" href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
+              <Button
+                className='registration-button' 
+                type="primary"  
+                icon={<FormOutlined />}
+                onClick={() => sendRegisterClickEvent('jobStatus')}
+              >
+                Register Here
+              </Button>
+            </a>
+
+        </Row>
+      </div>
+
+    )
+  }
+
   renderLogView(){
     let log_view = null
     
@@ -702,14 +1107,15 @@ class JobStatus extends Component{
         <Row justify="center">
           <Col span={24}>
             <h2>
-              Log Preview:<br/>
+              <Text strong>Log Preview</Text>
+              <br/>
               <Checkbox
                 checked={this.state.show_log_line_numbers}
                 onChange={e => this.setState({show_log_line_numbers: e.target.checked})}
               >
                 Show line numbers
               </Checkbox>
-              </h2>
+            </h2>
             {this.renderLogFiles()}
           </Col>
         </Row>
@@ -722,338 +1128,28 @@ class JobStatus extends Component{
     )
   }
 
-  createJobStatus(){
-    if( this.props.jobid && this.props.jobtype ){
-
-      let jobtype = undefined;
-      if( ['apbs','pdb2pqr'].includes(this.props.jobtype) ){
-        jobtype = this.props.jobtype;
-      }
-
-      /** Create the timeline view of the current job status */
-      // let state_list = ['Download input files', 'Queued', 'Running', 'Upload output files', 'Complete']
-      // let state_list = ['Pending', 'Aborted', 'Running', 'Complete', 'Terminated']
-      let state_list = ['Submitted', 'Running', 'Complete']
-      let stop_index = state_list.length
-
-      let is_pending = false
-      let pending_text = ''
-
-      let timeline_list = []
-      // if( this.state[jobtype].status === 'running' )
-      //   stop_index = 2;
-      // else if( this.state[jobtype].status === 'complete' ){
-      //   /** Do nothing */
-      // }else
-      //   stop_index = 0;
-
-      // for (let val of state_list.slice(0, stop_index)){
-      //   if( val == 'Running' && this.state[jobtype].status === 'running' ){
-      //     console.log('Running should be a pending dot')
-      //     is_pending = true
-      //     pending_text = "Running"
-
-      //     // timeline_list.push( <Timeline.Item pending >{val}</Timeline.Item> )
-      //   }
-      //   else if( val == 'Complete' && this.state[jobtype].status === 'complete' ){
-      //     timeline_list.push( <Timeline.Item color="green" dot={<Icon type="check-circle"/>}>{val}</Timeline.Item> )
-      //   }
-      //   else
-      //     timeline_list.push( <Timeline.Item>{val}</Timeline.Item> )
-      // }
-        
-      if( this.state[jobtype].status === 'pending' ){
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
-        pending_text = this.possibleJobStates.pending
-      }
-      else if( this.state[jobtype].status === 'running' ){
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.pending}</Timeline.Item> )
-        pending_text = this.possibleJobStates.running
-      }
-      else if( this.state[jobtype].status === 'failed' ){
-        let reason_for_failure = this.getReasonForFailure(jobtype)
-        let task_name = null
-        let reason = null
-        let timeline_message = null
-
-        if( reason_for_failure[0] !== null && reason_for_failure[1] !== null ){
-          task_name = reason_for_failure[0]
-          reason = reason_for_failure[1]
-
-          timeline_message = `${this.possibleJobStates.failed} - ${task_name}: ${reason}`
-        }else{
-          timeline_message = this.possibleJobStates.failed
-        }
-
-
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.pending}</Timeline.Item> )
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.running}</Timeline.Item> )
-        timeline_list.push( <Timeline.Item color="red" dot={<CloseCircleOutlined />}>{timeline_message}</Timeline.Item> )
-      }
-      else if( this.state[jobtype].status === 'complete' ){
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.submitted}</Timeline.Item> )
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.pending}</Timeline.Item> )
-        timeline_list.push( <Timeline.Item>{this.possibleJobStates.running}</Timeline.Item> )
-        timeline_list.push( <Timeline.Item color="green" dot={<CheckCircleOutlined />}>{this.possibleJobStates.complete}</Timeline.Item> )
-      }
-
-
-      /** Set elapsed time */
-      let elapsedTime = 'computing...'
-      if (this.state.elapsedTime[jobtype] !== undefined){
-        elapsedTime = this.state.elapsedTime[jobtype]
-      }
-      else{
-        elapsedTime = 'computing...'
-      }
-
-      /** Setup button to configure APBS post-PDB2PQR */
-      let apbs_button_block = null
-      // if ( jobtype !== undefined ){
-      if ( jobtype === 'pdb2pqr' ){
-        let date_query_param = ''
-        if( this.usingJobDate() ){
-          date_query_param = `&date=${this.props.jobdate}`
-        }
-        let apbs_config_url = `/apbs?jobid=${this.props.jobid}${date_query_param}`
-        let is_disabled = true;
-        if (this.state[jobtype].status === 'complete'){
-          // TODO: Use alternative means to determine if user requested APBS input file
-          if ( this.state[jobtype].files_output.some( e => e.slice(-3) === '.in' ) ) // check if APBS input file exists in output_files with *.in
-            is_disabled = false;
-        }
-        apbs_button_block = 
-        // <Button type="primary" href={apbs_config_url}>
-        <Link to={apbs_config_url}>
-          <Button type="primary" size='large' disabled={is_disabled}>
-              Use results with APBS
-              <RightOutlined />
-            </Button>
-        </Link>
-      }
-
-      // Setup button to view results in vizualizer
-      // TODO: use dropdown when we add more than just 3Dmol
-      let viz_button_block = null
-      let pqr_prefix = null
-      if ( jobtype === 'apbs' ){
-        // find pqr name prefix
-        for( let element of this.state[jobtype].files_input ){
-          let file_name = element.split('/').slice(-1)[0]
-          let extension_index = file_name.search(/.pqr$/)
-          if( extension_index !== -1 ){
-            pqr_prefix = file_name.slice(0, extension_index)
-            // console.log(pqr_prefix)
-            break
-          }
-        }
-        // load visualizer button link if on the respective job status page
-        // let viz_3dmol_url = `/viz/3dmol?jobid=${this.props.jobid}&pqr=${pqr_prefix}`
-        let date_query_param_3dmol = ''
-        if( this.usingJobDate() ){
-          date_query_param_3dmol = `&date=${this.props.jobdate}`
-        }
-        let viz_3dmol_url = `${window._env_.VIZ_URL}?jobid=${this.props.jobid}&pqr=${pqr_prefix}${date_query_param_3dmol}`
-        let is_disabled = true;
-        if (this.state[jobtype].status === 'complete') is_disabled = false;
-        viz_button_block = 
-        // <Button type="primary" href={apbs_config_url}>
-        <Button type="primary" size='large' href={viz_3dmol_url} target='_BLANK' disabled={is_disabled}>
-            View in 3Dmol
-            {/* View in Visualizer */}
-            <RightOutlined />
-        </Button>
-      }
-
-      let bookmark_notice_block = 
-        <div>
-          <h2> <b>Bookmark</b> <StarTwoTone /> this page to return to your results after leaving</h2>
-          {/* <h2> <b>Bookmark</b> this page in order to view your results after leaving this page.</h2> */}
-          <br/>
-        </div>
-
-      // Show registration button if its state is true
-      let registration_button = 
-        <div >
-          Please remember to <b>register your use</b>:
-          <a name="registration_link" href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
-          <Button
-            className='registration-button' 
-            type="primary"  
-            icon={<FormOutlined />}
-            onClick={() => sendRegisterClickEvent('jobStatus')}
-          >
-            Register Here
-          </Button>
-        </a>
-        </div>
-
-      
-      let error_alert = null
-      if(this.state.showRetry){
-        error_alert =
-          // <Row justify="center"><Col xs={24} md={20} lg={18} xl={14}>
-          <Row justify="center"><Col xs={20}>
-            <Alert
-              showIcon
-              type="error"
-              message="Could not find status information for job. This may be caused by an server-side error/delay. Otherwise your Job ID doesn't exist. Please try again later."
-              closeText="Retry"
-              onClose={() => this.resetSpinner(jobtype)}
-              afterClose={() => this.retryDownload(jobtype)}
-            />
-            <br/>
-          </Col></Row>
-      }
-
-      let job_status_block =
-        <div>
-          <Row justify="center" >
-            {bookmark_notice_block}
-          </Row>
-          {error_alert}
-          <Row gutter={16}>
-            {/* General job information */}
-            <Col span={6}>
-              {/* Registration Button */}
-
-              <h2>
-                ID: {this.props.jobid}
-              </h2>
-
-              {/* General job information here */}
-              <h3>Time Elapsed:</h3>
-              <p style={{fontSize:24}}>
-                {elapsedTime}
-                {/* <b>{elapsedTime}</b> */}
-                {/* Time Elapsed: {this.state.elapsedTime[jobtype]} */}
-              </p>
-
-              <Timeline mode="left" pending={pending_text}>
-                {timeline_list}
-              </Timeline>
-              {registration_button}
-              <br/>
-              <br/>
-
-              {/* <br/> */}
-              {/* <h3>Regarding data retention</h3> */}
-            </Col>
-
-            {/* Display input/output files */}
-            <Col span={12}>
-              {/* {this.createOutputList('pdb2pqr')} */}
-              {/* {this.createOutputList(jobtype)} */}
-
-              <h2>Files:</h2>
-              {/* <h3>Notice regarding data retention</h3> */}
-              <List
-                size="small"
-                bordered
-                header={<h3>Input</h3>}
-                dataSource={this.state[jobtype].files_input}
-                renderItem={ (item) => {
-                  const item_split = item.split('/')
-                  const file_name = item_split[ item_split.length-1 ]
-                  let action_list = []
-                  if(this.state.show_download_button){
-                    action_list.push(
-                      this.formatBytes(this.state.filesizes[this.props.jobtype][item]),
-                      <a href={window._env_.OUTPUT_BUCKET_HOST+'/'+item}><DownloadOutlined /> Download </a>, 
-                    )
-                  }
-                  return(
-                    <List.Item actions={action_list}>
-                      {file_name}
-                    </List.Item>
-                  )
-                }}
-              />
-              <br/>
-              <List
-                size="small"
-                bordered
-                header={<h3>Output</h3>}
-                dataSource={this.state[jobtype].files_output}
-                // dataSource={(jobtype === "pdb2pqr") ? this.state.pdb2pqr.files : this.state.apbs.files}
-                renderItem={ (item) => this.createFileListItem(item) }
-              />
-
-              <br/>
-
-              <div className='next-process'>
-                {apbs_button_block}
-                {viz_button_block}
-              </div>
-
-            </Col>
-
-            {/* Show timeline of task related to job */}
-            <Col span={6}>
-              {/* <Timeline mode="left">
-                <Timeline.Item>Download input files</Timeline.Item>
-                <Timeline.Item>Queued</Timeline.Item>
-                <Timeline.Item>Running</Timeline.Item>
-                <Timeline.Item>Upload output files</Timeline.Item>
-                <Timeline.Item>Complete</Timeline.Item>
-              </Timeline> */}
-              {/* <Timeline mode="left" pending={pending_text}>
-                {timeline_list}
-              </Timeline> */}
-            </Col>
-
-          </Row>
-
-          {this.renderLogView()}
-
-          {/* <Row>
-            <Col offset={18}>
-              {apbs_button_block}
-            </Col>
-          </Row>
-          <Row>
-            <Col offset={18}>
-              {viz_button_block}
-            </Col>
-          </Row> */}
-
-        </div>
-
-      return job_status_block;
+  render(){
+    if( !this.props.jobid || !this.props.jobtype ){
+      return this.renderMissingFieldsPage()
     }
 
-    // If a job ID not in URL, display appropriate message
-    else{
-      return(
-        <Layout>
-          <Typography>
-            {/* <h2>Missing jobid field</h2>
-            <p>Your request URL is missing the jobid field</p>
-            <p>Usage: /jobstatus?<b>jobid=JOBID</b> </p> */}
-
-            <Title level={3}>Missing query fields</Title>
-            <Paragraph>Your request URL may be missing the following fields: jobid, jobtype, jobdate</Paragraph>
-            <Paragraph>
-              Usage: /jobstatus?jobid=<b>JOBID</b>&amp;jobtype=<b>JOBTYPE</b>&amp;jobdate=<b>JOBDATE</b>
-            </Paragraph>
-
-            {/* <Paragraph>Usage:</Paragraph> */}
-          </Typography>
-        </Layout>
-      )
-    }   
-  }
-
-  render(){
-    console.log('rendering')
     return(
       <Layout id="pdb2pqr">
           <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
-          {/* <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}> */}
             <BackTop/>
-            {this.createJobStatus()}
+            {this.renderWorkflowSteps()}
+            <br/>
+            {this.renderBookmarkRow()}
+            <br/>
+            {this.renderErrorAlert()}
+            {this.renderJobStatsRow()}
+            <br/>
+            {this.renderCurrentStepTimeline()}
+            <br/>
+            {this.renderInputOutputFiles()}
+            <br/>
+            {this.renderRegistrationRow()}
+            {this.renderLogView()}
         </Content>
       </Layout>
     );
