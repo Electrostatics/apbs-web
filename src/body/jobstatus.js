@@ -1034,7 +1034,8 @@ class JobStatus extends Component{
           <List
             size="small"
             bordered
-            header={<h3>{jobtype.toUpperCase()} Input Files:</h3>}
+            header={<Title level={5}>{jobtype.toUpperCase()} Input Files:</Title>}
+            // header={<h3>{jobtype.toUpperCase()} Input Files:</h3>}
             dataSource={this.state[jobtype].files_input}
             renderItem={ (item) => {
               const item_split = item.split('/')
@@ -1060,7 +1061,8 @@ class JobStatus extends Component{
           <List
             size="small"
             bordered
-            header={<h3>{jobtype.toUpperCase()} Output Files:</h3>}
+            header={<Title level={5}>{jobtype.toUpperCase()} Output Files:</Title>}
+            // header={<h3>{jobtype.toUpperCase()} Output Files:</h3>}
             dataSource={this.state[jobtype].files_output}
             renderItem={ (item) => this.createFileListItem(item) }
           />
