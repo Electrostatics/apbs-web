@@ -824,13 +824,6 @@ class JobStatus extends Component{
       <div>
         <Row justify="center">
           <Col span={22}>
-
-            {/* Old - Timeline */}
-            {/* <Timeline mode="left" pending={pending_text}>
-              {timeline_list}
-            </Timeline> */}
-
-            {/* New - Steps */}
             <Steps
               size="small"
               current={current_step}
@@ -841,7 +834,7 @@ class JobStatus extends Component{
               <Step icon={pending_icon} title={this.possibleJobStates.pending} />
               <Step icon={running_icon} title={this.possibleJobStates.running} />
               <Step icon={complete_icon} title={this.possibleJobStates.complete} />
-              {/* <Step status="error" title={this.possibleJobStates.complete} /> */}
+              {/* TODO: 2021/08/30 (Elvis) - use "status" property of <Step/> based on exit code (#55) */}
               {/* <Step title={this.possibleJobStates.failed} /> */}
             </Steps>
           </Col>
@@ -1175,6 +1168,47 @@ class JobStatus extends Component{
     }   
   }
 
+  renderMissingFieldsPage(){
+    return(
+      <Layout>
+        <Typography>
+          {/* <h2>Missing jobid field</h2>
+          <p>Your request URL is missing the jobid field</p>
+          <p>Usage: /jobstatus?<b>jobid=JOBID</b> </p> */}
+
+          <Title level={3}>Missing query fields</Title>
+          <Paragraph>Your request URL may be missing the following fields: jobid, jobtype, jobdate</Paragraph>
+          <Paragraph>
+            Usage: /jobstatus?jobid=<b>JOBID</b>&amp;jobtype=<b>JOBTYPE</b>&amp;jobdate=<b>JOBDATE</b>
+          </Paragraph>
+
+          {/* <Paragraph>Usage:</Paragraph> */}
+        </Typography>
+      </Layout>
+    )  
+  }
+
+  renderErrorAlert(){
+    let error_alert = null
+    if(this.state.showRetry){
+      error_alert =
+        // <Row justify="center"><Col xs={24} md={20} lg={18} xl={14}>
+        <Row justify="center"><Col xs={20}>
+          <Alert
+            showIcon
+            type="error"
+            message="Could not find status information for job. This may be caused by an server-side error/delay. Otherwise your Job ID doesn't exist. Please try again later."
+            closeText="Retry"
+            onClose={() => this.resetSpinner(jobtype)}
+            afterClose={() => this.retryDownload(jobtype)}
+          />
+          <br/>
+        </Col></Row>
+    }
+
+    return error_alert
+  }
+
   createNextProcessButton(){
     const jobtype = this.props.jobtype
     let next_process_button = null
@@ -1241,7 +1275,7 @@ class JobStatus extends Component{
     return next_process_button
   }
 
-  renderIDandElapsed(){
+  renderJobStatsRow(){
     const jobtype = this.props.jobtype
     const jobid = this.props.jobid
     const elapsedTime = this.state.elapsedTime[jobtype] !== undefined ? this.state.elapsedTime[jobtype] : 'computing...'
@@ -1256,59 +1290,35 @@ class JobStatus extends Component{
 
     return(
       <div>
-        {/* <Row gutter={16} justify="space-between">
-          <Col span={2} offset={2}>
-            <Text>Job ID:</Text>
-          </Col>
-        </Row>
-
-        <Row justify="center">
-          <Col span={10}>
-            <Title level={4}>{jobid}</Title>
-          </Col>
-          <Col span={10}>
-            {continueButton}
-          </Col>
-        </Row> */}
-
-        {/* <Row>
-          <Col offset={1}>
-            <Title level={3}>
-              {jobtype.toUpperCase()} Results
-            </Title>
-          </Col>
-        </Row> */}
-
         <Row align="middle">
+          {/* Job ID section */}
           <Col span={3} offset={1}>
             <Text>Job ID:</Text><br/>
             <Text style={{fontSize: 20, fontWeight: 600}}>{jobid}</Text>
           </Col>
 
+          {/* Job Type section */}
           <Col span={3}>
             <Text>Job Type:</Text><br/>
             <Text style={{fontSize: 20, fontWeight: 600}}>{jobtype.toUpperCase()}</Text>
           </Col>
 
+          {/* Elapsed time section */}
           <Col span={3}>
             <Text>Time Elapsed:</Text><br/>
             <Text style={{fontSize: 20, fontWeight: 600}}>{elapsedTime}</Text>
           </Col>
-          {/* <Col span={14}/> */}
-          {/* <Col span={3} pull={2}> */}
+
+          {/* Button for next process (e.g. APBS, 3Dmol) */}
           <Col span={13}>
             <Row justify="end">
               <Col>
-                {/* <Text>Next:</Text><br/> */}
                 <Text>Next:</Text><br/>
                 {continueButton}
               </Col>
             </Row>
           </Col>
         </Row>
-
-        
-
       </div>
     )
   }
@@ -1317,8 +1327,8 @@ class JobStatus extends Component{
     const jobtype = this.props.jobtype
     return(
       <Row gutter={16} justify="center">
+        {/* Input files */}
         <Col span={11}>
-          {/* Input files */}
           <List
             size="small"
             bordered
@@ -1350,7 +1360,6 @@ class JobStatus extends Component{
             bordered
             header={<h3>{jobtype.toUpperCase()} Output Files:</h3>}
             dataSource={this.state[jobtype].files_output}
-            // dataSource={(jobtype === "pdb2pqr") ? this.state.pdb2pqr.files : this.state.apbs.files}
             renderItem={ (item) => this.createFileListItem(item) }
           />
         </Col>
@@ -1362,7 +1371,6 @@ class JobStatus extends Component{
     return(
       <div >
         <Row justify="center">
-          {/* <h2> <b>Bookmark</b> <StarTwoTone /> this page to return to your results after leaving</h2> */}
           <h2>
             <Text
               copyable={{
@@ -1371,16 +1379,9 @@ class JobStatus extends Component{
                 tooltips: ["Copy URL", "Copied"]
               }}
             >
-              To return to your results after leaving,
-              {/* <Tooltip title="Copy URL" placement="bottom"> */}
-                {/* <a> */}
-                  <b> save this page</b>.
-                  {/* <LinkOutlined /> */}
-                {/* </a> */}
-              {/* </Tooltip> */}
+              To return to your results after leaving,<b> save this page</b>.
             </Text>
           </h2>
-          {/* <h2> <b>Bookmark</b> this page in order to view your results after leaving this page.</h2> */}
           <br/>
         </Row>
       </div>
@@ -1392,12 +1393,11 @@ class JobStatus extends Component{
     return(
       <div>
         <Row justify="center">
-            <Text>
-              If you haven't already, please remember to <Text strong>register your use of this software</Text>:
-            </Text>
+          <Text>
+            If you haven't already, please remember to <Text strong>register your use of this software</Text>:
+          </Text>
         </Row>
-        {/* <br/> */}
-        <Row justify="center">
+        <Row justify="center" style={{paddingTop: 5}}>
             <a name="registration_link" href={window._env_.REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
               <Button
                 className='registration-button' 
@@ -1424,12 +1424,10 @@ class JobStatus extends Component{
     .then(response => {
       if(response.ok){
         console.log("found pdb2pqr-status.json. Job is post-PDB2PQR")
-        // return true
         this.setState({is_apbs_post_pdb2pqr: true})
       }else{
         console.log("couldn't find pdb2pqr-status.json. Job is not post-PDB2PQR")
         this.setState({is_apbs_post_pdb2pqr: false})
-        // return false
       }
     })
     .catch(error => {
@@ -1453,16 +1451,20 @@ class JobStatus extends Component{
   }
 
   render(){
+    if( !this.props.jobid || !this.props.jobtype ){
+      return this.renderMissingFieldsPage()
+    }
+
     return(
       <Layout id="pdb2pqr">
           <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
-          {/* <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}> */}
             <BackTop/>
             {this.renderWorkflowSteps()}
             <br/>
             {this.renderBookmarkRow()}
             <br/>
-            {this.renderIDandElapsed()}
+            {this.renderErrorAlert()}
+            {this.renderJobStatsRow()}
             <br/>
             {this.createCurrentStepTimeline()}
             <br/>
