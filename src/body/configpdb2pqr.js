@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+// NPM imports
+import React from 'react';
 import ReactGA from 'react-ga';
 import 'antd/dist/antd.css'
 import { UploadOutlined, FormOutlined } from '@ant-design/icons';
@@ -11,7 +12,6 @@ import {
   Typography,
   Menu,
   Button,
-  // Switch,
   Input,
   Radio,
   Checkbox,
@@ -19,14 +19,18 @@ import {
   Col,
   InputNumber,
   Popover,
-  // Tooltip,
   Upload,
-  // Spin,
   message,
 } from 'antd';
+
+// Project imports
 import ConfigForm from './utils/formutils';
-import { hasAnalyticsId, hasMeasurementId, sendPageView, sendRegisterClickEvent } from './utils/ga-utils'
+import { hasAnalyticsId, sendRegisterClickEvent } from './utils/ga-utils'
+import WorkflowHeader from '../common/WorkflowHeader.tsx';
+import { WORKFLOW_TYPES } from '../common/WorkflowHeader.tsx';
+
 // import '../styles/configJob.css'
+
 const { Content, Sider } = Layout;
 const { Text, Title, Paragraph } = Typography;
 
@@ -1122,7 +1126,8 @@ class ConfigPDB2PQR extends ConfigForm{
       <Layout id="pdb2pqr" style={{ padding: '16px 0', marginBottom: 5, background: '#fff', boxShadow: "2px 4px 3px #00000033" }}>
           {/* {this.renderSidebar()} */}
           <Layout>
-            <Content style={{ background: '#fff', padding: 16, margin: 0, minHeight: 280 }}>
+            <Content style={{ background: '#fff', padding: 16, paddingTop: 0, margin: 0, minHeight: 280 }}>
+              <WorkflowHeader currentStep={0} stepList={WORKFLOW_TYPES.PDB2PQR} /><br/>
               {this.renderConfigForm()}
             </Content>
           </Layout>

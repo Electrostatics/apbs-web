@@ -17,9 +17,6 @@ import { Layout, Breadcrumb, Result, Button } from 'antd';
 import DownloadPage from './body/cli-download.js';
 import { hasMeasurementId, sendPageView } from './body/utils/ga-utils'
 import Announcement from './common/announcement.js';
-// import { Layout, Col, Menu, Icon, Tooltip, Alert } from 'antd';
-// const { Header, Content, Sider, Footer } = Layout;
-const { Header } = Layout;
 
 /**
  * Main application code.
@@ -136,7 +133,7 @@ class App extends Component {
       let show_cli_args = query_args.get('show_cli')
 
       document.title = "Tools | Configure a PDB2PQR job";
-      bcrumb = this.createServiceBreadcrumb(['Tools', `PDB2PQR (v${window._env_.PDB2PQR_VERSION}) Job Configuration`])
+      bcrumb = this.createServiceBreadcrumb(['Tools', `PDB2PQR Job Configuration`])
       content = <ConfigPDB2PQR show_cli={show_cli_args}/>;
     }
     
@@ -148,7 +145,7 @@ class App extends Component {
       let job_date = query_args.get('date')
 
       document.title = "Tools | Configure a APBS job";
-      bcrumb = this.createServiceBreadcrumb(['Tools', `APBS (v${window._env_.APBS_VERSION}) Job Configuration`])
+      bcrumb = this.createServiceBreadcrumb(['Tools', `APBS Job Configuration`])
       content = <ConfigAPBS jobid={job_id} jobdate={job_date}/>;
     }
 
@@ -192,19 +189,15 @@ class App extends Component {
           all_header_items={new Array()}
           onClick={j => this.onClickSelectPage(j)}
 
-          //
           isMenuCollapsed={this.props.isMenuCollapsed}
           openSubmenus={Object.values(this.props.openSubmenus)}
           submenuOnClick={k => this.props.submenuOnClick(k)}
           onSiderCollapse={(isCollapsed, type) => this.props.onSiderCollapse(isCollapsed, type)}
           onAnnounmentClick={() => this.toggleAnnouncementDrawer(true)}
         />
-        {/* <Header style={{ background: '#fff', paddingDown: 16 }} /> */}
         <Layout style={{ padding: '0px 50px' }}>
-          {/* <Row> */}
           {bcrumb}
           {content}
-          {/* </Row> */}
           <MyFooter />
         </Layout>
       </Layout>
