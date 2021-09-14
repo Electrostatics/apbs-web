@@ -756,6 +756,7 @@ class JobStatus extends Component{
             return style
           }}
 
+          // TODO: 2021/9/14 (Elvis) If using the virtualized renderer, work out how to scroll horizontally
           // renderer={this.myVirtualizedRenderer()}
         >
           {/* {text} */}
