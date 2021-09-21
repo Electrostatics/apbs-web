@@ -156,14 +156,16 @@ class App extends Component {
       let job_id = query_args.get('jobid')
       let job_type = query_args.get('jobtype')
       let job_date = query_args.get('date')
+      const combinedJobIdDate = `${job_id}_${job_date.replaceAll('-', '')}` // removed dashes for aesthetic purposes
 
       document.title = `Job Status - ${job_id}`;
-      bcrumb = this.createServiceBreadcrumb(['Tools', 'Job Status', job_id])
+      bcrumb = this.createServiceBreadcrumb(['Tools', 'Job Status', combinedJobIdDate])
       content = 
         <JobStatus
           jobid={job_id}
           jobtype={job_type}
           jobdate={job_date}
+          combinedJobIdDate={combinedJobIdDate}
         />;
     }
 

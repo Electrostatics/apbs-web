@@ -191,7 +191,7 @@ class JobStatus extends Component{
         duration: 0,
         // btn: acknowledgement_btn,
         description: 
-          `Files for the job ${this.props.jobid} will be retained for 14 DAYS following job creation.\
+          `Files for the job ${this.props.combinedJobIdDate} will be retained for 14 DAYS following job creation.\
             Please download the files you wish to keep in the meantime.`,
         // btn: (<Button type="primary" size="small" onClick={() => notification.close('data_retention_notice')}> Close </Button>)
       })
@@ -990,7 +990,7 @@ class JobStatus extends Component{
 
   renderJobStatsRow(){
     const jobtype = this.props.jobtype
-    const jobid = this.props.jobid
+    const combinedJobIdDate = this.props.combinedJobIdDate
     const elapsedTime = this.state.elapsedTime[jobtype] !== undefined ? this.state.elapsedTime[jobtype] : 'computing...'
 
     const continueButton = this.createNextProcessButton()
@@ -1002,27 +1002,31 @@ class JobStatus extends Component{
 
     return(
       <div>
-        <Row align="middle">
-          {/* Job ID section */}
-          <Col span={3} offset={1}>
-            <Text>Job ID:</Text><br/>
-            <Text strong style={{fontSize: 20}}>{jobid}</Text>
-          </Col>
+        <Row align="middle" justify="space-between">
+          <Col xs={11} xxl={8} offset={1}>
+            <Row justify="space-between">
+              {/* Job ID section */}
+              <Col>
+                <Text>Job ID:</Text><br/>
+                <Text strong style={{fontSize: 20}}>{combinedJobIdDate}</Text>
+              </Col>
 
-          {/* Job Type section */}
-          <Col span={3}>
-            <Text>Job Type:</Text><br/>
-            <Text strong style={{fontSize: 20}}>{jobtype.toUpperCase()}</Text>
-          </Col>
+              {/* Job Type section */}
+              <Col>
+                <Text>Job Type:</Text><br/>
+                <Text strong style={{fontSize: 20}}>{jobtype.toUpperCase()}</Text>
+              </Col>
 
-          {/* Elapsed time section */}
-          <Col span={3}>
-            <Text>Time Elapsed:</Text><br/>
-            <Text strong style={{fontSize: 20}}>{elapsedTime}</Text>
+              {/* Elapsed time section */}
+              <Col>
+                <Text>Time Elapsed:</Text><br/>
+                <Text strong style={{fontSize: 20}}>{elapsedTime}</Text>
+              </Col>
+            </Row>
           </Col>
 
           {/* Button for next process (e.g. APBS, 3Dmol) */}
-          <Col span={13}>
+          <Col span={3} pull={1}>
             <Row justify="end">
               <Col>
                 <Text>Next:</Text><br/>
