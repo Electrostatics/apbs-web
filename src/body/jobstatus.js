@@ -42,6 +42,8 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { AutoSizer, List as VirtualList } from 'react-virtualized';
+import { createElement } from 'react-syntax-highlighter';
 
 // Project imports
 import '../styles/jobstatus.css'
@@ -189,7 +191,7 @@ class JobStatus extends Component{
         duration: 0,
         // btn: acknowledgement_btn,
         description: 
-          `Files for the job ${this.props.jobid} will be retained for 14 DAYS following job creation.\
+          `Files for the job ${this.props.combinedJobIdDate} will be retained for 14 DAYS following job creation.\
             Please download the files you wish to keep in the meantime.`,
         // btn: (<Button type="primary" size="small" onClick={() => notification.close('data_retention_notice')}> Close </Button>)
       })
@@ -672,20 +674,93 @@ class JobStatus extends Component{
     return [null, null]
   }
 
+
+  // Adapted from react-syntax-highlighter-virtualized-renderer source: https://github.com/conorhastings/react-syntax-highlighter-virtualized-renderer/blob/master/src/index.jsx
+  logRowRenderer({ rows, stylesheet, useInlineStyles }) {
+    return ({ index, key, style }) => createElement({
+      node: rows[index],
+      stylesheet,
+      style,
+      useInlineStyles,
+      key,
+    });
+  }
+
+  // Adapted from react-syntax-highlighter-virtualized-renderer source: https://github.com/conorhastings/react-syntax-highlighter-virtualized-renderer/blob/master/src/index.jsx
+  myVirtualizedRenderer({ overscanRowCount = 10, rowHeight = 15, height = 700 } = {}) {
+    return ({ rows, stylesheet, useInlineStyles }) => (
+      <div style={{ height: '100%' }}>
+        <AutoSizer disableHeight>
+          {({ width }) => (
+            <VirtualList
+              // height={700}
+              height={height}
+              width={width}
+              rowHeight={rowHeight}
+              rowRenderer={this.logRowRenderer({ rows, stylesheet, useInlineStyles })}
+              rowCount={rows.length}
+              overscanRowCount={overscanRowCount}
+            />
+          )}
+        </AutoSizer>
+      </div>
+    )
+  }
+
+  // renderCodeBlock(log_key, language, filename){
   renderCodeBlock(text, language, filename){
     let code_block
     const code_block_style = {
-      maxHeight: 600
+      maxHeight: 700,
+      // display: 'flex'
+      // height: 600
+      height: "100%"
     }
 
     if(text){
+      const object_key = `${this.props.jobdate}/${this.props.jobid}/${filename}`
+      const num_lines_to_preview = 1000
+      const split_text = text.split('\n')
+      const num_lines = split_text.length
+      let preface_text = ""
+      let starting_line
+
+      if(num_lines < num_lines_to_preview){
+        starting_line = 1
+      }else{
+        const file_size = this.state.filesizes[this.props.jobtype][object_key]
+        preface_text = `Text too large (${num_lines} lines, ${this.formatBytes(file_size)}). Displaying last ${num_lines_to_preview} lines...\n\n`
+        // starting_line = num_lines - num_lines_to_preview + 1
+        starting_line = num_lines - num_lines_to_preview - 1  // extra -1 is to account for additional blank line after preface text
+      }
+
       code_block = 
         <SyntaxHighlighter
+          // className="syntaxhighlighter"
+          customStyle={code_block_style}
           language={language}
           style={atomOneDark}
           showLineNumbers={this.state.show_log_line_numbers}
+          showInlineLineNumbers={this.state.show_log_line_numbers}
+          startingLineNumber={starting_line}
+          lineNumberStyle={(lineNum) => {
+            let style = {
+              paddingLeft: '1em',
+              paddingRight: '1em',
+            }
+            if(starting_line !== 1 && lineNum <= (starting_line+1)){
+              // style.display = 'none'
+              style.visibility = 'hidden'
+            }
+
+            return style
+          }}
+
+          // TODO: 2021/9/14 (Elvis) If using the virtualized renderer, work out how to scroll horizontally
+          // renderer={this.myVirtualizedRenderer()}
         >
-          {text}
+          {/* {text} */}
+          {preface_text + split_text.slice(-num_lines_to_preview).join('\n')}
         </SyntaxHighlighter>
     }
     else{
@@ -727,13 +802,14 @@ class JobStatus extends Component{
 
       if(this.props.jobtype === JOBTYPES.PDB2PQR){
         logfile_view_pdb2pqr_only =
-          <Panel header={`Log (${log_filename})`} extra={createLogDownload( log_filename )}>
+          <Panel header={`Log (${log_filename})`} extra={createLogDownload( log_filename )} >
             {this.renderCodeBlock(this.state.logData.log, 'accesslog', `${this.props.jobid}.log`)}
           </Panel>
+        // logfile_view_pdb2pqr_only = this.renderCodeBlock(this.state.logData.log, 'accesslog', `${this.props.jobid}.log`)
       }
 
       return(
-        <div>
+        <div style={{height: '100%'}}>
           <Collapse bordered={false}>
             {logfile_view_pdb2pqr_only}
             <Panel header={`Stdout (${stdout_filename})`} extra={createLogDownload( stdout_filename )}>
@@ -914,7 +990,7 @@ class JobStatus extends Component{
 
   renderJobStatsRow(){
     const jobtype = this.props.jobtype
-    const jobid = this.props.jobid
+    const combinedJobIdDate = this.props.combinedJobIdDate
     const elapsedTime = this.state.elapsedTime[jobtype] !== undefined ? this.state.elapsedTime[jobtype] : 'computing...'
 
     const continueButton = this.createNextProcessButton()
@@ -926,27 +1002,31 @@ class JobStatus extends Component{
 
     return(
       <div>
-        <Row align="middle">
-          {/* Job ID section */}
-          <Col span={3} offset={1}>
-            <Text>Job ID:</Text><br/>
-            <Text strong style={{fontSize: 20}}>{jobid}</Text>
-          </Col>
+        <Row align="middle" justify="space-between">
+          <Col xs={11} xxl={8} offset={1}>
+            <Row justify="space-between">
+              {/* Job ID section */}
+              <Col>
+                <Text>Job ID:</Text><br/>
+                <Text strong style={{fontSize: 20}}>{combinedJobIdDate}</Text>
+              </Col>
 
-          {/* Job Type section */}
-          <Col span={3}>
-            <Text>Job Type:</Text><br/>
-            <Text strong style={{fontSize: 20}}>{jobtype.toUpperCase()}</Text>
-          </Col>
+              {/* Job Type section */}
+              <Col>
+                <Text>Job Type:</Text><br/>
+                <Text strong style={{fontSize: 20}}>{jobtype.toUpperCase()}</Text>
+              </Col>
 
-          {/* Elapsed time section */}
-          <Col span={3}>
-            <Text>Time Elapsed:</Text><br/>
-            <Text strong style={{fontSize: 20}}>{elapsedTime}</Text>
+              {/* Elapsed time section */}
+              <Col>
+                <Text>Time Elapsed:</Text><br/>
+                <Text strong style={{fontSize: 20}}>{elapsedTime}</Text>
+              </Col>
+            </Row>
           </Col>
 
           {/* Button for next process (e.g. APBS, 3Dmol) */}
-          <Col span={13}>
+          <Col span={3} pull={1}>
             <Row justify="end">
               <Col>
                 <Text>Next:</Text><br/>
