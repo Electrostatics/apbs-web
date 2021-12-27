@@ -8,7 +8,7 @@ phases:
       - cp env/env-config.js public/
       - npm run build
       - cd build
-      - aws s3 sync . s3://apbs-web/$branch/
+      - aws s3 sync . s3://$WEB_BUCKET/$branch/
       - aws cloudfront create-invalidation --distribution-id $CFID --paths '/*'
 artifacts:
   files:
