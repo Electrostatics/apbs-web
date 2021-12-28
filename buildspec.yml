@@ -4,6 +4,7 @@ phases:
     commands:
       - branch=`echo $CODEBUILD_INITIATOR | awk -F'-' '{ print $NF }'`  
       - npm ci -automatic
+      - branch=demo
       - cd env/ && bash ./env.sh && cd ..
       - cp env/env-config.js public/
       - npm run build
