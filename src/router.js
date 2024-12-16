@@ -8,11 +8,14 @@ import {
 import App from './App';
 import VizLegacyPage from './body/old-viz-layout'
 import './App.css';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 import PAGES from './common/pagenames.js';
 import { hasMeasurementId, hasAnalyticsId, sendPageView } from './body/utils/ga-utils'
 
-  
+
 class ServerRouter extends Component{
 
     constructor(props){

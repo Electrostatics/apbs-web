@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
 
 import { Layout, Typography, Col, Row, Spin, Alert } from 'antd';
 const { Content } = Layout;

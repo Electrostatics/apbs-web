@@ -1,9 +1,15 @@
 import React, {Component} from 'react';
 import CalctypeBase from './calctypebase';
-import 'antd/dist/antd.css'
+
+// import 'antd/dist/antd.css'
+
+
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
+
+// import '@ant-design/compatible/assets/index.css';
+
+
 import { Radio, Collapse, Switch, Input, InputNumber, Col, Row, Button } from 'antd';
 
 const Panel = Collapse.Panel;

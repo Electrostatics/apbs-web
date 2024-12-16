@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 import '../styles/home.css';
 
 import { Icon as LegacyIcon } from '@ant-design/compatible';

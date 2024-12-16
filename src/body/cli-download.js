@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 // import './home.css';
 
 import { Layout, Col, Menu, Carousel, Row, Card, Button, Link } from 'antd';

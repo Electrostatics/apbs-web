@@ -1,7 +1,9 @@
 // NPM imports
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css'
+
+// import 'antd/dist/antd.css'
+
 
 import {
   CheckCircleOutlined,
@@ -18,25 +20,26 @@ import {
   FormOutlined,
 } from '@ant-design/icons';
 
-import '@ant-design/compatible/assets/index.css';
+// import '@ant-design/compatible/assets/index.css';
+
 
 import {
   Alert,
-  BackTop,
   Button,
   Checkbox,
   Col,
   Collapse,
+  Empty,
+  FloatButton,
   Layout,
   List,
   notification,
-  Timeline,
-  Tooltip,
   Row,
   Spin,
   Steps,
+  Timeline,
+  Tooltip,
   Typography,
-  Empty
 } from 'antd';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -1213,25 +1216,25 @@ class JobStatus extends Component{
       return this.renderMissingFieldsPage()
     }
 
-    return(
-      <Layout id="pdb2pqr">
-          <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
-            <BackTop/>
-            {this.renderWorkflowSteps()}
-            <br/>
-            {this.renderBookmarkRow()}
-            <br/>
-            {this.renderErrorAlert()}
-            {this.renderJobStatsRow()}
-            <br/>
-            {this.renderCurrentStepTimeline()}
-            <br/>
-            {this.renderInputOutputFiles()}
-            <br/>
-            {this.renderRegistrationRow()}
-            {this.renderLogView()}
-        </Content>
-      </Layout>
+    return (
+      (<Layout id="pdb2pqr">
+        <Content style={{ background: '#fff', padding: 16, marginBottom: 5, minHeight: 280, boxShadow: "2px 4px 3px #00000033" }}>
+          <FloatButton.BackTop/>
+          {this.renderWorkflowSteps()}
+          <br/>
+          {this.renderBookmarkRow()}
+          <br/>
+          {this.renderErrorAlert()}
+          {this.renderJobStatsRow()}
+          <br/>
+          {this.renderCurrentStepTimeline()}
+          <br/>
+          {this.renderInputOutputFiles()}
+          <br/>
+          {this.renderRegistrationRow()}
+          {this.renderLogView()}
+      </Content>
+      </Layout>)
     );
   }
 }

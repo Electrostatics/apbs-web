@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 import { Link as ReactRouterLink } from 'react-router-dom';
 import { Layout, Col, Row } from 'antd';
 import { Typography } from 'antd';

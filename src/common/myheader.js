@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 import '../styles/myheader.css'
 // import APBS_LOGO_64 from '../img/APBS_64.png';
 import APBS_LOGO_128 from '../img/APBS_128_v2.png';
@@ -10,7 +13,6 @@ import { NavLink, } from 'react-router-dom';
 import { BookOutlined, DownOutlined, HomeOutlined, ToolOutlined, TeamOutlined } from '@ant-design/icons';
 
 import { Layout, Col, Row, Menu, Affix, Input } from 'antd';
-import { stat } from 'fs';
 
 import { BellFilled } from '@ant-design/icons';
 // import Announcement from './announcement';

@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 import { Layout, Col, Row } from 'antd';
 import { Typography } from 'antd';
 import { Switch, Slider, InputNumber } from 'antd';
@@ -910,9 +913,9 @@ class VizLegacyPage extends Component{
 
     build_page(){
         let self = this
-        return(
+        return (
             // TODO: 2021/03/20, Elvis - Fix formatting of control panel elements using Ant Design Row/Col components
-            <div>
+            (<div>
                 <div id='gldiv'></div>
                 {/* <!--<hr style='margin: 0;'>--> */}
                 <br/>
@@ -1227,8 +1230,8 @@ class VizLegacyPage extends Component{
                     
                 </div>
                 {/* <!--</td></tr></table>-->  */}
-            </div>
-        )
+            </div>)
+        );
     }
 
     render(){

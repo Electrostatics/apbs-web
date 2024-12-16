@@ -1,8 +1,14 @@
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css'
+
+// import 'antd/dist/antd.css'
+
+
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
+
+// import '@ant-design/compatible/assets/index.css';
+
+
 import {
   Layout,
   Button,

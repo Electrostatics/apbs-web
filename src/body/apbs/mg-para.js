@@ -1,8 +1,14 @@
 import React, {Component} from 'react';
-import 'antd/dist/antd.css'
+
+// import 'antd/dist/antd.css'
+
+
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
+
+// import '@ant-design/compatible/assets/index.css';
+
+
 import { Radio, Collapse, Switch, Input, InputNumber, Col, Row, Button } from 'antd';
 import CalctypeBase from './calctypebase';
 

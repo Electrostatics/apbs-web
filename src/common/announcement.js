@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 import '../styles/myfooter.css';
 
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -275,18 +278,18 @@ class Announcement extends Component {
       announcement_contents = this.renderEmptyMessage()
     }
 
-    return(
-      <div>
+    return (
+      (<div>
         <Drawer
           // title="Announcements"
-          visible={this.props.open}
+          open={this.props.open}
           onClose={() => this.props.toggleDrawer(false)}
           placement="bottom"
           height={265}
         >
           {announcement_contents}
         </Drawer>
-      </div>
+      </div>)
     );
   }
 }

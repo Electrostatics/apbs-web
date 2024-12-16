@@ -1,11 +1,17 @@
 // NPM imports
 import React from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css'
+
+// import 'antd/dist/antd.css'
+
+
 import { UploadOutlined, FormOutlined } from '@ant-design/icons';
 import { Form } from 'antd';
-// import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
+
+// // import { Form } from '@ant-design/compatible';
+// import '@ant-design/compatible/assets/index.css';
+
+
 import {
   Affix,
   Layout,
@@ -859,12 +865,12 @@ class ConfigPDB2PQR extends ConfigForm{
       </Upload>
 
 
-      return(
+      return (
         // <input type="file" name="LIGAND"/>
-        <div>
+        (<div>
           {ligand_upload}
-        </div>
-      )
+        </div>)
+      );
     }
   }
 

@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import { Link as ReactRouterLink } from 'react-router-dom';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
+
 import '../styles/myfooter.css';
 
 import { CopyToClipboard } from 'react-copy-to-clipboard';

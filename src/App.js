@@ -11,7 +11,9 @@ import ConfigPDB2PQR from './body/configpdb2pqr.js';
 import ConfigAPBS from './body/configapbs.js';
 import JobStatus from './body/jobstatus.js';
 import './App.css';
-import 'antd/dist/antd.css';
+
+// import 'antd/dist/antd.css';
+
 
 import { Layout, Breadcrumb, Result, Button } from 'antd';
 import DownloadPage from './body/cli-download.js';

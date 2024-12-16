@@ -1,10 +1,16 @@
 // NPM imports
 import React, { Component } from 'react';
 import ReactGA from 'react-ga';
-import 'antd/dist/antd.css'
+
+// import 'antd/dist/antd.css'
+
+
 import { ExportOutlined, SettingOutlined, UploadOutlined, FormOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
+
+// import '@ant-design/compatible/assets/index.css';
+
+
 import {
   Affix,
   Layout,

@@ -1,5 +1,5 @@
 # stage: 1
-FROM node:10 as react-build
+FROM node:20 as react-build
 WORKDIR /app
 COPY package.json package-lock.json ./
 # RUN yarn install
