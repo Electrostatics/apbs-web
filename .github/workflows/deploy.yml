@@ -1,0 +1,23 @@
+name: Build and Deploy APBS Web
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm run build
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          region: ${{ secrets.AWS_REGION }}
+      - name: Deploy to S3
+        run: aws s3 sync build/ s3://${{ secrets.AWS_BUCKET }} --delete
