@@ -25,4 +25,4 @@ jobs:
       - name: Upload to Azure Blob Storage
         run: |
           az storage blob upload-batch --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
-          --auth-mode key -d '$web' -s build
+          --auth-mode login -d "\$web" -s build
