@@ -13,12 +13,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
       - run: npm install
       - run: npm run build
-      - name: Setup Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: "AZ CLI login"
         uses: azure/login@v2
         with:
