@@ -28,9 +28,10 @@
     "react-scripts": "^5.0.1"
   },
   "scripts": {
+    "generate-env": "cd ./env && bash ./env.sh && cd .. && cp ./env/env-config.js ./public/",
     "dev": "cd ./env && bash ./env.sh && cd .. && cp ./env/env-config.js ./public/ && cp ./env/.env . && react-scripts start",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "npm run generate-env && react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
