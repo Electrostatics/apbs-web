@@ -10,6 +10,7 @@ jobs:
       id-token: write
     env:
       API_TOKEN_URL: ${{ secrets.API_TOKEN_URL }}
+      OUTPUT_BUCKET_HOST: ${{ secrets.OUTPUT_BUCKET_HOST }}
     steps:
       # Login first to make debugging the account easier
       - name: "AZ CLI login"
