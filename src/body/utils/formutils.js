@@ -109,7 +109,7 @@ class ConfigForm extends Component {
       body: file_data,
       headers: {
         "Content-Type": "application/octet-stream",
-        "x-ms-block-type": "BlockBlob",
+        "x-ms-blob-type": "BlockBlob",
       },
     });
   }
