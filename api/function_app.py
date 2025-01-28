@@ -28,6 +28,7 @@ def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
         timestamp = now.strftime("%Y%m%d-%H%M%S")
         blob_name = f"{timestamp}-{file_name}"
         expiry = now + timedelta(hours=1)
+        formatted_expiry = expiry.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         sas = generate_blob_sas(
             account_name=account_name,
@@ -41,7 +42,7 @@ def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
         return_val = {
             "upload_url": upload_url,
             "blob_name": blob_name,
-            "expiry": expiry,
+            "expiry": formatted_expiry,
             "content_type": content_type,
         }
         return func.HttpResponse(
