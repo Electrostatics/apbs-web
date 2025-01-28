@@ -50,7 +50,7 @@ def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
         req_body = req.get_json()
         file_list = req_body.get("file_list")
         job_id = "".join(choices(digits + ascii_lowercase, k=8))
-        urls = []
+        urls = {}
         for file in file_list:
             urls[file] = generate_sas_url(file, job_id)
         # TODO: ensure that this matches correctly with the frontend
