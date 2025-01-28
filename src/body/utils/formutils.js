@@ -104,6 +104,7 @@ class ConfigForm extends Component {
   }
 
   uploadFileToAzure(file_url, file_data) {
+    console.log(file_url);
     return fetch(file_url, {
       method: "PUT",
       body: file_data,
@@ -139,6 +140,7 @@ class ConfigForm extends Component {
             // Add fetch to promise list
             // let body = new FormData();
             // body.append("file", upload_file_data[file_name]);
+            console.log(sas_url);
             fetch_list.push(
               // self.uploadFileToS3(presigned_url, upload_file_data[file_name]),
               self.uploadFileToAzure(sas_url, upload_file_data[file_name]),
