@@ -52,7 +52,7 @@ def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         logging.error(e)
         return func.HttpResponse(
-            json.dumps({"error": "internal server error"}),
+            json.dumps({"error": f"internal server error: {e}"}),
             mimetype="application/json",
             status_code=500,
         )
