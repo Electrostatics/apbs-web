@@ -104,8 +104,7 @@ class ConfigForm extends Component {
   }
 
   uploadFileToAzure(file_url, file_data) {
-    console.log(file_url);
-    return fetch(file_url, {
+    return fetch(file_url["upload_url"], {
       method: "PUT",
       body: file_data,
       headers: {
