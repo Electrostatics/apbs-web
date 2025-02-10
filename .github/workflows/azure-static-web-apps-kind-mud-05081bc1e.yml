@@ -47,6 +47,7 @@ jobs:
           ###### End of Repository/Build Configurations ######
         env:
           API_TOKEN_URL: "/api/upload"
+          OUTPUT_BUCKET_HOST: ${{ secrets.AZURE_OUTPUT_BLOB_STORAGE_URL }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
