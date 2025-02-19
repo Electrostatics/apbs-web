@@ -125,6 +125,7 @@ class ConfigForm extends Component {
       .then((response) => response.json())
       .then((data) => {
         let jobid = data["job_id"];
+        console.log("Azure jobid: ", jobid);
         let url_table = data["urls"];
         let job_date = data["date"];
 
