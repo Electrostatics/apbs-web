@@ -214,6 +214,7 @@ class ConfigAPBS extends ConfigForm {
       let upload_file_data = {};
       let token_request_payload = {};
       if (self.props.jobid) {
+        console.log("JOB_ID " + this.state.jobid);
         token_request_payload["job_id"] = this.state.jobid;
       } else {
         // Add file names and data to token request payloads
@@ -252,6 +253,7 @@ class ConfigAPBS extends ConfigForm {
   }
 
   fetchAutofillData(jobid) {
+    console.log("Fetching data for job id: ", jobid);
     let self = this;
     let autofill_objectname = "";
     if (self.usingJobDate()) {
