@@ -166,7 +166,7 @@ class ConfigAPBS extends ConfigForm {
   handleNewJobSubmit(e) {
     e.preventDefault();
     let self = this;
-    console.log("WE IN NEWJOBSUBMIT");
+    console.log("Submitting APBS job");
     if (self.state.job_submit)
       alert("Job is submitted. Redirecting to job status page");
     else {
@@ -176,6 +176,7 @@ class ConfigAPBS extends ConfigForm {
 
       let payload;
       if (self.props.jobid) {
+        console.log("Continuing from PDB2PQR job: ", self.props.jobid);
         let combined_form_data = self.state.parent_form_values;
         Object.assign(combined_form_data, self.state.child_form_values);
 
@@ -214,7 +215,10 @@ class ConfigAPBS extends ConfigForm {
       let upload_file_data = {};
       let token_request_payload = {};
       if (self.props.jobid) {
-        console.log("JOB_ID " + this.state.jobid);
+        console.log(
+          "Using existing PDB2PQR jobid for APBS: ",
+          self.props.jobid,
+        );
         token_request_payload["job_id"] = this.state.jobid;
       } else {
         // Add file names and data to token request payloads
@@ -245,6 +249,7 @@ class ConfigAPBS extends ConfigForm {
 
   componentDidMount() {
     if (this.props.jobid) {
+      this.setState({ jobid: this.props.jobid });
       this.fetchAutofillData(this.state.jobid);
       this.toggleRegisterButton(true);
     } else {
