@@ -289,12 +289,9 @@ class ConfigForm extends Component {
     if (this.state.job_date !== undefined && this.state.job_date !== null) {
       date_query_param = `&date=${this.state.job_date}`;
     }
-    const useWorkflowId = this.props.jobid && job_type === "apbs";
-    const jobId = useWorkflowId ? this.props.jobid : this.state.jobid;
-
     return (
       <Redirect
-        to={`/jobstatus?jobtype=${job_type}&jobid=${jobId}${date_query_param}`}
+        to={`/jobstatus?jobtype=${job_type}&jobid=${this.state.jobid}${date_query_param}`}
       />
     );
   }
