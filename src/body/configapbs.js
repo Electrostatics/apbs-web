@@ -219,7 +219,7 @@ class ConfigAPBS extends ConfigForm {
           "Using existing PDB2PQR jobid for APBS: ",
           self.props.jobid,
         );
-        token_request_payload["job_id"] = this.state.jobid;
+        token_request_payload["job_id"] = this.props.jobid;
       } else {
         // Add file names and data to token request payloads
         for (let file of [].concat(
@@ -273,7 +273,7 @@ class ConfigAPBS extends ConfigForm {
       .then((file_text) => {
         let data = this.convertInfileToJson(file_text);
         data["response_id"] = jobid;
-        conole.log("Autofill data: ", data);
+        console.log("Autofill data: ", data);
 
         self.setState({
           autofill_data: data,
