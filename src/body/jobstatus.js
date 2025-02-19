@@ -446,6 +446,7 @@ class JobStatus extends Component {
 
   fetchObjectHead(bucket_url, object_name) {
     let object_url = `${bucket_url}/${object_name}`;
+    console.log("Fetching: " + object_url);
     return fetch(object_url, {
       method: "HEAD",
     });
