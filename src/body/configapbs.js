@@ -214,8 +214,8 @@ class ConfigAPBS extends ConfigForm {
       let upload_file_data = {};
       let token_request_payload = {};
       if (self.props.jobid) {
-        console.log("JOB_ID " + this.props.jobid);
-        token_request_payload["job_id"] = this.props.jobid;
+        console.log("JOB_ID " + this.state.jobid);
+        token_request_payload["job_id"] = this.state.jobid;
       } else {
         // Add file names and data to token request payloads
         for (let file of [].concat(
@@ -234,7 +234,6 @@ class ConfigAPBS extends ConfigForm {
       upload_file_names.push(job_file_name);
       upload_file_data[job_file_name] = JSON.stringify(payload);
 
-      console.log("Token request payload", token_request_payload);
       this.uploadJobFilesAzure(
         job_file_name,
         token_request_payload,
@@ -246,7 +245,6 @@ class ConfigAPBS extends ConfigForm {
 
   componentDidMount() {
     if (this.props.jobid) {
-      console.log("Mounted");
       this.fetchAutofillData(this.state.jobid);
       this.toggleRegisterButton(true);
     } else {

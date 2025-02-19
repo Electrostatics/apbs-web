@@ -183,7 +183,6 @@ class JobStatus extends Component {
 
     // TODO: add ON_CLOUD environement variable then change conditional
     // if( window._env_.ON_CLOUD == true ){}
-    console.log("JOB " + id);
     if (this.props.jobid !== "" && this.props.jobid !== undefined) {
       console.log(`inside componentDidMount, JOB_ID: ${this.props.jobid}`);
       const acknowledgement_btn = (
