@@ -10,6 +10,7 @@ from random import choices
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
+
 def generate_sas_url(filename: str, job_id: str, formatted_date: str):
     now = datetime.now(timezone.utc)
     expiry = now + timedelta(hours=1)
@@ -34,7 +35,6 @@ def generate_sas_url(filename: str, job_id: str, formatted_date: str):
     }
 
 
-
 @app.route(route="upload")
 def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
     try:
@@ -46,7 +46,9 @@ def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
                 mimetype="application/json",
                 status_code=400,
             )
-        job_id = "".join(choices(digits + ascii_lowercase, k=8))
+        job_id = req_body.get("job_id")
+        if not job_id:
+            job_id = "".join(choices(digits + ascii_lowercase, k=8))
         date = datetime.now().strftime("%Y-%m-%d")
         urls = {}
         for file in file_list:
