@@ -261,12 +261,14 @@ class ConfigAPBS extends ConfigForm {
     } else {
       autofill_objectname = `${jobid}/${jobid}.in`;
     }
+    console.log("autofill object name " + autofill_objectname);
 
     fetch(`${window._env_.OUTPUT_BUCKET_HOST}/${autofill_objectname}`)
       .then((response) => response.text())
       .then((file_text) => {
         let data = this.convertInfileToJson(file_text);
         data["response_id"] = jobid;
+        conole.log("Autofill data: ", data);
 
         self.setState({
           autofill_data: data,
