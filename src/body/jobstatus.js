@@ -431,7 +431,10 @@ class JobStatus extends Component {
 
         if (response.ok) {
           let num_bytes = response.headers.get("Content-Length");
+          console.log("Num bytes: ", num_bytes);
           filesize_dict[object_name] = parseInt(num_bytes);
+        } else {
+          console.log("WARNING file failed to execute HEAD request");
         }
       }
 
