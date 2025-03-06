@@ -35,9 +35,9 @@ jobs:
       - name: Set output url
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "OUTPUT_BUCKET_HOST=${{ secrets.AZURE_OUTPUT_BLOB_STORAGE_URL }}" >> "$GITHUB_ENV"
-          else
             echo "OUTPUT_BUCKET_HOST=${{ secrets.AZURE_DEV_OUTPUT_BLOB_STORAGE_URL }}" >> "$GITHUB_ENV"
+          else
+            echo "OUTPUT_BUCKET_HOST=${{ secrets.AZURE_OUTPUT_BLOB_STORAGE_URL }}" >> "$GITHUB_ENV"
           fi
       - name: Build And Deploy
         id: builddeploy
