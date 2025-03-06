@@ -18,7 +18,7 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
           lfs: false
@@ -32,6 +32,13 @@ jobs:
             const coredemo = require('@actions/core')
             return await coredemo.getIDToken()
           result-encoding: string
+      - name: Set output url
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "OUTPUT_BUCKET_HOST=${{ secrets.AZURE_OUTPUT_BLOB_STORAGE_URL }}" >> "$GITHUB_ENV"
+          else
+            echo "OUTPUT_BUCKET_HOST=${{ secrets.AZURE_DEV_OUTPUT_BLOB_STORAGE_URL }}" >> "$GITHUB_ENV"
+          fi
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -47,7 +54,6 @@ jobs:
           ###### End of Repository/Build Configurations ######
         env:
           API_TOKEN_URL: "/api/upload"
-          OUTPUT_BUCKET_HOST: ${{ secrets.AZURE_OUTPUT_BLOB_STORAGE_URL }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
