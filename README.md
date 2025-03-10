@@ -2,6 +2,8 @@
 
 *This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).  As such, this README will lift some of the content available from the original README, which can be found [here](./README_CREATEREACTAPP.md)*
 
+For deployment information, see [here](./infrastructure.md).
+
 ## Table of Contents
 - [Overview](#overview)
 - [Available Scripts](#available-scripts)
