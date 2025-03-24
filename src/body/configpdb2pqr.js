@@ -1164,13 +1164,13 @@ class ConfigPDB2PQR extends ConfigForm {
       function (element) {
         if (element["name"] == "LIGANDCHECK") {
           optionChecklist.push(
-            <div>
+            <div style={{ width: '100%', rowGap: '0px' }}>
               <Popover
                 placement="left"
                 title={cli_popovers.title}
                 content={cli_popovers.contents.ligand}
               >
-                <Row>
+                <Row style={{ display: 'block', width: '100%'}}>
                   <Checkbox
                     name={element["name"]}
                     value={element["value"]}
@@ -1186,13 +1186,13 @@ class ConfigPDB2PQR extends ConfigForm {
           );
         } else {
           optionChecklist.push(
-            <div>
+            <div style={{ width: '100%', rowGap: '0px' }}>
               <Popover
                 placement="left"
                 title={cli_popovers.title}
                 content={cli_popovers.contents[element["cli"]]}
               >
-                <Row>
+                <Row style={{ display: 'block', width: '100%'}}>
                   <Checkbox
                     name={element["name"]}
                     value={element["value"]}
