@@ -269,7 +269,7 @@ class JobStatus extends Component {
    */
   fetchJobStatus(jobtype) {
     let self = this;
-    let statusStates = ["complete", "error", null];
+    let statusStates = ["complete", "error", "failed", null];
 
     // Initialize interval to continually compute elapsed time
     if (this.isUsingJobtype("pdb2pqr"))
