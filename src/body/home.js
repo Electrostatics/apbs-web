@@ -87,14 +87,6 @@ class HomePage extends Component {
                     <span>APBS</span>
                   </Link>
                 </Button>
-                <p>
-                  We are currently undergoing a migration from AWS to Azure, if
-                  you have any issues please contact us at{" "}
-                  <a href="mailto:apbssummer2025migration@gmail.com">
-                    apbssummer2025migration@gmail.com
-                  </a>
-                  .
-                </p>
               </div>
             </Content>
             {/* </Carousel>         */}
