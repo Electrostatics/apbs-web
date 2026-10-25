@@ -5,13 +5,13 @@ on:
     branches:
       - azure-release
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
     branches:
       - azure-release
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed' && !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     permissions:
@@ -56,7 +56,7 @@ jobs:
           API_TOKEN_URL: "/api/upload"
 
   modify_environment_job:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed' && !github.event.pull_request.draft
     runs-on: ubuntu-latest
     name: Set deployment environment variables
     needs: build_and_deploy_job
