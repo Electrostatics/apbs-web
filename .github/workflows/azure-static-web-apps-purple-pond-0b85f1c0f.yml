@@ -95,7 +95,23 @@ jobs:
           environment=$(az staticwebapp environment list -n apbs-web \
             --query "[?name=='$PREVIEW_ENVIRONMENT'].name | [0]" -o tsv)
           if [[ -n "$environment" ]]; then
-            az staticwebapp environment delete -n apbs-web --environment-name "$PREVIEW_ENVIRONMENT" -y
+            # The CLI delete waits on an operation status that needs
+            # subscription-level read access, so start the delete through ARM
+            # without waiting and poll the environment list instead.
+            site_id=$(az staticwebapp show -n apbs-web --query id -o tsv)
+            az rest --method delete \
+              --url "${site_id}/builds/${PREVIEW_ENVIRONMENT}?api-version=2024-04-01"
+            for attempt in $(seq 1 40); do
+              environment=$(az staticwebapp environment list -n apbs-web \
+                --query "[?name=='$PREVIEW_ENVIRONMENT'].name | [0]" -o tsv)
+              if [[ -z "$environment" ]]; then
+                echo "Preview environment $PREVIEW_ENVIRONMENT deleted."
+                exit 0
+              fi
+              sleep 15
+            done
+            echo "::error::Preview environment $PREVIEW_ENVIRONMENT still exists after 10 minutes."
+            exit 1
           else
             echo "Preview environment $PREVIEW_ENVIRONMENT does not exist; nothing to delete."
           fi
