@@ -6,10 +6,13 @@ At this time, we are utilizing what Microsoft Provisions for us during creation.
 The default GitHub Action proved to be not work well when creating new preview environments and deleting old ones.
 This caused us to rewrite this action to use an Azure Federated Identity with static site permissions enabled. 
 This is scoped to this specific repo and to this specific resource.
-Each non-draft PR gets its own environment connected to a shared development backend, since this repo is for frontend development only.
+Each non-draft, non-Dependabot PR gets its own environment connected to a shared development backend, since this repo is for frontend development only.
 Draft PR updates do not deploy previews or change Azure environment settings.
-Marking a PR ready for review triggers the preview deployment.
-Closing a PR still triggers preview-environment cleanup.
+Dependabot-authored PRs skip all Azure preview jobs because ordinary Actions secrets are unavailable to those runs.
+They still receive the deployment-free frontend checks, and merging them retains production deployment on pushes to `azure-release`.
+Marking a non-Dependabot PR ready for review triggers the preview deployment.
+Closing a non-Dependabot PR triggers preview-environment cleanup only if that environment exists.
+An absent preview is a successful no-op; Azure lookup, authorization, and deletion errors still fail the cleanup job.
 
 ## Frontend validation
 The `Frontend CI` workflow runs for both draft and ready-for-review PRs targeting `azure-release`, and for pushes to that branch.
