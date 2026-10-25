@@ -41,10 +41,11 @@ import {
 } from "antd";
 import { Link as RouterLink } from "react-router-dom";
 
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+// Keep the HLJS renderer compatible with Jest without loading unused Prism modules.
+import SyntaxHighlighter from "react-syntax-highlighter/dist/cjs/default-highlight";
+import atomOneDark from "react-syntax-highlighter/dist/cjs/styles/hljs/atom-one-dark";
 import { AutoSizer, List as VirtualList } from "react-virtualized";
-import { createElement } from "react-syntax-highlighter";
+import createElement from "react-syntax-highlighter/dist/cjs/create-element";
 
 // Project imports
 import "../styles/jobstatus.css";
