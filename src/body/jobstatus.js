@@ -403,10 +403,19 @@ class JobStatus extends Component {
     this.fetchIntervalErrorCount[jobtype] = 0;
     this.setState({
       showRetry: false,
+      stop_computing_time: {
+        ...this.state.stop_computing_time,
+        [jobtype]: false,
+      },
     });
 
     // Attempt download again
-    this.fetchJobStatus(jobtype);
+    const interval = this.fetchJobStatus(jobtype);
+    if (jobtype === JOBTYPES.PDB2PQR) {
+      this.fetchIntervalPDB2PQR = interval;
+    } else if (jobtype === JOBTYPES.APBS) {
+      this.fetchIntervalAPBS = interval;
+    }
   }
 
   usingJobDate() {
@@ -1077,8 +1086,10 @@ class JobStatus extends Component {
               type="error"
               message="Could not find status information for job. This may be caused by an server-side error/delay. Otherwise your Job ID doesn't exist. Please try again later."
               closeText="Retry"
-              onClose={() => this.resetSpinner(jobtype)}
-              afterClose={() => this.retryDownload(jobtype)}
+              onClose={() => {
+                this.resetSpinner();
+                this.retryDownload(this.props.jobtype);
+              }}
             />
             <br />
           </Col>
