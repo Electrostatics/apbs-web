@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@playwright/test": "^1.64.1",
     "react-scripts": "^5.0.1"
   },
   "scripts": {
@@ -33,6 +34,7 @@
     "start": "react-scripts start",
     "build": "npm run generate-env && react-scripts build",
     "test": "react-scripts test --env=jsdom",
+    "test:compatibility": "playwright test",
     "eject": "react-scripts eject"
   },
   "browserslist": [

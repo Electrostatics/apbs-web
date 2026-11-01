@@ -6,8 +6,6 @@ on:
       - azure-release
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches:
-      - azure-release
 
 permissions:
   contents: read
@@ -37,3 +35,28 @@ jobs:
         run: ./node_modules/.bin/react-scripts build
         env:
           CI: "false"
+
+  compatibility:
+    name: Browser and toolchain compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test production assets and development tooling
+        run: npm run test:compatibility
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: compatibility-failures
+          path: test-results
+          retention-days: 7
