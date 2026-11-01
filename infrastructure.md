@@ -50,7 +50,8 @@ To run only one group, use `npm run test:compatibility -- --project=production`,
 Failure screenshots and traces are written to the ignored `test-results` directory and uploaded by CI.
 
 ## Dependency overrides
-The npm overrides are scoped to the `react-scripts` dependency tree rather than application dependencies.
+The npm overrides target transitive toolchain packages directly so npm 10 and npm 11 both apply them to hoisted dependencies.
+TypeScript stays on major version 4, with a 4.9.5 minimum to satisfy SVGR's optional configuration-loader peer dependency without adding TypeScript 7.
 `serialize-javascript` is pinned to 7.1.3, including its nested Workbox consumer.
 `sockjs` uses UUID 11.1.1, which retains the CommonJS API its connection code needs.
 The Jest environment's HTTP proxy agent uses `@tootallnate/once` 2.0.1.
