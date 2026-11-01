@@ -46,5 +46,21 @@ npx playwright install chromium
 npm run test:compatibility
 ```
 On Linux, use `npx playwright install --with-deps chromium` to install required system libraries.
-To run only one group, use `npm run test:compatibility -- --project=production`, `--project=development-http`, `--project=development-https`, or `--project=jest-proxy`.
+To run only one group, use `npm run test:compatibility -- --project=production`, `--project=development-http`, `--project=development-https`, `--project=jest-proxy`, or `--project=build-loaders`.
 Failure screenshots and traces are written to the ignored `test-results` directory and uploaded by CI.
+
+## Dependency overrides
+The npm overrides are scoped to the `react-scripts` dependency tree rather than application dependencies.
+`serialize-javascript` is pinned to 7.1.3, including its nested Workbox consumer.
+`sockjs` uses UUID 11.1.1, which retains the CommonJS API its connection code needs.
+The Jest environment's HTTP proxy agent uses `@tootallnate/once` 2.0.1.
+SVGR's webpack loader is upgraded to 8.1.0 instead of forcing an incompatible SVGO version into SVGR 5.
+`resolve-url-loader` is upgraded to 5.0.0 to remove its PostCSS 7 dependency.
+The source-map loader test checks rewritten asset paths, query strings, fragments, and preserved source references.
+`webpack-dev-middleware` 7.4.6 is pinned and checked with the current development server over HTTP and HTTPS.
+Use Node.js 22 as in CI; the updated serializer requires Node.js 20 or newer.
+
+Seven of the original Dependabot alerts remain in the webpack development-server path.
+The modern server rejects CRA 5's legacy middleware hooks, and `node-forge` has no listed patched release.
+The separate startup/certificate dependency migration is tracked in [#82](https://github.com/Electrostatics/apbs-web/issues/82).
+These overrides do not resolve those alerts or unrelated findings from the broader npm audit.
