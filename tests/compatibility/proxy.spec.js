@@ -20,11 +20,13 @@ test("Jest's jsdom loads documents and scripts through its real HTTP proxy agent
     const targetUrl = await listen(target);
     proxy = http.createServer((req, res) => {
       requests.push(req.url);
-      if (new URL(req.url).origin !== targetUrl) {
+      const upstreamPath = req.url === `${targetUrl}/probe.js` ? "/probe.js"
+        : req.url === `${targetUrl}/` ? "/" : null;
+      if (upstreamPath === null) {
         res.writeHead(502).end();
         return;
       }
-      const upstream = http.get(req.url, response => {
+      const upstream = http.get(`${targetUrl}${upstreamPath}`, response => {
         res.writeHead(response.statusCode, response.headers);
         response.pipe(res);
       });
@@ -48,6 +50,8 @@ test("Jest's jsdom loads documents and scripts through its real HTTP proxy agent
     expect(dom.window.proxyProbe).toBe("script-loaded");
     expect(requests).toEqual([`${targetUrl}/`, `${targetUrl}/probe.js`]);
     await expect(new ResourceLoader({ proxy: proxyUrl }).fetch("http://not-a-real-host.invalid/"))
+      .rejects.toThrow("Status: 502");
+    await expect(new ResourceLoader({ proxy: proxyUrl }).fetch(`${targetUrl}/not-allowed`))
       .rejects.toThrow("Status: 502");
   } finally {
     if (dom) dom.window.close();
