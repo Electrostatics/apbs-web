@@ -12,6 +12,12 @@ test("serves the app and applies source updates over the live-reload WebSocket",
   const response = await page.goto(app.url);
   expect(response.status()).toBe(200);
   await expect(page.getByText("Welcome to the new home")).toBeVisible();
+  expect(await page.evaluate(() => window._env_.OUTPUT_BUCKET_HOST)).toBe("https://outputs.example");
+  const route = await page.request.get(`${app.url}/jobstatus/apbs/compatibility-job`, {
+    headers: { Accept: "text/html" },
+  });
+  expect(route.status()).toBe(200);
+  expect(await route.text()).toContain('<div id="root">');
   await expect(page.getByTestId("compatibility-probe")).toContainText("compatibility-v1");
   await expect.poll(() => frames.some(frame => ["ok", "warnings"].includes(frame.type))).toBe(true);
   if (app.url.startsWith("https:")) {
@@ -33,6 +39,11 @@ test("proxies HTTP bodies and SockJS WebSocket messages to a local backend", asy
     return result.json();
   });
   expect(response).toEqual({ method: "POST", path: "/compat-api/ping", body: "request-body" });
+  const defaultProxy = await page.evaluate(async () => {
+    const result = await fetch("/default-proxy/ping");
+    return result.json();
+  });
+  expect(defaultProxy).toEqual({ method: "GET", path: "/default-proxy/ping", body: "" });
   const echoed = await page.evaluate(() => new Promise((resolve, reject) => {
     const socket = new WebSocket(
       `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/compat-sockjs/websocket`
