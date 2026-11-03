@@ -44,10 +44,16 @@ async function stop(child) {
 async function createApp() {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "apbs-compatibility-"));
   try {
-    for (const name of ["src", "public", "package.json", "tsconfig.json"]) {
+    for (const name of ["src", "public", "package.json", "tsconfig.json", "craco.config.js"]) {
       await fs.cp(path.join(root, name), path.join(directory, name), { recursive: true });
     }
-    await fs.symlink(path.join(root, "node_modules"), path.join(directory, "node_modules"), "dir");
+    const modules = path.join(directory, "node_modules");
+    await fs.mkdir(modules);
+    const entries = await fs.readdir(path.join(root, "node_modules"), { withFileTypes: true });
+    // Keep generated certificates and build caches isolated from the checkout.
+    await Promise.all(entries.filter(entry => entry.name !== ".cache").map(entry =>
+      fs.symlink(path.join(root, "node_modules", entry.name), path.join(modules, entry.name),
+        entry.isDirectory() ? "dir" : "file")));
     await fs.writeFile(path.join(directory, "public/env-config.js"),
       `window._env_ = ${JSON.stringify(env)};`);
     // Exercise SVG imports and CSS optimization even when current app assets don't use SVGR.
@@ -75,11 +81,15 @@ ReactDOM.render(<CompatibilityProbe />, document.body.appendChild(document.creat
 }
 
 function startScript(directory, name, extraEnv = {}) {
+  const script = name === "start"
+    ? require.resolve("@craco/craco/dist/scripts/start.js")
+    : require.resolve(`react-scripts/scripts/${name}.js`);
   const child = spawn(process.execPath,
-    [require.resolve(`react-scripts/scripts/${name}.js`)], {
+    [script], {
       cwd: directory,
       env: {
         ...process.env, CI: "true", BROWSER: "none", HOST: "127.0.0.1",
+        SSL_CRT_FILE: "", SSL_KEY_FILE: "",
         REACT_APP_GA_MEASUREMENT_ID: "", ...extraEnv,
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -149,6 +159,10 @@ const test = base.test.extend({
         });
         sockjs.installHandlers(backend, { prefix: "/compat-sockjs" });
         const backendUrl = await listen(backend);
+        const packageFile = path.join(directory, "package.json");
+        const packageJson = JSON.parse(await fs.readFile(packageFile, "utf8"));
+        packageJson.proxy = backendUrl;
+        await fs.writeFile(packageFile, JSON.stringify(packageJson));
         await fs.writeFile(path.join(directory, "src/setupProxy.js"), `
 const { createProxyMiddleware } = require("http-proxy-middleware");
 module.exports = app => app.use(createProxyMiddleware(
@@ -159,12 +173,32 @@ module.exports = app => app.use(createProxyMiddleware(
         const portUrl = await listen(portServer);
         const port = new URL(portUrl).port;
         await close(portServer);
-        const https = workerInfo.project.name === "development-https";
+        const https = workerInfo.project.name.includes("https");
         const url = `${https ? "https" : "http"}://127.0.0.1:${port}`;
-        process = startScript(directory, "start", {
+        const serverEnv = {
           NODE_ENV: "development", HTTPS: String(https), PORT: port,
           WDS_SOCKET_HOST: "127.0.0.1", WDS_SOCKET_PORT: port,
-        });
+        };
+        let certificate;
+        if (workerInfo.project.name === "development-custom-https") {
+          const selfsigned = require(require.resolve("selfsigned", {
+            paths: [path.dirname(require.resolve("webpack-dev-server"))],
+          }));
+          const pems = await selfsigned.generate(
+            [{ name: "commonName", value: "apbs-compatibility-custom" }],
+            {
+              algorithm: "sha256",
+              keySize: 2048,
+              extensions: [{ name: "subjectAltName", altNames: [{ type: 7, ip: "127.0.0.1" }] }],
+            }
+          );
+          certificate = pems.cert;
+          await fs.writeFile(path.join(directory, "custom-cert.pem"), pems.cert);
+          await fs.writeFile(path.join(directory, "custom-key.pem"), pems.private, { mode: 0o600 });
+          serverEnv.SSL_CRT_FILE = "custom-cert.pem";
+          serverEnv.SSL_KEY_FILE = "custom-key.pem";
+        }
+        process = startScript(directory, "start", serverEnv);
         const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
         try {
           await base.expect.poll(async () => {
@@ -182,14 +216,20 @@ module.exports = app => app.use(createProxyMiddleware(
         } finally {
           await request.dispose();
         }
-        await use({ directory, url });
+        await use({ directory, url, certificate });
       }
     } finally {
-      if (process) await stop(process.child);
-      for (const connection of connections) connection.close();
-      if (server) await close(server);
-      if (backend) await close(backend);
-      await fs.rm(directory, { recursive: true, force: true });
+      try {
+        if (process) {
+          await stop(process.child);
+          base.expect(process.child.exitCode, process.output()).toBe(0);
+        }
+      } finally {
+        for (const connection of connections) connection.close();
+        if (server) await close(server);
+        if (backend) await close(backend);
+        await fs.rm(directory, { recursive: true, force: true });
+      }
     }
   }, { scope: "worker", timeout: 300000 }],
   context: async ({ context, app }, use) => {
@@ -214,4 +254,4 @@ module.exports = app => app.use(createProxyMiddleware(
   }, { auto: true }],
 });
 
-module.exports = { test, expect: base.expect, listen, close };
+module.exports = { test, expect: base.expect, listen, close, startScript, stop };

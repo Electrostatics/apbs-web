@@ -30,7 +30,8 @@ CI=false ./node_modules/.bin/react-scripts build
 
 ## Browser and toolchain compatibility
 The compatibility job exercises production JavaScript, CSS, SVG imports, 3Dmol rendering with plain and compressed potential data, and PNG downloads in Chromium.
-It also starts the actual Create React App development server over HTTP and HTTPS, checks hot updates without a page reload, and exercises HTTP and SockJS WebSocket proxying.
+It also starts the actual Create React App development server through CRACO over HTTP and HTTPS, checks hot updates without a page reload, and exercises package-level HTTP proxies and custom HTTP/SockJS WebSocket proxies.
+HTTPS checks cover freshly generated certificates, trusted custom certificates, and rejection of missing certificates or mismatched private keys.
 A separate test exercises the HTTP proxy agent used by Jest's jsdom environment, including a failed upstream request.
 These are dependency-update compatibility checks, not vulnerability exploit tests.
 
@@ -46,7 +47,7 @@ npx playwright install chromium
 npm run test:compatibility
 ```
 On Linux, use `npx playwright install --with-deps chromium` to install required system libraries.
-To run only one group, use `npm run test:compatibility -- --project=production`, `--project=development-http`, `--project=development-https`, `--project=jest-proxy`, or `--project=build-loaders`.
+To run only one group, use `npm run test:compatibility -- --project=production`, `--project=development-http`, `--project=development-https`, `--project=development-custom-https`, `--project=jest-proxy`, or `--project=build-loaders`.
 Failure screenshots and traces are written to the ignored `test-results` directory and uploaded by CI.
 
 ## Dependency overrides
@@ -61,7 +62,12 @@ The source-map loader test checks rewritten asset paths, query strings, fragment
 `webpack-dev-middleware` 7.4.6 is pinned and checked with the current development server over HTTP and HTTPS.
 Use Node.js 22 as in CI; the updated serializer requires Node.js 20 or newer.
 
-Seven of the original Dependabot alerts remain in the webpack development-server path.
-The modern server rejects CRA 5's legacy middleware hooks, and `node-forge` has no listed patched release.
-The separate startup/certificate dependency migration is tracked in [#82](https://github.com/Electrostatics/apbs-web/issues/82).
-These overrides do not resolve those alerts or unrelated findings from the broader npm audit.
+## Development-server migration
+`npm start` and `npm run dev` use CRACO's supported CRA 5 configuration hook; production builds and Jest still use `react-scripts` directly.
+`craco.config.js` translates CRA's legacy HTTPS options to `server` and orders its existing error-overlay/proxy hooks before the default middleware, with served-path redirects and service-worker cleanup afterwards.
+It adapts CRA's shutdown call to the modern server API and retains host validation for package-level proxies on loopback addresses.
+The runtime environment-generation steps in `npm run dev` are unchanged.
+
+`webpack-dev-server` is pinned to 5.2.7, which patches the six remaining original server alerts and uses asynchronous `selfsigned` 5 without `node-forge`.
+This addresses the startup/certificate migration tracked in [#82](https://github.com/Electrostatics/apbs-web/issues/82), including the remaining original certificate alert.
+These updates do not resolve unrelated findings from the broader npm audit.
