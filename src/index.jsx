@@ -5,7 +5,7 @@ import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 import { unregister } from './registerServiceWorker';
 
-import ServerRouter from './router.js'
+import ServerRouter from './router'
 
 
 // ReactDOM.render(<App />, document.getElementById('root'));

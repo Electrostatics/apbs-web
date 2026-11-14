@@ -69,7 +69,7 @@ export default function CompatibilityProbe() {
       '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20" viewBox="0 0 40 20"><rect width="40" height="20" fill="#e02040"/></svg>');
     await fs.writeFile(path.join(directory, "src/compatibility.css"),
       '[data-testid="compatibility-probe"] { display: flex; background: rgb(12, 34, 56); color: white; gap: 8px; user-select: none; }');
-    await fs.appendFile(path.join(directory, "src/index.js"), `
+    await fs.appendFile(path.join(directory, "src/index.jsx"), `
 import CompatibilityProbe from "./CompatibilityProbe";
 ReactDOM.render(<CompatibilityProbe />, document.body.appendChild(document.createElement("div")));
 `);
