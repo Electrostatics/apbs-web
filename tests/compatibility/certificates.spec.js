@@ -41,9 +41,13 @@ test("rejects a configured certificate with a mismatched private key", async ({ 
     publicKeyEncoding: { type: "spki", format: "pem" },
   });
   await fs.writeFile(path.join(app.directory, "mismatched-key.pem"), privateKey, { mode: 0o600 });
-  await rejectCertificate(app, { SSL_KEY_FILE: "mismatched-key.pem" }, /certificate key[\s\S]*is invalid/);
+  await rejectCertificate(app, { SSL_KEY_FILE: "mismatched-key.pem" }, /key values mismatch/);
 });
 
 test("rejects a missing configured certificate instead of silently generating one", async ({ app }) => {
-  await rejectCertificate(app, { SSL_CRT_FILE: "missing-cert.pem" }, /SSL_CRT_FILE[\s\S]*can't be found/);
+  await rejectCertificate(app, { SSL_CRT_FILE: "missing-cert.pem" }, /ENOENT.*missing-cert\.pem/);
+});
+
+test("rejects an incomplete custom certificate configuration", async ({ app }) => {
+  await rejectCertificate(app, { SSL_KEY_FILE: "" }, /requires both SSL_CRT_FILE and SSL_KEY_FILE/);
 });

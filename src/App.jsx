@@ -2,28 +2,28 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 // import logo from './logo.svg';
 import PAGES from './common/pagenames.js';
-import MyHeader from './common/myheader.js';
-import MyFooter from './common/myfooter.js';
-import HomePage from './body/home.js';
-import AboutPage from './body/about.js';
-import DocumentationPage from './body/documentation.js';
-import ConfigPDB2PQR from './body/configpdb2pqr.js';
-import ConfigAPBS from './body/configapbs.js';
-import JobStatus from './body/jobstatus.js';
+import MyHeader from './common/myheader';
+import MyFooter from './common/myfooter';
+import HomePage from './body/home';
+import AboutPage from './body/about';
+import DocumentationPage from './body/documentation';
+import ConfigPDB2PQR from './body/configpdb2pqr';
+import ConfigAPBS from './body/configapbs';
+import JobStatus from './body/jobstatus';
 import './App.css';
 
 // import 'antd/dist/antd.css';
 
 
 import { Layout, Breadcrumb, Result, Button } from 'antd';
-import DownloadPage from './body/cli-download.js';
+import DownloadPage from './body/cli-download';
 import { hasMeasurementId, sendPageView } from './body/utils/ga-utils'
-import Announcement from './common/announcement.js';
+import Announcement from './common/announcement';
 
 /**
  * Main application code.
  * The page displayed to the user is dependent on the state of the current page.
- * The current page is determined through the React Router, implemented in router.js
+ * The current page is determined through the React Router, implemented in router.jsx
  */
 class App extends Component {
   constructor(props){

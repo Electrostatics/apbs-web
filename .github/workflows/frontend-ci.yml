@@ -31,10 +31,10 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Test
         run: npm test -- --watchAll=false --runInBand
+      - name: Lint and type check
+        run: npm run check
       - name: Compile frontend without deployment configuration
-        run: ./node_modules/.bin/react-scripts build
-        env:
-          CI: "false"
+        run: npm run build:app
 
   compatibility:
     name: Browser and toolchain compatibility
