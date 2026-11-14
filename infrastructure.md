@@ -16,26 +16,25 @@ An absent preview is a successful no-op; Azure lookup, authorization, and deleti
 
 ## Frontend validation
 The `Frontend CI` workflow runs for both draft and ready-for-review PRs targeting any branch, including stacked PRs, and for pushes to `azure-release`.
-It uses Node.js 22, installs the lockfile with `npm ci --ignore-scripts`, runs the complete test suite, and compiles the frontend.
+It uses Node.js 22 (at least 22.12), installs the lockfile with `npm ci --ignore-scripts`, runs Jest, ESLint, and TypeScript checking, and compiles the frontend with Vite.
 It has read-only repository permissions and does not use Azure credentials, generate deployment configuration, or deploy artifacts.
-The compile step sets `CI=false` so existing lint and source-map warnings remain warnings; compilation errors still fail the job.
-The test step retains the normal CI behavior.
+Compilation and check errors fail the job. Bundler warnings remain visible without failing compilation.
 
 To run the same checks locally:
 ```bash
 npm ci --ignore-scripts --no-audit --no-fund
 CI=true npm test -- --watchAll=false --runInBand
-CI=false ./node_modules/.bin/react-scripts build
+npm run check
+npm run build:app
 ```
 
 ## Browser and toolchain compatibility
-The compatibility job exercises production JavaScript, CSS, SVG imports, 3Dmol rendering with plain and compressed potential data, and PNG downloads in Chromium.
-It also starts the actual Create React App development server through CRACO over HTTP and HTTPS, checks hot updates without a page reload, and exercises package-level HTTP proxies and custom HTTP/SockJS WebSocket proxies.
+The compatibility job exercises production JavaScript, CSS, SVG imports, 3Dmol rendering with plain and compressed potential data, and PNG and PyMol/UnityMol archive downloads in Chromium.
+It also starts the Vite development server over HTTP and HTTPS and checks function-component updates without a page reload.
 HTTPS checks cover freshly generated certificates, trusted custom certificates, and rejection of missing certificates or mismatched private keys.
-A separate test exercises the HTTP proxy agent used by Jest's jsdom environment, including a failed upstream request.
-These are dependency-update compatibility checks, not vulnerability exploit tests.
+These are application and toolchain compatibility checks, not vulnerability exploit tests.
 
-The harness copies the application into temporary directories and adds isolated CSS/SVG fixtures so build optimizers are exercised even when application assets don't use every loader.
+The harness copies the application into temporary directories and adds isolated CSS/SVG fixtures to exercise production asset handling.
 It uses the installed dependency tree, synthetic molecular data, and a local copy of the application's jQuery dependency instead of the public CDN.
 External analytics and live cloud requests are blocked.
 Original source files, environment configuration, and build artifacts are not modified.
@@ -47,27 +46,46 @@ npx playwright install chromium
 npm run test:compatibility
 ```
 On Linux, use `npx playwright install --with-deps chromium` to install required system libraries.
-To run only one group, use `npm run test:compatibility -- --project=production`, `--project=development-http`, `--project=development-https`, `--project=development-custom-https`, `--project=jest-proxy`, or `--project=build-loaders`.
+To run only one group, use `npm run test:compatibility -- --project=production`, `--project=development-http`, `--project=development-https`, or `--project=development-custom-https`.
 Failure screenshots and traces are written to the ignored `test-results` directory and uploaded by CI.
 
-## Dependency overrides
-The npm overrides target transitive toolchain packages directly so npm 10 and npm 11 both apply them to hoisted dependencies.
-TypeScript stays on major version 4, with a 4.9.5 minimum to satisfy SVGR's optional configuration-loader peer dependency without adding TypeScript 7.
-`serialize-javascript` is pinned to 7.1.3, including its nested Workbox consumer.
-`sockjs` uses UUID 11.1.1, which retains the CommonJS API its connection code needs.
-The Jest environment's HTTP proxy agent uses `@tootallnate/once` 2.0.1.
-SVGR's webpack loader is upgraded to 8.1.0 instead of forcing an incompatible SVGO version into SVGR 5.
-`resolve-url-loader` is upgraded to 5.0.0 to remove its PostCSS 7 dependency.
-The source-map loader test checks rewritten asset paths, query strings, fragments, and preserved source references.
-`webpack-dev-middleware` 7.4.6 is pinned and checked with the current development server over HTTP and HTTPS.
-Use Node.js 22 as in CI; the updated serializer requires Node.js 20 or newer.
+## Vite migration and runtime configuration
 
-## Development-server migration
-`npm start` and `npm run dev` use CRACO's supported CRA 5 configuration hook; production builds and Jest still use `react-scripts` directly.
-`craco.config.js` translates CRA's legacy HTTPS options to `server` and orders its existing error-overlay/proxy hooks before the default middleware, with served-path redirects and service-worker cleanup afterwards.
-It adapts CRA's shutdown call to the modern server API and retains host validation for package-level proxies on loopback addresses.
-The runtime environment-generation steps in `npm run dev` are unchanged.
+The migration tracked in [#88](https://github.com/Electrostatics/apbs-web/issues/88) replaces CRA and CRACO without upgrading React or the client-side router.
+Jest runs independently with Babel and jsdom. ESLint retains the previous base JSX checks and also rejects undefined JSX components.
+TypeScript remains on 4.9; Node declarations stay on major version 22 to match CI and avoid newer declaration syntax incompatible with that compiler.
+The React plugin uses the classic JSX runtime, and automatic-runtime dependency optimization is excluded for React 16.13.
+JavaScript targets and Autoprefixer use the existing Browserslist policy.
 
-`webpack-dev-server` is pinned to 5.2.7, which patches the six remaining original server alerts and uses asynchronous `selfsigned` 5 without `node-forge`.
-This addresses the startup/certificate migration tracked in [#82](https://github.com/Electrostatics/apbs-web/issues/82), including the remaining original certificate alert.
-These updates do not resolve unrelated findings from the broader npm audit.
+3Dmol 1.6's concatenated UMD bundle does not reliably export its viewer API under CommonJS.
+The application loads its packaged no-jQuery browser distribution as a local, hashed Vite asset before importing the router.
+Load failures produce a visible startup error. The existing external jQuery script is retained.
+No new service worker is installed; the existing unregister behavior is retained.
+
+`npm run generate-env` writes `public/env-config.js` using only keys listed in `env/.env`.
+Nonempty environment values override defaults, values are JSON-escaped, and unlisted environment variables are not exported.
+All generated values are public browser configuration, not secrets.
+The analytics script reads its measurement ID from the same runtime configuration, rather than a build-time HTML placeholder.
+
+The application has no configured CRA API proxy. The old synthetic proxy, webpack loader, and Jest transitive-proxy probes are retired with their dependencies.
+If a local backend proxy is needed, configure Vite's `server.proxy` explicitly; CRA's package-level `proxy` and `setupProxy.js` conventions are not supported.
+Development HTTPS still accepts `HTTPS`, `SSL_CRT_FILE`, and `SSL_KEY_FILE`; host and port use `HOST` and `PORT`.
+
+## Deployment build and preview verification
+
+Azure Static Web Apps builds the frontend explicitly on Node.js 22 using `npm ci` and `npm run build`, then uploads `build` with `skip_app_build`.
+The API build, production/preview backend selection, and preview lifecycle are unchanged.
+[public/staticwebapp.config.json](public/staticwebapp.config.json) is copied into `build` and preserves the SPA navigation fallback.
+The manual Blob Storage workflow also retains the `build` output path.
+
+Before merging the migration, verify an Azure preview:
+
+- Open and refresh nested routes, including job-status and visualization URLs with query parameters.
+- Confirm runtime settings select the development backend.
+- Submit PDB2PQR and APBS jobs through the upload API.
+- Check logos, announcements, and other static assets.
+- Render molecular surfaces with plain and compressed potential data, and export a PNG.
+- Export PyMol and UnityMol archives containing the script, structure, and potential files.
+
+Local tests do not establish that cloud credentials, backend connectivity, or deployed routing work.
+React/router modernization and unrelated dependency audit findings remain separate work.

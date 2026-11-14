@@ -3,9 +3,7 @@ phases:
   build:
     commands:
       - branch=`echo $CODEBUILD_INITIATOR | awk -F'-' '{ print $NF }'`  
-      - npm ci -automatic
-      - cd env/ && bash ./env.sh && cd ..
-      - cp env/env-config.js public/
+      - npm ci --ignore-scripts --no-audit --no-fund
       - npm run build
       - cd build
       - aws s3 sync . s3://apbs-web/$branch/

@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 22
           cache: "npm"
-      - run: npm install
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: CODEBUILD_RESOLVED_SOURCE_VERSION=$(git rev-parse --short HEAD) npm run build
       - name: Upload to Azure Blob Storage
         run: |

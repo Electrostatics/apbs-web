@@ -1,6 +1,6 @@
 # APBS-Web: A New Interface for the APBS Web Server
 
-*This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).  As such, this README will lift some of the content available from the original README, which can be found [here](./README_CREATEREACTAPP.md)*
+This React application uses [Vite](https://vite.dev/) for development and production builds, and standalone Jest for unit tests.
 
 For deployment information, see [here](./infrastructure.md).
 
@@ -10,6 +10,8 @@ For deployment information, see [here](./infrastructure.md).
     - [npm run dev](#npm-run-dev)
     - [npm test](#npm-test)
     - [npm run build](#npm-run-build)
+    - [npm run check](#npm-run-check)
+    - [npm run test:compatibility](#npm-run-testcompatibility)
 - [Build Container](#available-scripts)
     - [docker build](#docker-build)
 - [Reference Documentation](#reference-documentation)
@@ -19,6 +21,12 @@ This project serves as the web interface for the APBS [web server](http://server
 
 ## Available Scripts
 
+Use Node.js 22 (22.12 or newer), matching CI. Install dependencies with:
+
+```shell
+npm ci --ignore-scripts --no-audit --no-fund
+```
+
 In the project directory, you can run:
 
 ### `npm run dev`
@@ -26,23 +34,19 @@ In the project directory, you can run:
 Runs the app in the development mode.<br>
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+Vite applies source updates while you work. Function components support Fast Refresh; changes to class components can reset component state or reload the page.
 
-Prior to launching, a script is run to convert the environment variables from [env/.env](env/.env) to variables used by the website.
+Both `npm run dev` and `npm start` generate [public/env-config.js](public/env-config.js) from the public settings listed in [env/.env](env/.env). Nonempty shell values override those defaults. The file is loaded as `window._env_` before the application starts; these values are public, so never put credentials in this file.
 
-<!-- ### `npm start`
-*Deprecated*
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console. -->
+`HOST` and `PORT` configure the development server. Use `HTTPS=true npm run dev` for a generated development certificate, or also set `SSL_CRT_FILE` and `SSL_KEY_FILE` for a custom certificate. Invalid or incomplete custom certificates fail startup.
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](README_CREATEREACTAPP.md#running-tests) for more information.
+Launches Jest in interactive watch mode. For a single CI-style run:
+
+```shell
+CI=true npm test -- --watchAll=false --runInBand
+```
 
 ### `npm run build`
 
@@ -52,7 +56,19 @@ It correctly bundles React in production mode and optimizes the build for the be
 The build is minified and the filenames include the hashes.<br>
 Your app is ready to be deployed!
 
-See the section about [deployment](README_CREATEREACTAPP.md#deployment) for more information.
+`npm run build` generates runtime configuration before bundling. `npm run build:app` only bundles, for deployment-free CI or when configuration has already been prepared. `npm run preview` serves the built files locally; it is not a production server.
+
+The root [index.html](index.html) is the entry point, and [public/](public/) contains files copied unchanged into the build. JSX-bearing source files use `.jsx` or `.tsx`. The existing Browserslist targets are used for JavaScript compilation and CSS prefixing.
+
+See [deployment information](infrastructure.md) for Azure setup and preview verification.
+
+### `npm run check`
+
+Runs ESLint and `tsc --noEmit` explicitly. Vite compilation does not replace these checks. Individual commands are `npm run lint` and `npm run typecheck`.
+
+### `npm run test:compatibility`
+
+Runs Playwright browser checks against isolated production and development applications. Install Chromium first with `npx playwright install chromium`. See the [compatibility guide](infrastructure.md#browser-and-toolchain-compatibility) for details.
 
 
 ## Build Container
