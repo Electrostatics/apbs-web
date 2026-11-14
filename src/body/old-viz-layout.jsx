@@ -10,12 +10,12 @@ import { Switch, Slider, InputNumber } from 'antd';
 import { Select } from 'antd';
 import { Button } from 'antd';
 
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import * as Pako from 'pako';
 import { saveAs } from 'file-saver';
 
 // import { ExportOutlined } from '@ant-design/icons'
-import * as $3Dmol from '3dmol/build/3Dmol'
+const $3Dmol = window.$3Dmol;
 
 // Styles and images
 // import './viz/static/3dmol/css/foundation.css'

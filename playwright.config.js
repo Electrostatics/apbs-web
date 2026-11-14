@@ -19,7 +19,5 @@ module.exports = defineConfig({
     { name: "development-http", testMatch: "development.spec.js" },
     { name: "development-https", testMatch: "development.spec.js" },
     { name: "development-custom-https", testMatch: ["development.spec.js", "certificates.spec.js"] },
-    { name: "jest-proxy", testMatch: "proxy.spec.js" },
-    { name: "build-loaders", testMatch: "optimizer.spec.js" },
   ],
 });

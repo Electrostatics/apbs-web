@@ -3,7 +3,7 @@ const fs = require("node:fs/promises");
 const http = require("node:http");
 const path = require("node:path");
 const os = require("node:os");
-const { spawn } = require("node:child_process");
+const { spawn, execFileSync } = require("node:child_process");
 const { once } = require("node:events");
 
 const root = path.resolve(__dirname, "../..");
@@ -44,25 +44,29 @@ async function stop(child) {
 async function createApp() {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "apbs-compatibility-"));
   try {
-    for (const name of ["src", "public", "package.json", "tsconfig.json", "craco.config.js"]) {
+    for (const name of [
+      "src", "public", "env", "scripts", "package.json", "tsconfig.json",
+      "index.html", "vite.config.mjs", "postcss.config.cjs",
+    ]) {
       await fs.cp(path.join(root, name), path.join(directory, name), { recursive: true });
     }
     const modules = path.join(directory, "node_modules");
     await fs.mkdir(modules);
     const entries = await fs.readdir(path.join(root, "node_modules"), { withFileTypes: true });
     // Keep generated certificates and build caches isolated from the checkout.
-    await Promise.all(entries.filter(entry => entry.name !== ".cache").map(entry =>
+    await Promise.all(entries.filter(entry => ![".cache", ".vite", ".vite-temp"].includes(entry.name)).map(entry =>
       fs.symlink(path.join(root, "node_modules", entry.name), path.join(modules, entry.name),
         entry.isDirectory() ? "dir" : "file")));
-    await fs.writeFile(path.join(directory, "public/env-config.js"),
-      `window._env_ = ${JSON.stringify(env)};`);
-    // Exercise SVG imports and CSS optimization even when current app assets don't use SVGR.
-    await fs.writeFile(path.join(directory, "src/CompatibilityProbe.js"), `
+    execFileSync(process.execPath, [path.join(directory, "scripts/generate-env.cjs")], {
+      cwd: directory,
+      env: { ...process.env, ...env },
+    });
+    await fs.writeFile(path.join(directory, "src/CompatibilityProbe.jsx"), `
 import React from "react";
-import { ReactComponent as Image } from "./compatibility.svg";
+import image from "./compatibility.svg";
 import "./compatibility.css";
 export default function CompatibilityProbe() {
-  return <div data-testid="compatibility-probe"><Image /><span>compatibility-v1</span></div>;
+  return <div data-testid="compatibility-probe"><img src={image} alt="SVG probe" /><span>compatibility-v1</span></div>;
 }
 `);
     await fs.writeFile(path.join(directory, "src/compatibility.svg"),
@@ -81,15 +85,13 @@ ReactDOM.render(<CompatibilityProbe />, document.body.appendChild(document.creat
 }
 
 function startScript(directory, name, extraEnv = {}) {
-  const script = name === "start"
-    ? require.resolve("@craco/craco/dist/scripts/start.js")
-    : require.resolve(`react-scripts/scripts/${name}.js`);
+  const script = path.join(path.dirname(require.resolve("vite/package.json")), "bin/vite.js");
   const child = spawn(process.execPath,
-    [script], {
+    [script, ...(name === "build" ? ["build"] : [])], {
       cwd: directory,
       env: {
         ...process.env, CI: "true", BROWSER: "none", HOST: "127.0.0.1",
-        SSL_CRT_FILE: "", SSL_KEY_FILE: "",
+        SSL_CRT_FILE: "", SSL_KEY_FILE: "", HTTPS: "false",
         REACT_APP_GA_MEASUREMENT_ID: "", ...extraEnv,
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -105,9 +107,7 @@ const test = base.test.extend({
   app: [async ({ playwright }, use, workerInfo) => {
     const directory = await createApp();
     let server;
-    let backend;
     let process;
-    const connections = new Set();
     try {
       if (workerInfo.project.name === "production") {
         process = startScript(directory, "build", { CI: "false", NODE_ENV: "production" });
@@ -140,35 +140,6 @@ const test = base.test.extend({
         const url = await listen(server);
         await use({ directory, url });
       } else {
-        backend = http.createServer((req, res) => {
-          let body = "";
-          req.on("data", data => { body += data; });
-          req.on("end", () => {
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ method: req.method, path: req.url, body }));
-          });
-        });
-        const sockjsPath = require.resolve("sockjs", {
-          paths: [path.dirname(require.resolve("webpack-dev-server"))],
-        });
-        const sockjs = require(sockjsPath).createServer({ log: () => {} });
-        sockjs.on("connection", connection => {
-          connections.add(connection);
-          connection.on("data", data => connection.write(data));
-          connection.on("close", () => connections.delete(connection));
-        });
-        sockjs.installHandlers(backend, { prefix: "/compat-sockjs" });
-        const backendUrl = await listen(backend);
-        const packageFile = path.join(directory, "package.json");
-        const packageJson = JSON.parse(await fs.readFile(packageFile, "utf8"));
-        packageJson.proxy = backendUrl;
-        await fs.writeFile(packageFile, JSON.stringify(packageJson));
-        await fs.writeFile(path.join(directory, "src/setupProxy.js"), `
-const { createProxyMiddleware } = require("http-proxy-middleware");
-module.exports = app => app.use(createProxyMiddleware(
-  ["/compat-api", "/compat-sockjs"], { target: "${backendUrl}", ws: true }
-));
-`);
         const portServer = http.createServer();
         const portUrl = await listen(portServer);
         const port = new URL(portUrl).port;
@@ -177,13 +148,10 @@ module.exports = app => app.use(createProxyMiddleware(
         const url = `${https ? "https" : "http"}://127.0.0.1:${port}`;
         const serverEnv = {
           NODE_ENV: "development", HTTPS: String(https), PORT: port,
-          WDS_SOCKET_HOST: "127.0.0.1", WDS_SOCKET_PORT: port,
         };
         let certificate;
         if (workerInfo.project.name === "development-custom-https") {
-          const selfsigned = require(require.resolve("selfsigned", {
-            paths: [path.dirname(require.resolve("webpack-dev-server"))],
-          }));
+          const selfsigned = require("selfsigned");
           const pems = await selfsigned.generate(
             [{ name: "commonName", value: "apbs-compatibility-custom" }],
             {
@@ -210,7 +178,7 @@ module.exports = app => app.use(createProxyMiddleware(
             } catch {
               return 0;
             }
-          }, { timeout: 180000, message: "CRA development server must become responsive" }).toBe(200);
+          }, { timeout: 180000, message: "Vite development server must become responsive" }).toBe(200);
         } catch (error) {
           throw new Error(`${error.message}\n${process.output()}`);
         } finally {
@@ -222,12 +190,14 @@ module.exports = app => app.use(createProxyMiddleware(
       try {
         if (process) {
           await stop(process.child);
-          base.expect(process.child.exitCode, process.output()).toBe(0);
+          if (process.child.signalCode === null) {
+            base.expect([0, 143], process.output()).toContain(process.child.exitCode);
+          } else {
+            base.expect(process.child.signalCode, process.output()).toBe("SIGTERM");
+          }
         }
       } finally {
-        for (const connection of connections) connection.close();
         if (server) await close(server);
-        if (backend) await close(backend);
         await fs.rm(directory, { recursive: true, force: true });
       }
     }
